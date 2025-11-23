@@ -1,0 +1,56 @@
+/* --- Google 字體（Playfair + Noto Sans）--- */
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@300;400;500&family=Noto+Sans+TC:wght@300;400;500&display=swap');
+
+/* --- Tailwind 必須在字體後 --- */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* --- 全站字體與背景 --- */
+@layer base {
+  :root {
+    font-family: 'Noto Sans TC', 'Playfair Display', system-ui, sans-serif;
+  }
+
+  body {
+    @apply bg-white text-gray-800 min-h-screen m-0 transition-colors duration-300;
+  }
+}
+
+/* --- 輸入框統一深色字體（避免變白）--- */
+input, select, textarea {
+  @apply text-gray-800 placeholder-gray-400;
+}
+
+/* --- 精品標題字體 --- */
+h1, h2, h3 {
+  font-family: 'Playfair Display', serif;
+  letter-spacing: 0.5px;
+}
+
+/* --- 精品按鈕（黑） --- */
+.btn-black {
+  @apply bg-black text-white py-3 px-6 rounded-lg tracking-wide hover:bg-gray-900 transition;
+}
+
+/* --- 精品按鈕（白底黑邊）--- */
+.btn-outline {
+  @apply border border-gray-800 text-gray-800 py-3 px-6 rounded-lg hover:bg-gray-100 transition;
+}
+
+/* --- 動畫 --- */
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@layer utilities {
+  .animate-fade-in {
+    animation: fade-in 1.2s ease-out forwards;
+  }
+
+  .animate-fade-in-delayed {
+    animation: fade-in 1.8s ease-out forwards;
+    animation-delay: 0.5s;
+  }
+}
