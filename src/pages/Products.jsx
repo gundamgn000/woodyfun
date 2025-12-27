@@ -204,7 +204,7 @@ export default function Products() {
                       NT${item.price}
                     </div>
                     <div className="text-[10px] text-gray-400">
-                      分類：{item.category}
+                      {item.category}
                     </div>
                   </div>
                 </div>

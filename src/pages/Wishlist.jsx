@@ -107,7 +107,7 @@ export default function Wishlist() {
                         NT${item.price?.toLocaleString()}
                       </div>
                       <div className="text-[11px] text-gray-400">
-                       {item.category}
+                       分類：{item.category}
                       </div>
                     </div>
                   </div>

@@ -104,7 +104,7 @@ export default function NewArrivals() {
                         NT${p.price?.toLocaleString()}
                       </div>
                       <div className="text-[11px] text-gray-400">
-                       分類: {p.category}
+                       {p.category}
                       </div>
                     </div>
                   </div>
