@@ -106,21 +106,22 @@ export default function Navbar() {
           </div>
           {/* --- 商品夾層結束 --- */}
                   
-            {/* --- 會員中心夾層 --- */}
-            <div className="nav-item-dropdown">
-              <NavLink to="/profile" className="nav-main-link">
-               會員中心
-              </NavLink>
-              
-              {/* 會員中心下拉夾層 */}
-              <div className="nav-submenu-centered">
-                <NavLink to="/profile">個人資料</NavLink>
-                <NavLink to="/profile/edit"> 編輯資料</NavLink>
-                <NavLink to="/profile/password"> 修改密碼</NavLink>
-                <NavLink to="/wishlist"> 我的收藏</NavLink>
-                <NavLink to="/orders"> 歷史訂單</NavLink>
+            {/* --- 會員中心（僅登入後顯示） --- */}
+            {!authLoading && user && (
+              <div className="nav-item-dropdown">
+                <NavLink to="/profile" className="nav-main-link">
+                  會員中心
+                </NavLink>
+
+                <div className="nav-submenu-centered">
+                  <NavLink to="/profile">個人資料</NavLink>
+                  <NavLink to="/profile/edit">編輯資料</NavLink>
+                  <NavLink to="/profile/password">修改密碼</NavLink>
+                  <NavLink to="/wishlist">我的收藏</NavLink>
+                  <NavLink to="/orders">歷史訂單</NavLink>
+                </div>
               </div>
-            </div>
+            )}
 
             {!authLoading && user && userRole === "admin" && (
               <NavLink to="/admin">後台</NavLink>
@@ -270,12 +271,14 @@ export default function Navbar() {
           >
             新品上架
           </NavLink>
-          <NavLink
-            to="/profile"
-            onClick={() => setMenuOpen(false)}
-          >
-            會員中心
-          </NavLink>
+          {!authLoading && user && (
+            <NavLink
+              to="/profile"
+              onClick={() => setMenuOpen(false)}
+            >
+              會員中心
+            </NavLink>
+          )}
 
           {user && userRole === "admin" && (
             <NavLink
