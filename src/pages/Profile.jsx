@@ -1,8 +1,17 @@
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { useNavigate } from "react-router-dom";
+
 
 export default function Profile() {
   const { user, userProfile, logout } = useAuth(); // ✅ 一定要拿 logout
+  const navigate = useNavigate(); // ⭐ 一定要有
+  const handleLogout = async () => {
+    await logout();
+    navigate("/"); // ⭐ 關鍵
+  };
+  
+
 
   return (
     <div className="min-h-screen bg-white pt-32 pb-20 px-6">
@@ -80,17 +89,17 @@ export default function Profile() {
           </div>
 
           {/* 登出 */}
-          <div className="border border-red-300 bg-red-50/40 rounded-3xl p-8 shadow-sm flex flex-col justify-between">
+          <div className="border border-red-300  rounded-3xl p-8 shadow-sm flex flex-col justify-between">
             <div>
-              <h2 className="text-xl font-semibold mb-4">登出</h2>
-              <p className="text-gray-600 mb-6">
+              <h2 className="text-xl font-semibold mb-4 text-red-500">登出</h2>
+              <p className="text-red-400 mb-6">
                 登出目前帳號，返回首頁
               </p>
             </div>
 
             <button
-              onClick={logout}
-              className="text-sm underline tracking-wider text-center text-red-600 hover:text-red-700"
+              onClick={handleLogout}
+              className="text-sm underline tracking-wider text-center text-red-600 hover:text-red-800 font-medium"
             >
               LOG OUT →
             </button>
