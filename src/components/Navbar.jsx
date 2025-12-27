@@ -19,7 +19,7 @@ export default function Navbar() {
 
 
   // ✅ 關鍵修正：用 user + authLoading
-  const { user, authLoading, userRole, logout } = useAuth();
+  const { user, authLoading, userRole, logout, userProfile } = useAuth();
 
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(true);
@@ -27,10 +27,8 @@ export default function Navbar() {
   const [dynamicCategories, setDynamicCategories] = useState([]);
 
   const isHome = location.pathname === "/";
-  const displayName =
-    user?.displayName ||
-    user?.email?.split("@")[0] ||
-    "會員";
+  const displayName = userProfile?.name || user?.email || "會員";
+;
 
   const handleLogout = async () => {
     await logout();
@@ -132,7 +130,7 @@ export default function Navbar() {
           {/* ⭐ 這段是重點 */}
           {authLoading ? null : user ? (
             <>
-              <span className="navbar-user">Hi, {displayName}</span>
+              <span className="navbar-user">Hi, {userProfile?.name || user?.email}</span>
               <button className="navbar-button" onClick={handleLogout}>
                 登出
               </button>

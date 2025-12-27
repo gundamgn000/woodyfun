@@ -19,8 +19,8 @@ export default function Register() {
       const uid = result.user.uid;
 
       await setDoc(doc(db, "users", uid), {
-        name,
-        email,
+        name: formData.name, // ⭐ 關鍵
+        email: user.email,
         createdAt: serverTimestamp(),
         orders: 0,
         recentPurchase: [],
