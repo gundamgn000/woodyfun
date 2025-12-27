@@ -20,7 +20,7 @@ export default function Login() {
     try {
       await signInWithEmailAndPassword(auth, email, password);
       // 成功後，AuthContext 會自動更新 user/profile
-      navigate("/member");
+      navigate("/profile");
     } catch (err) {
       console.error(err);
       setError("登入失敗，請確認帳號密碼");

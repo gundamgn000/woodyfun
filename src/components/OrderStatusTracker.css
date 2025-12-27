@@ -1,0 +1,104 @@
+/* ------------------------------
+   精品淡藍綠風格進度條（高級版）
+------------------------------ */
+
+:root {
+  --primary-color: #4fc3c6;
+  --primary-light: #7ee3e3;
+  --primary-glow: rgba(127, 227, 227, 0.55);
+
+  --inactive-color: #d5d5d5;
+  --inactive-line: #e0e0e0;
+}
+
+.order-tracker {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 30px 0;
+  position: relative;
+}
+
+/* 每個 step */
+.tracker-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  position: relative;
+}
+
+/* ------------------------------
+   高級版圓點（active 有 glow + 漸層）
+------------------------------ */
+.step-circle {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--inactive-color);
+  box-shadow: inset 0 0 4px rgba(0, 0, 0, 0.15);
+  transition: 
+    background 0.35s ease,
+    transform 0.25s ease,
+    box-shadow 0.35s ease;
+}
+
+.step-circle.active {
+  background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+  transform: scale(1.25);
+  box-shadow: 
+    0 0 10px var(--primary-glow),
+    0 0 18px var(--primary-glow),
+    inset 0 0 5px rgba(255, 255, 255, 0.7);
+}
+
+/* ------------------------------
+   高級標籤文字
+------------------------------ */
+.step-label {
+  margin-top: 8px;
+  font-size: 14px;
+  color: #999;
+  transition: color 0.35s ease, font-weight 0.35s ease;
+}
+
+.step-label.active {
+  color: var(--primary-color);
+  font-weight: 600;
+}
+
+/* ------------------------------
+   連接線（高級漸層 + 左右流動動畫）
+------------------------------ */
+.step-line {
+  position: absolute;
+  top: 11px;
+  left: 50%;
+  width: 100%;
+  height: 4px;
+  background: var(--inactive-line);
+  z-index: -1;
+  border-radius: 3px;
+  overflow: hidden;
+  transition: background 0.4s ease;
+}
+
+.step-line.active {
+  background: linear-gradient(
+    90deg,
+    var(--primary-color),
+    var(--primary-light),
+    var(--primary-color)
+  );
+  animation: flow 2.2s linear infinite;
+}
+
+/* 漸層流動動畫（高級感） */
+@keyframes flow {
+  0% {
+    background-position: 0% 0%;
+  }
+  100% {
+    background-position: 200% 0%;
+  }
+}

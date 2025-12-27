@@ -5,8 +5,11 @@ export default function ScrollToTop() {
   const { pathname } = useLocation();
 
   useEffect(() => {
-    window.scrollTo(0, 0);
-  }, [pathname]); // ← 路由每次變更時執行
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth", // 若不要動畫，可改成 "auto"
+    });
+  }, [pathname]);
 
   return null;
 }

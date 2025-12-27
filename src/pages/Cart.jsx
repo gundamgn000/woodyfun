@@ -1,134 +1,147 @@
+// src/pages/Cart.jsx (請用此內容覆蓋)
+
+import React from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { useCart } from "../context/CartContext";
-import { Link } from "react-router-dom";
 
-export default function Cart() {
-  const { cart, removeFromCart, clearCart, increaseQuantity, decreaseQuantity } = useCart();
+const CartPage = () => {
+  const { cart, totalAmountNumber, removeFromCart, clearCart } = useCart();
+  const navigate = useNavigate();
 
-  // 計算總金額
-  const total = cart.reduce((sum, item) => {
-    const price = parseInt(item.price.replace("$", ""));
-    return sum + price * item.quantity;
-  }, 0);
+  // ✅ 運費（只新增這一行）
+  const SHIPPING_FEE = 80;
+
+  // 取得數量（兼容 quantity / qty）
+  const getQty = (item) => {
+    if (typeof item.quantity === "number") return item.quantity;
+    if (typeof item.qty === "number") return item.qty;
+    return 1;
+  };
+
+  // 處理價格欄位，確保是數字
+  const getPrice = (item) => {
+    if (typeof item.price === "number") return item.price;
+    if (typeof item.price === "string") {
+      const num = Number(item.price.replace(/[^\d.]/g, ""));
+      return isNaN(num) ? 0 : num;
+    }
+    return 0;
+  };
+
+  const getLineTotal = (item) => getQty(item) * getPrice(item);
+
+  // 商品小計
+  const computedTotal = (cart || []).reduce(
+    (sum, item) => sum + getLineTotal(item),
+    0
+  );
+
+  // ✅ 最終總金額（只改這裡）
+  const finalTotal = computedTotal + SHIPPING_FEE;
+
+  const handleRemove = (item) => {
+    if (window.confirm(`確定移除 ${item.name} (${item.size}) 嗎？`)) {
+      removeFromCart(item.id, item.size);
+    }
+  };
+
+  if (cart.length === 0) {
+    return (
+      <div className="py-40 text-center">
+        <h1 className="text-3xl mb-4">購物車是空的</h1>
+        <p className="text-gray-600">請先選購商品後再進行結帳。</p>
+        <Link to="/products" className="text-blue-600 underline mt-4 block">
+          前往商品列表
+        </Link>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-[#fafafa] pt-28 pb-20 px-6">
+    <div className="max-w-6xl mx-auto px-6 py-20">
+      <h1 className="text-3xl font-light mb-10">購物車 ({cart.length})</h1>
 
-      {/* 標題 */}
-      <h1 className="text-4xl font-['Playfair_Display'] text-gray-900 mb-12 text-center tracking-wide">
-        購物車
-      </h1>
-
-      {/* 空購物車 */}
-      {cart.length === 0 && (
-        <div className="text-center text-gray-600 mt-20">
-          <p className="mb-3">你的購物車目前是空的</p>
-          <Link to="/products" className="text-gray-900 underline hover:text-black">
-            去逛逛商品 →
-          </Link>
-        </div>
-      )}
-
-      {/* 有商品 */}
-      {cart.length > 0 && (
-        <div className="max-w-4xl mx-auto space-y-6">
-
-          {cart.map((item) => (
-            <div
-              key={`${item.id}-${item.size}`}
-              className="
-                flex flex-col md:flex-row items-center justify-between
-                p-6 border border-gray-300 rounded-xl shadow-sm
-                bg-white hover:shadow-md transition
-              "
-            >
-              {/* 商品資訊區 */}
-              <div className="flex items-center space-x-6 w-full md:w-auto">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* 左：商品列表 */}
+        <div className="lg:col-span-2">
+          {cart.map((item) => {
+            const lineTotal = getLineTotal(item);
+            return (
+              <div
+                key={`${item.id}-${item.size}`}
+                className="flex items-start border-b py-6 last:border-b-0"
+              >
                 <img
                   src={item.image}
                   alt={item.name}
-                  className="w-28 h-28 object-cover rounded-lg border border-gray-300"
+                  className="w-24 h-24 object-cover rounded-lg mr-6"
                 />
-
-                <div>
-                  <p className="text-xl font-['Playfair_Display'] text-gray-900">
-                    {item.name}
+                <div className="flex-grow">
+                  <h3 className="text-lg font-medium">{item.name}</h3>
+                  <p className="text-sm text-gray-500">尺寸：{item.size}</p>
+                  <p className="text-sm text-gray-500">數量：{getQty(item)}</p>
+                  <p className="font-semibold mt-1">
+                    NT$ {getPrice(item).toLocaleString()} / 件
                   </p>
-
-                  <p className="text-gray-600 text-sm mt-1">尺寸：{item.size}</p>
-                  <p className="text-gray-800 text-lg mt-2">{item.price}</p>
-
-                  {/* 數量調整 */}
-                  <div className="flex items-center mt-4 space-x-4">
-                    <button
-                      onClick={() => decreaseQuantity(item.id, item.size)}
-                      className="w-8 h-8 border border-gray-300 rounded-full flex items-center justify-center hover:bg-gray-100 transition"
-                    >
-                      -
-                    </button>
-
-                    <span className="text-gray-900 text-lg w-6 text-center">
-                      {item.quantity}
-                    </span>
-
-                    <button
-                      onClick={() => increaseQuantity(item.id, item.size)}
-                      className="w-8 h-8 border border-gray-300 rounded-full flex items-center justify-center hover:bg-gray-100 transition"
-                    >
-                      +
-                    </button>
-                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="font-bold text-xl mb-4">
+                    NT$ {lineTotal.toLocaleString()}
+                  </p>
+                  <button
+                    className="text-sm text-red-500 hover:text-red-700"
+                    onClick={() => handleRemove(item)}
+                  >
+                    移除
+                  </button>
                 </div>
               </div>
+            );
+          })}
+        </div>
 
-              {/* 刪除按鈕 */}
-              <button
-                onClick={() => removeFromCart(item.id, item.size)}
-                className="
-                  mt-4 md:mt-0 px-5 py-2 rounded-full
-                  bg-red-500 text-white text-sm
-                  hover:bg-red-600 transition
-                "
-              >
-                移除
-              </button>
-            </div>
-          ))}
+        {/* 右：結帳總覽 */}
+        <div className="border rounded-xl p-6 bg-gray-50">
+          <h2 className="text-xl font-semibold mb-4">訂單摘要</h2>
 
-          {/* 總金額區塊 */}
-          <div className="p-6 rounded-xl border border-gray-300 bg-white shadow-sm mt-10">
-            <div className="flex justify-between mb-6 text-xl text-gray-800">
-              <span>總金額</span>
-              <span className="font-semibold">${total}</span>
-            </div>
-
-            <div className="flex flex-col md:flex-row justify-between space-y-4 md:space-y-0">
-
-              <button
-                onClick={clearCart}
-                className="
-                  px-6 py-3 rounded-full border border-gray-400 text-gray-800
-                  hover:bg-gray-100 transition tracking-wide
-                "
-              >
-                清空購物車
-              </button>
-
-              {/* 前往結帳 → Link 修正白屏 */}
-              <Link
-                to="/checkout"
-                className="
-                  px-6 py-3 rounded-full bg-black text-white text-center
-                  hover:bg-gray-800 transition tracking-wide
-                "
-              >
-                前往結帳
-              </Link>
-
-            </div>
+          <div className="flex justify-between text-sm mb-2">
+            <span>商品金額</span>
+            <span>NT$ {computedTotal.toLocaleString()}</span>
           </div>
 
+          <div className="flex justify-between text-sm mb-4">
+            <span>運費</span>
+            <span>NT$ {SHIPPING_FEE}</span>
+          </div>
+
+          <div className="border-t pt-4 flex justify-between items-center mb-4">
+            <span className="text-lg font-semibold">總金額</span>
+            <span className="text-2xl font-bold text-pink-600">
+              NT$ {finalTotal.toLocaleString()}
+            </span>
+          </div>
+
+          <button
+            className="w-full bg-black text-white py-3 rounded-full text-lg"
+            onClick={() => navigate("/checkout")}
+          >
+            前往結帳（第1步）
+          </button>
+
+          <button
+            className="w-full border border-gray-400 text-gray-700 py-3 rounded-full text-sm tracking-widest hover:bg-gray-100 mt-3"
+            onClick={() => {
+              if (window.confirm("確定清空購物車嗎？")) {
+                clearCart();
+              }
+            }}
+          >
+            清空購物車
+          </button>
         </div>
-      )}
+      </div>
     </div>
   );
-}
+};
+
+export default CartPage;

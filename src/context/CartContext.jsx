@@ -1,92 +1,172 @@
-import { createContext, useContext, useMemo, useState } from "react";
+import { createContext, useContext, useMemo, useState, useEffect } from "react";
+import { useAuth } from "./AuthContext";
 
 const CartContext = createContext(null);
 
-export function CartProvider({ children }) {
-  const [cart, setCart] = useState([]);
+// 讓其他元件用這個 hook 拿購物車資料
+export function useCart() {
+  const ctx = useContext(CartContext);
+  if (!ctx) {
+    throw new Error("useCart 必須在 <CartProvider> 裡使用");
+  }
+  return ctx;
+}
 
-  // 加入購物車
-  const addToCart = (product, quantity = 1, size = "M") => {
+// 依使用者狀態決定 localStorage key
+function getCartKey(user) {
+  return user ? `adiaforos_cart_${user.uid}` : "adiaforos_cart_guest";
+}
+
+export function CartProvider({ children }) {
+  const { user } = useAuth();
+
+  const cartKey = useMemo(() => getCartKey(user), [user]);
+
+  // 1️⃣ 初始化購物車（依 key 讀取）
+  const [cart, setCart] = useState(() => {
+    const saved = localStorage.getItem(cartKey);
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  // 2️⃣ 使用者切換時，自動載入對應購物車
+  useEffect(() => {
+    const saved = localStorage.getItem(cartKey);
+    setCart(saved ? JSON.parse(saved) : []);
+  }, [cartKey]);
+
+  // 3️⃣ 同步寫入目前 key
+  useEffect(() => {
+    localStorage.setItem(cartKey, JSON.stringify(cart));
+  }, [cart, cartKey]);
+
+  // 📦 結帳用收件資料
+  const [checkoutInfo, setCheckoutInfo] = useState({
+    name: "",
+    phone: "",
+    city: "",
+    district: "",
+    address: "",
+    paymentMethod: "",
+  });
+
+  // ✨ 動畫用
+  const [lastAddedItem, setLastAddedItem] = useState(null);
+
+  // ─────────────────────────────
+  // 🧮 金額計算（唯一真實來源）
+  // ─────────────────────────────
+
+  const getSafePrice = (price) => {
+    if (price == null) return 0;
+    const num = Number(String(price).replace(/[^0-9.]/g, ""));
+    return Number.isNaN(num) ? 0 : num;
+  };
+
+  // 商品小計
+  const subtotal = useMemo(() => {
+    return cart.reduce((sum, item) => {
+      const price = getSafePrice(item.price);
+      const qty = Number(item.quantity) || 0;
+      return sum + price * qty;
+    }, 0);
+  }, [cart]);
+
+  // 運費
+  const SHIPPING_FEE = 80;
+
+  const shippingFee = useMemo(() => {
+    return subtotal > 0 ? SHIPPING_FEE : 0;
+  }, [subtotal]);
+
+  // 總金額
+  const totalAmount = useMemo(() => {
+    return subtotal + shippingFee;
+  }, [subtotal, shippingFee]);
+
+  // 商品總數量
+  const totalItems = useMemo(() => {
+    return cart.reduce((sum, item) => {
+      return sum + (Number(item.quantity) || 0);
+    }, 0);
+  }, [cart]);
+
+  // ─────────────────────────────
+  // 🧩 購物車操作
+  // ─────────────────────────────
+
+  const addToCart = (newItem) => {
     setCart((prev) => {
-      const existing = prev.find(
-        (item) => item.id === product.id && item.size === size
+      const exists = prev.find(
+        (item) => item.id === newItem.id && item.size === newItem.size
       );
 
-      if (existing) {
-        return prev.map((item) =>
-          item.id === product.id && item.size === size
-            ? { ...item, quantity: item.quantity + quantity }
+      let next;
+      if (exists) {
+        next = prev.map((item) =>
+          item.id === newItem.id && item.size === newItem.size
+            ? {
+                ...item,
+                quantity:
+                  (Number(item.quantity) || 0) +
+                  (Number(newItem.quantity) || 1),
+              }
             : item
         );
+      } else {
+        next = [
+          ...prev,
+          {
+            ...newItem,
+            quantity: Number(newItem.quantity) || 1,
+          },
+        ];
       }
 
-      return [...prev, { ...product, size, quantity }];
+      setLastAddedItem(newItem);
+      return next;
     });
   };
 
-  // 移除單一商品
   const removeFromCart = (id, size) => {
-    setCart((prev) => prev.filter((item) => !(item.id === id && item.size === size)));
+    setCart((prev) =>
+      prev.filter((item) => !(item.id === id && item.size === size))
+    );
   };
 
-  // 清空購物車
-  const clearCart = () => setCart([]);
-
-  // 增加數量
-  const increaseQuantity = (id, size) => {
+  const updateQuantity = (id, size, quantity) => {
+    const safeQty = Math.max(1, Number(quantity) || 1);
     setCart((prev) =>
       prev.map((item) =>
         item.id === id && item.size === size
-          ? { ...item, quantity: item.quantity + 1 }
+          ? { ...item, quantity: safeQty }
           : item
       )
     );
   };
 
-  // 減少數量
-  const decreaseQuantity = (id, size) => {
-    setCart((prev) =>
-      prev
-        .map((item) =>
-          item.id === id && item.size === size
-            ? { ...item, quantity: Math.max(1, item.quantity - 1) }
-            : item
-        )
-    );
+  const clearCart = () => {
+    setCart([]);
+    setLastAddedItem(null);
   };
-
-  // 商品總數
-  const cartCount = useMemo(
-    () => cart.reduce((sum, item) => sum + item.quantity, 0),
-    [cart]
-  );
-
-  // 計算總金額
-  const totalAmountNumber = useMemo(() => {
-    return cart.reduce((sum, item) => {
-      const numeric = parseInt(String(item.price).replace(/[^0-9]/g, ""), 10) || 0;
-      return sum + numeric * item.quantity;
-    }, 0);
-  }, [cart]);
-
-  const totalAmount = `NT$ ${totalAmountNumber.toLocaleString()}`;
 
   const value = {
     cart,
-    cartCount,
-    totalAmount,
     addToCart,
     removeFromCart,
-    increaseQuantity,
-    decreaseQuantity,
+    updateQuantity,
     clearCart,
+
+    totalItems,
+    subtotal,
+    shippingFee,
+    totalAmount,
+
+    checkoutInfo,
+    setCheckoutInfo,
+
+    lastAddedItem,
+    setLastAddedItem,
   };
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
-}
-
-export function useCart() {
-  const ctx = useContext(CartContext);
-  if (!ctx) throw new Error("useCart 必須在 CartProvider 中使用");
-  return ctx;
 }

@@ -1,93 +1,85 @@
-import { useEffect, useState } from "react";
-import { auth } from "../firebase/firebase";
-import { db } from "../firebase/firebase";
-import { doc, getDoc } from "firebase/firestore";
 import { Link } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";   // ⭐ 新增
+import { useAuth } from "../context/AuthContext";
 
 export default function Profile() {
-  const [userData, setUserData] = useState(null);
-  const { setProfile } = useAuth();                 // ⭐ 新增
-  const user = auth.currentUser;
-
-  useEffect(() => {
-    const loadData = async () => {
-      if (!user) return;
-
-      const docRef = doc(db, "users", user.uid);
-      const snap = await getDoc(docRef);
-
-      if (snap.exists()) {
-        const data = snap.data();
-        setUserData(data);
-
-        // ⭐ 關鍵：同步資料給 Navbar / AuthContext
-        setProfile(data);
-      }
-    };
-
-    loadData();
-  }, [user, setProfile]);        // ⭐ setProfile 加入 dependency
-
-  if (!userData)
-    return (
-      <div className="py-32 text-center text-gray-500 tracking-wide">
-        載入中…
-      </div>
-    );
+  const { user } = useAuth();
 
   return (
-    <div className="max-w-5xl mx-auto py-28 px-6">
-      <h1
-        className="text-4xl md:text-5xl font-light text-center mb-20 tracking-widest"
-        style={{ fontFamily: "Playfair Display, serif" }}
-      >
-        MEMBER CENTER
-      </h1>
+    <div className="min-h-screen bg-white pt-32 pb-20 px-6">
+      <div className="max-w-6xl mx-auto text-center">
+        <h1
+          className="text-4xl font-light mb-16 tracking-widest"
+          style={{ fontFamily: "Playfair Display, serif" }}
+        >
+          MEMBER CENTER
+        </h1>
 
-      <div className="grid md:grid-cols-3 gap-12">
-        {/* 個人資料 */}
-        <div className="group border border-gray-300 bg-white rounded-3xl p-10 shadow-sm hover:shadow-xl transition-all duration-300">
-          <h2
-            className="text-xl font-semibold mb-6 tracking-wide"
-            style={{ fontFamily: "Playfair Display, serif" }}
-          >
-            個人資料
-          </h2>
-
-          <div className="space-y-3 text-gray-700 leading-relaxed">
-            <p><span className="font-medium">姓名：</span>{userData.name}</p>
-            <p><span className="font-medium">Email：</span>{userData.email}</p>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+          
+          {/* 個人資料 */}
+          <div className="border rounded-3xl p-8 shadow-sm">
+            <h2 className="text-xl font-semibold mb-4">個人資料</h2>
+            <p className="text-gray-700">
+              姓名：{user?.displayName || "未設定"}
+            </p>
+            <p className="text-gray-700 mt-2">
+              Email：{user?.email}
+            </p>
           </div>
+
+          {/* 編輯資料 */}
+          <div className="border rounded-3xl p-8 shadow-sm">
+            <h2 className="text-xl font-semibold mb-4">編輯資料</h2>
+            <p className="text-gray-600 mb-4">修改您的姓名、Email 等資料</p>
+            <Link
+              to="/profile/edit"
+              className="text-sm underline hover:text-gray-500 tracking-wider"
+            >
+              EDIT PROFILE →
+            </Link>
+          </div>
+          
+          {/* 修改密碼 */}
+          <div className="border rounded-3xl p-8 shadow-sm">
+            <h2 className="text-xl font-semibold mb-4">修改密碼</h2>
+            <p className="text-gray-600 mb-4">更改您的登入密碼</p>
+            <Link
+              to="/profile/password"
+              className="text-sm underline hover:text-gray-500 tracking-wider"
+            >
+              CHANGE PASSWORD →
+            </Link>
+          </div>
+
+          {/* 我的收藏 */}
+          <div className="border rounded-3xl p-8 shadow-sm">
+            <h2 className="text-xl font-semibold mb-4">我的收藏</h2>
+            <p className="text-gray-600 mb-4">查看您收藏的商品</p>
+            <Link
+              to="/wishlist"
+              className="text-sm underline hover:text-gray-500 tracking-wider"
+            >
+              VIEW WISHLIST →
+            </Link>
+          </div>
+
+
+          {/* ★ 歷史訂單 */}
+          <div className="border rounded-3xl p-8 shadow-sm md:col-span-2 lg:col-span-3">
+            <h2 className="text-xl font-semibold mb-4">歷史訂單</h2>
+            <p className="text-gray-600 mb-4">
+              查看您的過去訂單與目前訂單處理狀態
+            </p>
+            <Link
+              to="/orders"
+              className="text-sm underline hover:text-gray-500 tracking-wider"
+            >
+              ORDER HISTORY →
+            </Link>
+          </div>
+          
+
         </div>
-
-        {/* 編輯資料 */}
-        <Link
-          to="/profile/edit"
-          className="group border border-gray-300 bg-white rounded-3xl p-10 shadow-sm hover:shadow-xl transition-all duration-300 block"
-        >
-          <h2
-            className="text-xl font-semibold mb-4 tracking-wide"
-            style={{ fontFamily: "Playfair Display, serif" }}
-          >
-            編輯資料
-          </h2>
-          <p className="text-gray-500 group-hover:text-gray-700 transition">修改您的基本資料</p>
-        </Link>
-
-        {/* 修改密碼 */}
-        <Link
-          to="/profile/password"
-          className="group border border-gray-300 bg-white rounded-3xl p-10 shadow-sm hover:shadow-xl transition-all duration-300 block"
-        >
-          <h2
-            className="text-xl font-semibold mb-4 tracking-wide"
-            style={{ fontFamily: "Playfair Display, serif" }}
-          >
-            修改密碼
-          </h2>
-          <p className="text-gray-500 group-hover:text-gray-700 transition">更改您的登入密碼</p>
-        </Link>
       </div>
     </div>
   );

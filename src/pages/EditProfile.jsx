@@ -1,60 +1,68 @@
+// src/pages/EditProfile.jsx
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+
 export default function EditProfile() {
+  const navigate = useNavigate();
+  const { profile, updateProfile } = useAuth();
+
+  const [name, setName] = useState("");
+
+  useEffect(() => {
+    if (profile?.name) {
+      setName(profile.name);
+    }
+  }, [profile]);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    await updateProfile({ name });
+
+    alert("資料更新成功！");
+    navigate("/profile");
+  };
+
   return (
-    <div className="min-h-screen bg-white pt-32 pb-20 px-6 flex justify-center">
-      <div className="w-full max-w-xl border border-gray-300 rounded-xl shadow-sm p-10">
+    <div className="container mx-auto p-4 pt-20">
+      <h2 className="text-2xl font-bold text-center mb-6">編輯資料</h2>
 
-        {/* 標題 */}
-        <h1 className="text-3xl font-light text-gray-900 text-center mb-10 font-serif tracking-wide">
-          編輯個人資料
-        </h1>
-
+      <form
+        onSubmit={handleSubmit}
+        className="max-w-md mx-auto space-y-6 bg-white p-6 rounded-lg shadow"
+      >
         {/* 姓名 */}
-        <div className="mb-6">
-          <label className="block text-gray-700 text-sm mb-2">姓名</label>
+        <div>
+          <label className="block text-gray-700 mb-1">姓名</label>
           <input
             type="text"
-            defaultValue="王小美"
-            className="w-full border border-gray-300 rounded-lg px-4 py-3 
-                       focus:outline-none focus:border-black transition"
+            className="w-full border p-2 rounded"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            required
           />
         </div>
 
-        {/* Email */}
-        <div className="mb-6">
-          <label className="block text-gray-700 text-sm mb-2">電子郵件</label>
+        {/* Email（不可修改） */}
+        <div>
+          <label className="block text-gray-700 mb-1">Email（不可修改）</label>
           <input
             type="email"
-            defaultValue="example@gmail.com"
-            className="w-full border border-gray-300 rounded-lg px-4 py-3 
-                       focus:outline-none focus:border-black transition"
+            className="w-full border p-2 rounded bg-gray-100 cursor-not-allowed"
+            value={profile?.email || ""}
+            disabled
           />
         </div>
 
-        {/* 電話 */}
-        <div className="mb-8">
-          <label className="block text-gray-700 text-sm mb-2">電話</label>
-          <input
-            type="text"
-            defaultValue="0900-123-456"
-            className="w-full border border-gray-300 rounded-lg px-4 py-3
-                       focus:outline-none focus:border-black transition"
-          />
-        </div>
-
-        {/* 儲存按鈕 */}
-        <button className="w-full bg-black text-white py-3 rounded-lg tracking-wide 
-                           hover:bg-gray-900 transition">
+        {/* 提交按鈕 */}
+        <button
+          type="submit"
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded"
+        >
           儲存變更
         </button>
-
-        {/* 返回 */}
-        <div className="text-center text-sm mt-6">
-          <a href="/member" className="underline text-gray-600 hover:text-black">
-            返回會員中心
-          </a>
-        </div>
-
-      </div>
+      </form>
     </div>
   );
 }

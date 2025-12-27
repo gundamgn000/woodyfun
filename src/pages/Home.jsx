@@ -1,87 +1,219 @@
-export default function Home() {
+import { useEffect, useState } from "react";
+import { collection, getDocs, query, limit, orderBy } from "firebase/firestore";
+import { db } from "../firebase/firebase";
+import { useNavigate } from "react-router-dom";
+import ProductCard from "../components/ProductCard";
+import "../pages/Products.css";
+import weekLookImage from "../assets/home/week-look.png";
+import weekLookMobile from "../assets/home/week-look-mobile.jpg";
+
+// ===== This Week's Look category images =====
+// 🔧 未來主頁中間方格要換圖片，只要改這裡
+import knitImg from "../assets/week-knit.jpg";
+import skirtImg from "../assets/week-skirt.jpg";
+import coatImg from "../assets/week-coat.jpg";
+import "./Home.css";
+import heroDesktop from "../assets/home/hero-desktop.jpg";
+// 🔧 未來要換首頁TOP主圖，只改這行
+import heroMobile from "../assets/home/hero-mobile.png";
+
+
+
+
+
+
+
+
+
+
+const Home = () => {
+  const navigate = useNavigate();
+  const [newArrivals, setNewArrivals] = useState([]);
+
+  useEffect(() => {
+    const fetchNewArrivals = async () => {
+      try {
+        const q = query(
+          collection(db, "products"),
+          orderBy("createdAt", "desc"),
+          limit(4)
+        );
+        const snapshot = await getDocs(q);
+        const items = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+        setNewArrivals(items);
+      } catch (err) {
+        console.error("Failed to fetch new arrivals:", err);
+      }
+    };
+
+    fetchNewArrivals();
+  }, []);
+
   return (
-    <div className="w-full">
+    <main>
+     {/* ================= Hero / Main Visual ================= */}
+      <section
+        className="hero hero-desktop"
+        style={{
+          backgroundImage: `url(${heroDesktop})`
+        }}
+      >
+        {/* 建議移除或淡化 overlay，讓圖片自然呈現 */}
+        {/* <div className="hero-overlay" /> */}
 
-      {/* --- HERO 首屏 --- */}
-      <section className="relative w-full h-screen bg-gradient-to-b from-gray-900 via-gray-800 to-white flex flex-col items-center justify-center text-center text-white overflow-hidden">
-
-        {/* 背景圖 */}
-        <div className="absolute inset-0">
-          <img
-            src="https://pic8.sucaisucai.com/02/50/02950758_2.jpg"
-            alt="Fashion background"
-            className="w-full h-full object-cover opacity-60"
-          />
-        </div>
-
-        {/* 標語 */}
-        <div className="relative z-10 animate-fade-in">
-          <h1 className="text-4xl md:text-5xl font-light tracking-wider mb-4">
-            - Insensible as a feather -
+        <div className="hero-content">
+          <h1 className="hero-title">
+            Insensible to Weight,<br />
+          As Soft as a Feather.  
           </h1>
-        </div>
 
-        {/* 底部淡入漸層 */}
-        <div className="absolute bottom-0 left-0 w-full h-40 bg-gradient-to-t from-white to-transparent"></div>
+          {/* 如果要完全還原目標圖，可以暫時移除這段中文 */}
+          {/* <p>
+            溫柔・日常・剛剛好的穿搭選擇<br />
+            為每一個平凡卻重要的日子而存在
+          </p> */}
+
+          <button
+            className="hero-button"
+            onClick={() => navigate("/products/new")}
+          >
+            Shop New Arrivals <span className="arrow">→</span>
+          </button>
+        </div>
       </section>
 
 
-      {/* --- 第二屏：新品推薦 --- */}
-      <section className="w-full py-20 bg-white">
-        <h2 className="text-center text-3xl font-light mb-10 text-gray-800 font-['Playfair_Display']">
-          新品推薦
-        </h2>
+      {/* 手機版 Hero（先放結構，之後再調） */}
+      {/* Mobile Hero */}
+    
+      {/* ===== Mobile Hero ===== */}
+      <section
+        className="hero hero-mobile"
+        style={{
+          backgroundImage: `url(${heroMobile})`
+        }}
+      >
+        <div className="hero-overlay-mobile" />
 
-        <div className="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-10 px-6">
+        <div className="hero-content-mobile">
+          <h1>
+            Insensible to Weight,<br />
+            As Soft as a Feather.
+          </h1>
 
-          {/* 商品卡（可複製使用） */}
-          {[
-            { name: "Tote Bag", price: "$1290", img: "https://via.placeholder.com/400x300/7b8190/ffffff?text=Tote+Bag" },
-            { name: "Minimal Shirt", price: "$1680", img: "https://via.placeholder.com/400x300/7b8190/ffffff?text=Minimal+Shirt" },
-            { name: "Pearl Necklace", price: "$900", img: "https://via.placeholder.com/400x300/7b8190/ffffff?text=Pearl+Necklace" }
-          ].map((item, index) => (
+          <button
+            className="hero-button"
+            onClick={() => navigate("/products/new")}
+          >
+            SHOP NEW ARRIVALS
+          </button>
+        </div>
+      </section>
+
+      
+      {/* ================= This Week's Look ================= */}
+      <section className="week-look">
+        <div className="week-look-container">
+          <h2 className="week-look-title">This Week’s Look</h2>
+          <p className="week-look-subtitle">
+            A gentle knit for quiet afternoons.
+          </p>
+
+          <div className="week-look-grid">
+            {/* 左側主視覺 */}
             <div
-              key={index}
-              className="group bg-white shadow-md rounded-xl overflow-hidden transform transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 relative"
+              className="week-look-image week-look-desktop"
+              style={{ backgroundImage: `url(${weekLookImage})` }}
             >
-              {/* 圖片 */}
-              <div className="overflow-hidden">
-                <img
-                  src={item.img}
-                  alt={item.name}
-                  className="w-full h-64 object-cover transition-transform duration-500 group-hover:scale-105"
-                />
-              </div>
+              <div className="week-look-gradient" />
+            </div>
 
-              {/* 商品資訊 */}
-              <div className="p-4 text-center">
-                <p className="text-lg text-gray-900 mt-4 font-['Playfair_Display']">
-                  {item.name}
-                </p>
-                <p className="text-gray-700">{item.price}</p>
-              </div>
+            {/* Mobile image */}
+            <div
+              className="week-look-image week-look-mobile"
+              style={{ backgroundImage: `url(${weekLookMobile})` }}
+            >
+            </div>
 
-              {/* ──────────────── hover 按鈕（動畫淡入） ──────────────── */}
+            {/* 右側分類卡 */}
+            <div className="week-look-categories">
+              {/* 毛衣 */}
               <div
-                className="
-                  absolute bottom-4 left-1/2 -translate-x-1/2
-                  opacity-0 group-hover:opacity-100
-                  translate-y-4 group-hover:translate-y-0
-                  transition-all duration-300
-                "
+                className="week-look-card"
+                onClick={() => navigate("/products?category=毛衣")}
               >
-                <button
-                  className="px-6 py-2 bg-black/80 text-white text-sm rounded-full hover:bg-black transition"
-                >
-                  加入購物車
-                </button>
+                <div className="week-look-card-img">
+                  <img src={knitImg} alt="毛衣 Knitwear" />
+                </div>
+                <div className="week-look-card-text">
+                  <div className="zh">毛衣</div>
+                  <div className="en">Knitwear</div>
+                </div>
+              </div>
+
+              {/* 短裙 */}
+              <div
+                className="week-look-card"
+                onClick={() => navigate("/products?category=短裙")}
+              >
+                <div className="week-look-card-img">
+                  <img src={skirtImg} alt="短裙 Skirt" />
+                </div>
+                <div className="week-look-card-text">
+                  <div className="zh">短裙</div>
+                  <div className="en">Skirt</div>
+                </div>
+              </div>
+
+              {/* 外套 */}
+              <div
+                className="week-look-card"
+                onClick={() => navigate("/products?category=外套")}
+              >
+                <div className="week-look-card-img">
+                  <img src={coatImg} alt="外套 Outerwear" />
+                </div>
+                <div className="week-look-card-text">
+                  <div className="zh">外套</div>
+                  <div className="en">Outerwear</div>
+                </div>
               </div>
             </div>
-          ))}
-
+          </div>
         </div>
       </section>
 
-    </div>
+
+
+      {/* ================= New Arrivals ================= */}
+      <section style={{ padding: "4rem 1.5rem" }}>
+        <div style={{ maxWidth: 1200, margin: "0 auto" }}>
+          <h2
+            style={{
+              textAlign: "center",
+              fontWeight: 400,
+              letterSpacing: "0.15em",
+              marginBottom: "3rem"
+            }}
+          >
+            NEW ARRIVALS
+          </h2>
+
+          <div className="home-products-wrapper">
+            <div className="products-grid">
+              {newArrivals.map(product => (
+                <ProductCard key={product.id} product={product} />
+              ))}
+            </div>
+          </div>
+
+        </div>
+      </section>
+    </main>
   );
-}
+};
+
+export default Home;

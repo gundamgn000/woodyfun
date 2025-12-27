@@ -1,57 +1,84 @@
-import { Link } from "react-router-dom";
+import React, { useState } from "react";
+import { db } from "../firebase/firebase";
+import { collection, addDoc } from "firebase/firestore";
+import { useAuth } from "../context/AuthContext";
+import { useNavigate } from "react-router-dom";
 
-export default function AddAddress() {
+const AddAddress = () => {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
+  const [form, setForm] = useState({
+    name: "",
+    phone: "",
+    address: "",
+  });
+
+  const handleChange = e => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = async e => {
+    e.preventDefault();
+    if (!user) return;
+
+    await addDoc(collection(db, "users", user.uid, "addresses"), form);
+
+    navigate("/address");
+  };
+
   return (
-    <div className="min-h-screen bg-white pt-32 pb-20 px-6 flex justify-center">
-      <div className="w-full max-w-xl border border-gray-300 rounded-xl shadow-sm p-10">
+    <div className="container mx-auto mt-20 px-6">
+      <h1 className="text-3xl tracking-widest text-center mb-12">新增配送地址</h1>
 
-        <h1 className="text-3xl font-light text-gray-900 text-center mb-10 font-['Playfair Display'] tracking-wide">
-          新增地址
-        </h1>
-
-        <div className="mb-6">
-          <label className="block text-gray-700 text-sm mb-2">姓名</label>
+      <form
+        onSubmit={handleSubmit}
+        className="max-w-lg mx-auto border p-8 rounded-xl shadow-md space-y-6"
+      >
+        <div>
+          <label className="block mb-1">收件人</label>
           <input
             type="text"
-            className="w-full border border-gray-300 rounded-lg px-4 py-3
-                       text-gray-800 placeholder-gray-400
-                       focus:outline-none focus:border-black transition"
-            placeholder="請輸入姓名"
+            name="name"
+            className="w-full border p-3 rounded-lg"
+            value={form.name}
+            onChange={handleChange}
+            required
           />
         </div>
 
-        <div className="mb-6">
-          <label className="block text-gray-700 text-sm mb-2">電話</label>
+        <div>
+          <label className="block mb-1">電話</label>
           <input
             type="text"
-            className="w-full border border-gray-300 rounded-lg px-4 py-3
-                       text-gray-800 placeholder-gray-400
-                       focus:outline-none focus:border-black transition"
-            placeholder="請輸入電話"
+            name="phone"
+            className="w-full border p-3 rounded-lg"
+            value={form.phone}
+            onChange={handleChange}
+            required
           />
         </div>
 
-        <div className="mb-8">
-          <label className="block text-gray-700 text-sm mb-2">地址</label>
-          <input
-            type="text"
-            className="w-full border border-gray-300 rounded-lg px-4 py-3
-                       text-gray-800 placeholder-gray-400
-                       focus:outline-none focus:border-black transition"
-            placeholder="請輸入地址"
-          />
+        <div>
+          <label className="block mb-1">地址</label>
+          <textarea
+            name="address"
+            className="w-full border p-3 rounded-lg"
+            value={form.address}
+            onChange={handleChange}
+            required
+          ></textarea>
         </div>
 
-        <button className="btn-black w-full">
+        <button
+          type="submit"
+          className="w-full py-3 bg-black text-white rounded-lg tracking-widest hover:opacity-80"
+        >
           儲存地址
         </button>
-
-        <div className="text-center mt-6">
-          <Link to="/address" className="underline text-gray-600 hover:text-black">
-            返回地址管理
-          </Link>
-        </div>
-      </div>
+      </form>
     </div>
   );
-}
+};
+
+export default AddAddress;

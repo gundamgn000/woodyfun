@@ -2,31 +2,25 @@ import { createContext, useContext, useState } from "react";
 
 const ToastContext = createContext();
 
-export function useToast() {
-  return useContext(ToastContext);
-}
+export const useToast = () => useContext(ToastContext);
 
-export function ToastProvider({ children }) {
-  const [toast, setToast] = useState(null);
+export const ToastProvider = ({ children }) => {
+  const [toast, setToast] = useState("");
 
-  function showToast(message) {
+  const showToast = (message) => {
     setToast(message);
-
-    setTimeout(() => {
-      setToast(null);
-    }, 1500); // 1.5 秒後自動消失
-  }
+    setTimeout(() => setToast(""), 1800); // 高級電商標準：1.8 秒淡出
+  };
 
   return (
     <ToastContext.Provider value={{ showToast }}>
       {children}
 
-      {/* Toast UI */}
       {toast && (
-        <div className="fixed top-5 right-5 bg-black text-white px-4 py-2 rounded-lg shadow-lg animate-fadeInOut z-50">
-          {toast}
+        <div className="toast-container">
+          <div className="toast-message">{toast}</div>
         </div>
       )}
     </ToastContext.Provider>
   );
-}
+};

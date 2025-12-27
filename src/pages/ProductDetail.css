@@ -1,0 +1,92 @@
+/* 主圖容器 */
+.product-main-image-wrapper {
+  width: 100%;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+
+/* 主圖（含切換動畫） */
+.product-main-image {
+  width: 100%;
+  height: auto;
+  border-radius: 8px;
+  cursor: zoom-in;
+}
+
+.fade-in {
+  animation: fadeIn 0.35s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* 縮圖列表 */
+.product-thumbnails {
+  display: flex;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.thumbnail {
+  width: 70px;
+  height: 70px;
+  object-fit: cover;
+  border-radius: 6px;
+  cursor: pointer;
+  opacity: 0.75;
+  transition: all 0.2s ease;
+  border: 2px solid transparent;
+}
+
+.thumbnail:hover {
+  opacity: 1;
+  transform: scale(1.05);
+}
+
+.thumbnail.active {
+  border-color: black;
+  opacity: 1;
+}
+
+/* --- 商品名稱：強化字距與日系感 --- */
+.product-name-premium {
+  font-family: 'Playfair Display', "Noto Serif TC", serif; /* 襯線體是精品感的核心 */
+  letter-spacing: 0.12em; /* 拉開字距，產生呼吸感 */
+  color: #1f2937;
+  line-height: 1.4;
+}
+
+/* --- 價格：調整為質感的玫瑰粉 --- */
+.product-price-premium {
+  /* 這是比純粉色更有質感的色號，推薦試試看 */
+  color: #D4A5A5; 
+  font-family: 'Montserrat', sans-serif;
+  letter-spacing: -0.02em; /* 數字稍微縮緊，看起來更扎實 */
+}
+
+.currency-symbol {
+  font-size: 0.6em;
+  font-weight: 300;
+  margin-right: 2px;
+}
+
+/* 商品詳情頁標題專用 */
+/* ProductDetail.css */
+.product-detail-title-custom {
+  /* 加上 !important 確保優先級 */
+  font-weight: 500 !important; 
+  letter-spacing: 0.15em !important; 
+  line-height: 1.4 !important;
+  font-family: 'Playfair Display', serif !important;
+  display: block;
+}
+

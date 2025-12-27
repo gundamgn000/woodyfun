@@ -1,0 +1,143 @@
+import React, { useState, useEffect } from "react";
+import { Link, NavLink, useNavigate, useLocation } from "react-router-dom";
+import { useCart } from "../context/CartContext";
+import { useAuth } from "../context/AuthContext";
+import { db } from "../firebase/firebase";
+import { collection, getDocs } from "firebase/firestore";
+import "./Navbar.css";
+
+export default function Navbar() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  // ✅ 修正：對齊你的 CartContext 變數名稱
+  const { totalItems, cart, totalAmountNumber } = useCart();
+  const { user, authLoading, userRole, logout } = useAuth();
+
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(true);
+  const [dynamicCategories, setDynamicCategories] = useState([]);
+
+  const isHome = location.pathname === "/";
+  const displayName = user?.displayName || user?.email?.split("@")[0] || "會員";
+
+  const handleLogout = async () => {
+    await logout();
+    navigate("/");
+  };
+
+  // ✅ 動態抓取分類
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const querySnapshot = await getDocs(collection(db, "products"));
+        const cats = querySnapshot.docs.map(doc => doc.data().category);
+        const uniqueCats = [...new Set(cats)].filter(c => c && c !== "全部");
+        setDynamicCategories(uniqueCats);
+      } catch (error) {
+        console.error("分類抓取失敗:", error);
+      }
+    };
+    fetchCategories();
+  }, []);
+
+  useEffect(() => {
+    const updateNavbarState = () => {
+      if (isHome) {
+        setScrolled(window.scrollY > 20);
+      } else {
+        setScrolled(true);
+      }
+    };
+    updateNavbarState();
+    window.addEventListener("scroll", updateNavbarState);
+    return () => window.removeEventListener("scroll", updateNavbarState);
+  }, [isHome]);
+
+  return (
+    <nav className={`navbar ${scrolled ? "navbar-scrolled" : "navbar-top"}`}>
+      <div className="navbar-container">
+        <div className="navbar-logo">
+          <Link to="/">ADIAFOROS</Link>
+        </div>
+
+        <nav className="navbar-links">
+          <NavLink to="/" end>HOME</NavLink>
+          
+          <div className="nav-item-dropdown">
+            <NavLink to="/products">SHOP</NavLink>
+            <div className="nav-submenu-centered">
+              <NavLink to="/products">ALL</NavLink>
+              <NavLink to="/new">NEW ARRIVALS</NavLink>
+              
+              {/* 動態分類線條 */}
+              {dynamicCategories.length > 0 && <div className="nav-submenu-divider" style={{ borderTop: '1px solid #eee', margin: '5px 0' }}></div>}
+              
+              {dynamicCategories.map((cat) => (
+                <NavLink key={cat} to={`/products?category=${cat}`}>
+                  {cat.toUpperCase()}
+                </NavLink>
+              ))}
+            </div>
+          </div>
+
+          <NavLink to="/about">ABOUT</NavLink>
+          <NavLink to="/contact">CONTACT</NavLink>
+
+          <div className="nav-item-dropdown">
+            <NavLink to="/profile" className="nav-main-link">ACCOUNT</NavLink>
+            <div className="nav-submenu-centered">
+              <NavLink to="/profile">個人資料</NavLink>
+              <NavLink to="/wishlist">我的收藏</NavLink>
+              <NavLink to="/orders">歷史訂單</NavLink>
+              {userRole === "admin" && <NavLink to="/admin">管理後台</NavLink>}
+            </div>
+          </div>
+        </nav>
+
+        <div className="navbar-icons">
+          <button className="navbar-button search-trigger">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>
+          </button>
+
+          <div className="nav-item-dropdown">
+            <NavLink to="/cart" className="navbar-cart">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M6 8h12l-1 12H7L6 8z" /><path d="M9 8V6a3 3 0 0 1 6 0v2" /></svg>
+              {totalItems > 0 && <span className="navbar-cart-badge">{totalItems}</span>}
+            </NavLink>
+
+            <div className="nav-submenu-right cart-preview-box">
+              <div className="cart-preview-title">SHOPPING BAG</div>
+              <div className="cart-preview-items">
+                {/* ✅ 修正：使用你的 cart 變數 */}
+                {cart && cart.length > 0 ? (
+                  cart.slice(0, 3).map((item) => (
+                    <div className="cart-preview-item" key={item.id}>
+                      <span className="cart-item-name">{item.name}</span>
+                      <span className="cart-item-qty-price">{item.quantity} x NT$ {item.price}</span>
+                    </div>
+                  ))
+                ) : (
+                  <div className="cart-empty-msg">購物袋是空的</div>
+                )}
+              </div>
+              <div className="cart-preview-footer">
+                <div className="cart-preview-total"><span>TOTAL</span><span>NT$ {totalAmountNumber}</span></div>
+                <button className="cart-preview-btn" onClick={() => navigate("/cart")}>VIEW BAG / 結帳</button>
+              </div>
+            </div>
+          </div>
+
+          {user && !authLoading && (
+            <button className="navbar-button logout-icon" onClick={handleLogout}>
+              <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" /></svg>
+            </button>
+          )}
+
+          <button className="navbar-mobile-menu" onClick={() => setMenuOpen(!menuOpen)}>
+            <div className={`hamburger ${menuOpen ? "active" : ""}`}><span></span><span></span></div>
+          </button>
+        </div>
+      </div>
+    </nav>
+  );
+}

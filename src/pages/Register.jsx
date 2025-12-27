@@ -2,113 +2,95 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { auth, db } from "../firebase/firebase";
-import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
+import { createUserWithEmailAndPassword } from "firebase/auth";
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
-import { useAuth } from "../context/AuthContext";
 
 export default function Register() {
   const navigate = useNavigate();
-  const { setProfile } = useAuth();
-
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e) => {
+  const handleRegister = async (e) => {
     e.preventDefault();
-    setError("");
-    setLoading(true);
 
     try {
-      // 1. Firebase Auth 建立帳號
-      const cred = await createUserWithEmailAndPassword(auth, email, password);
+      const result = await createUserWithEmailAndPassword(auth, email, password);
+      const uid = result.user.uid;
 
-      // 2. 更新 auth 的 displayName（純顯示用）
-      await updateProfile(cred.user, { displayName: name });
-
-      // 3. 在 Firestore 建一筆 /users/{uid}（重要：doc id 用 uid）
-      const userDocRef = doc(db, "users", cred.user.uid);
-      const profileData = {
+      await setDoc(doc(db, "users", uid), {
         name,
         email,
         createdAt: serverTimestamp(),
-      };
-      await setDoc(userDocRef, profileData);
+        orders: 0,
+        recentPurchase: [],
+      });
 
-      // 4. 更新 context 裡的 profile，讓畫面可以即時用到
-      setProfile(profileData);
-
-      // 5. 導向會員中心
-      navigate("/member");
+      navigate("/login");
     } catch (err) {
-      console.error(err);
-      setError("註冊失敗，請稍後再試");
-    } finally {
-      setLoading(false);
+      alert("註冊失敗：" + err.message);
     }
   };
 
   return (
-    <div className="min-h-[70vh] flex items-center justify-center bg-white">
-      <div className="w-full max-w-md bg-white shadow-lg rounded-2xl p-8">
-        <h1 className="text-2xl font-semibold text-center mb-6">會員註冊</h1>
+    <div className="pt-32 pb-20 flex justify-center">
+      <div className="w-full max-w-md bg-white p-10 rounded-2xl shadow-md border border-gray-200">
+        {/* Title */}
+        <h1 className="text-3xl font-['Playfair_Display'] text-center tracking-wide mb-10">
+          會員註冊
+        </h1>
 
-        {error && (
-          <p className="text-center text-sm text-red-500 mb-4">{error}</p>
-        )}
-
-        <form className="space-y-4" onSubmit={handleSubmit}>
+        <form onSubmit={handleRegister} className="space-y-6">
+          {/* Name */}
           <div>
-            <label className="block mb-1 text-gray-700">姓名</label>
+            <label className="block text-gray-700 mb-2">姓名</label>
             <input
               type="text"
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-black"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="請輸入姓名"
               required
+              className="w-full px-4 py-3 border rounded-lg bg-gray-50 focus:ring-2 focus:ring-black"
             />
           </div>
 
+          {/* Email */}
           <div>
-            <label className="block mb-1 text-gray-700">電子郵件</label>
+            <label className="block text-gray-700 mb-2">Email</label>
             <input
               type="email"
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-black"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="example@mail.com"
               required
+              className="w-full px-4 py-3 border rounded-lg bg-gray-50 focus:ring-2 focus:ring-black"
             />
           </div>
 
+          {/* Password */}
           <div>
-            <label className="block mb-1 text-gray-700">密碼</label>
+            <label className="block text-gray-700 mb-2">密碼</label>
             <input
               type="password"
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-black"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="至少 6 碼"
               required
+              className="w-full px-4 py-3 border rounded-lg bg-gray-50 focus:ring-2 focus:ring-black"
             />
           </div>
 
+          {/* Submit */}
           <button
             type="submit"
-            disabled={loading}
-            className="w-full mt-4 bg-black text-white py-2 rounded-full hover:bg-gray-900 transition disabled:opacity-60"
+            className="w-full bg-black text-white py-3 rounded-xl text-lg hover:bg-gray-800 transition"
           >
-            {loading ? "註冊中…" : "註冊"}
+            註冊帳號
           </button>
         </form>
 
-        <p className="mt-4 text-center text-sm text-gray-600">
-          已經有帳號了？{" "}
-          <Link to="/login" className="text-blue-600 hover:underline">
-            立即登入
+        {/* Login link */}
+        <p className="text-center text-gray-600 mt-6">
+          已有帳號？{" "}
+          <Link to="/login" className="text-black underline hover:text-gray-700">
+            前往登入
           </Link>
         </p>
       </div>

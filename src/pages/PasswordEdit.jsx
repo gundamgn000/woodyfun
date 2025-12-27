@@ -1,115 +1,97 @@
+// src/pages/PasswordEdit.jsx
 import { useState } from "react";
-import { auth } from "../firebase/firebase";
 import { updatePassword, reauthenticateWithCredential, EmailAuthProvider } from "firebase/auth";
+import { auth } from "../firebase/firebase";
+import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 
 export default function PasswordEdit() {
+  const { user } = useAuth();
   const navigate = useNavigate();
 
-  const [oldPassword, setOldPassword] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [currentPw, setCurrentPw] = useState("");
+  const [newPw, setNewPw] = useState("");
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
-  const handlePasswordUpdate = async () => {
-    if (!oldPassword || !newPassword) {
-      alert("請完整填寫欄位");
-      return;
-    }
-
-    const user = auth.currentUser;
-    if (!user) {
-      alert("尚未登入");
-      return;
-    }
-
-    setLoading(true);
+  // 處理更新密碼
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+    setSuccess("");
 
     try {
-      const credential = EmailAuthProvider.credential(
-        user.email,
-        oldPassword
-      );
+      if (!user?.email) {
+        setError("目前無法取得使用者 Email");
+        return;
+      }
 
+      // 重新驗證身份
+      const credential = EmailAuthProvider.credential(user.email, currentPw);
       await reauthenticateWithCredential(user, credential);
-      await updatePassword(user, newPassword);
 
-      alert("密碼更新成功");
-      navigate("/profile");
+      // 更新密碼
+      await updatePassword(user, newPw);
+
+      setSuccess("密碼更新成功！");
+      setCurrentPw("");
+      setNewPw("");
     } catch (err) {
-      console.error(err);
-      alert("密碼更新失敗：舊密碼錯誤或新密碼格式不符");
+      setError("密碼錯誤或更新失敗，請確認後再試");
     }
-
-    setLoading(false);
   };
 
   return (
-    <div className="max-w-2xl mx-auto py-28 px-6">
-
-      {/* 標題 */}
-      <h1
-        className="text-4xl font-light mb-14 text-center tracking-widest"
-        style={{ fontFamily: "Playfair Display, serif" }}
-      >
+    <div className="min-h-screen pt-32 px-6 md:px-0 flex flex-col items-center">
+      <h1 className="text-4xl font-['Playfair_Display'] tracking-wider mb-16 text-gray-800">
         CHANGE PASSWORD
       </h1>
 
-      {/* 卡片容器 */}
-      <div className="border border-gray-300 rounded-3xl bg-white shadow-sm p-10">
-
+      <form
+        onSubmit={handleSubmit}
+        className="w-full max-w-xl p-10 rounded-2xl border border-gray-200 shadow-sm bg-white"
+      >
         {/* 舊密碼 */}
-        <label
-          className="block mb-3 text-gray-700 tracking-wide"
-          style={{ fontFamily: "Playfair Display, serif" }}
-        >
-          舊密碼
-        </label>
+        <label className="block text-gray-700 font-medium mb-2">舊密碼</label>
         <input
           type="password"
-          value={oldPassword}
-          onChange={(e) => setOldPassword(e.target.value)}
-          className="
-            w-full border border-gray-300 rounded-xl px-5 py-3 mb-6
-            focus:outline-none focus:border-black
-            text-gray-800 bg-white
-          "
+          value={currentPw}
+          onChange={(e) => setCurrentPw(e.target.value)}
+          className="w-full border rounded-lg p-3 mb-6 focus:outline-none focus:ring-1 focus:ring-black"
+          required
         />
 
         {/* 新密碼 */}
-        <label
-          className="block mb-3 text-gray-700 tracking-wide"
-          style={{ fontFamily: "Playfair Display, serif" }}
-        >
-          新密碼
-        </label>
+        <label className="block text-gray-700 font-medium mb-2">新密碼</label>
         <input
           type="password"
-          value={newPassword}
-          onChange={(e) => setNewPassword(e.target.value)}
-          className="
-            w-full border border-gray-300 rounded-xl px-5 py-3
-            focus:outline-none focus:border-black
-            text-gray-800 bg-white
-          "
+          value={newPw}
+          onChange={(e) => setNewPw(e.target.value)}
+          className="w-full border rounded-lg p-3 mb-6 focus:outline-none focus:ring-1 focus:ring-black"
+          required
         />
 
-        {/* 儲存按鈕 */}
+        {/* 狀態訊息 */}
+        {error && <p className="text-red-500 mb-4">{error}</p>}
+        {success && <p className="text-green-600 mb-4">{success}</p>}
+
+        {/* 確認更新 */}
         <button
-          onClick={handlePasswordUpdate}
-          disabled={loading}
-          className="
-            w-full mt-10 py-3
-            rounded-full
-            bg-black text-white text-sm
-            tracking-widest
-            hover:bg-gray-900
-            transition
-          "
-          style={{ fontFamily: "Playfair Display, serif" }}
+          type="submit"
+          className="w-full bg-black text-white py-3 rounded-full text-lg tracking-wide hover:bg-gray-800 transition"
         >
-          {loading ? "更新中…" : "確認更新"}
+          確認更新
         </button>
-      </div>
+
+        {/* 返回會員中心按鈕 */}
+        <button
+          type="button"
+          onClick={() => navigate("/profile")}
+          className="w-full mt-6 border border-black text-black py-3 rounded-full text-lg tracking-wide hover:bg-black hover:text-white transition"
+        >
+          返回會員中心
+        </button>
+      </form>
     </div>
   );
 }

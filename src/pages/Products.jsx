@@ -1,123 +1,266 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
-import { useCart } from "../context/CartContext";
+import { useEffect, useState } from "react";
+import { Link,useSearchParams } from "react-router-dom";
+import { db } from "../firebase/firebase";
+import { collection, getDocs } from "firebase/firestore";
+
+import { useWishlist } from "../context/WishlistContext";
+import { HeartOutline, HeartFilled } from "../components/HeartIcons";
 
 export default function Products() {
-  const { addToCart } = useCart();
+  const { toggleWishlist, isWishlisted } = useWishlist();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const categoryParam = searchParams.get("category");
+  const [products, setProducts] = useState([]);
+  const [filteredCategory, setFilteredCategory] = useState("全部");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [sortMethod, setSortMethod] = useState("default");
 
-  const allItems = [
-    { id: 1, category: "bags", name: "Tote Bag", price: "$1290", image: "https://via.placeholder.com/600x500/d9d9d9/333?text=Tote+Bag" },
-    { id: 2, category: "tops", name: "Minimal Shirt", price: "$1680", image: "https://via.placeholder.com/600x500/d9d9d9/333?text=Minimal+Shirt" },
-    { id: 3, category: "accessories", name: "Pearl Necklace", price: "$900", image: "https://via.placeholder.com/600x500/d9d9d9/333?text=Pearl+Necklace" },
-    { id: 4, category: "tops", name: "Soft Knit Sweater", price: "$1980", image: "https://via.placeholder.com/600x500/d9d9d9/333?text=Knit+Sweater" },
-    { id: 5, category: "outerwear", name: "Structured Coat", price: "$3580", image: "https://via.placeholder.com/600x500/d9d9d9/333?text=Structured+Coat" },
-    { id: 6, category: "bags", name: "Leather Shoulder Bag", price: "$2680", image: "https://via.placeholder.com/600x500/d9d9d9/333?text=Leather+Bag" },
-  ];
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 6;
 
-  const [selectedCategory, setSelectedCategory] = useState("all");
+  // ⭐【飛行動畫】完全保留
+  const createFlyingHeart = (startElement) => {
+    if (!startElement) return;
 
-  // 依分類篩選
-  const filteredItems =
-    selectedCategory === "all"
-      ? allItems
-      : allItems.filter((item) => item.category === selectedCategory);
+    const start = startElement.getBoundingClientRect();
+    const startX = start.left + start.width / 2;
+    const startY = start.top + start.height / 2;
+
+    const targetX = window.innerWidth - 40;
+    const targetY = 20;
+
+    const heart = document.createElement("div");
+    heart.className = "flying-heart";
+    heart.textContent = "❤️";
+
+    heart.style.left = `${startX}px`;
+    heart.style.top = `${startY}px`;
+
+    document.body.appendChild(heart);
+
+    requestAnimationFrame(() => {
+      heart.style.transform = `translate(${targetX - startX}px, ${
+        targetY - startY
+      }px) scale(0.2)`;
+      heart.style.opacity = "0";
+    });
+
+    setTimeout(() => heart.remove(), 650);
+  };
+
+// 當網址參數改變時，自動更新分類狀態
+  useEffect(() => {
+    if (categoryParam) {
+      setFilteredCategory(categoryParam);
+    } else {
+      setFilteredCategory("全部");
+    }
+    setCurrentPage(1); 
+  }, [categoryParam]);
+
+    useEffect(() => {
+    const fetchProducts = async () => {
+      const querySnapshot = await getDocs(collection(db, "products"));
+      const list = querySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      setProducts(list);
+    };
+    fetchProducts();
+  }, []);
+
+  // 分類
+  const categories = ["全部", ...new Set(products.map((p) => p.category))];
+
+  // 篩選
+  let filteredProducts = products.filter((item) => {
+    const matchCategory =
+      filteredCategory === "全部" || item.category === filteredCategory;
+    const matchSearch =
+      searchTerm.trim() === "" ||
+      item.name.toLowerCase().includes(searchTerm.toLowerCase());
+    return matchCategory && matchSearch;
+  });
+
+  // 排序（完全不動）
+  if (sortMethod === "price-low") {
+    filteredProducts = filteredProducts.sort((a, b) => a.price - b.price);
+  } else if (sortMethod === "price-high") {
+    filteredProducts = filteredProducts.sort((a, b) => b.price - a.price);
+  } else if (sortMethod === "newest") {
+    filteredProducts = filteredProducts.sort(
+      (a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0)
+    );
+  }
+
+  // 分頁
+  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filteredCategory, searchTerm, sortMethod]);
+
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const displayedProducts = filteredProducts.slice(
+    startIndex,
+    startIndex + itemsPerPage
+  );
 
   return (
-    <div className="w-full py-20 bg-white">
+    <div className="max-w-7xl mx-auto px-6 py-20">
+      <h1 className="text-3xl font-semibold mb-10">商品列表</h1>
 
-      {/* 標題 */}
-      <h1 className="text-center text-4xl font-light mb-12 font-['Playfair_Display'] text-gray-800">
-        所有商品
-      </h1>
+      {/* 搜尋 + 排序（不動） */}
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
+        <input
+          type="text"
+          placeholder="搜尋商品名稱…"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="w-full max-w-md px-4 py-2 border rounded-full shadow-sm"
+        />
 
-      {/* 分類按鈕 */}
-      <div className="flex justify-center mb-10 space-x-4">
-        {[
-          { key: "all", label: "全部" },
-          { key: "tops", label: "上衣" },
-          { key: "outerwear", label: "外套" },
-          { key: "bags", label: "包款" },
-          { key: "accessories", label: "飾品" },
-        ].map((cat) => (
+        <select
+          value={sortMethod}
+          onChange={(e) => setSortMethod(e.target.value)}
+          className="mt-4 md:mt-0 px-4 py-2 border rounded-full"
+        >
+          <option value="default">預設排序</option>
+          <option value="price-low">價格：低 → 高</option>
+          <option value="price-high">價格：高 → 低</option>
+          <option value="newest">最新上架</option>
+        </select>
+      </div>
+
+      {/* 分類（不動） */}
+      <div className="flex space-x-3 mb-10 overflow-x-auto pb-2">
+        {categories.map((cat) => (
           <button
-            key={cat.key}
-            onClick={() => setSelectedCategory(cat.key)}
-            className={`px-4 py-2 rounded-full border transition
-              ${
-                selectedCategory === cat.key
-                  ? "bg-black text-white"
-                  : "bg-white text-gray-700 border-gray-300 hover:bg-gray-100"
-              }
-            `}
+            key={cat}
+            onClick={() => setSearchParams(cat === "全部" ? {} : { category: cat })}
+            className={`px-5 py-2 rounded-full border whitespace-nowrap ${
+              filteredCategory === cat
+                ? "bg-black text-white"
+                : "border-gray-400 text-gray-700 hover:bg-gray-100"
+            }`}
           >
-            {cat.label}
+            {cat}
           </button>
         ))}
       </div>
 
-      {/* 商品列表 */}
-      <div className="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-12 px-6">
-        {filteredItems.map((item) => (
-          
-          <div
-            key={item.id}
-            className="
-              group bg-white rounded-xl border border-gray-300 shadow-sm
-              overflow-hidden transition-all duration-300 relative
-              hover:shadow-2xl hover:-translate-y-2
-            "
-          >
+      {/* ✅ 商品列表（視覺已對齊 Wishlist） */}
+      <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-6">
+        {displayedProducts.map((item) => {
+          const cover =
+            item.mainImageUrl?.trim() !== ""
+              ? item.mainImageUrl
+              : "/placeholder.png";
 
-            {/* 點擊前往詳細頁 */}
-            <Link to={`/product/${item.id}`} className="block">
-              <div className="overflow-hidden">
-                <img
-                  src={item.image}
-                  alt={item.name}
-                  className="w-full h-72 object-cover transition-transform duration-500 group-hover:scale-105"
-                />
-              </div>
-
-              {/* 商品文字 */}
-              <div className="p-6 text-center">
-                <p className="text-lg font-['Playfair_Display'] text-gray-900 tracking-wide">
-                  {item.name}
-                </p>
-                <p className="mt-2 text-gray-700">{item.price}</p>
-              </div>
-            </Link>
-
-            {/* ───── 懸浮加入購物車按鈕 ───── */}
-            <div
-              className="
-                absolute bottom-5 left-1/2 -translate-x-1/2
-                opacity-0 group-hover:opacity-100
-                translate-y-4 group-hover:translate-y-0
-                transition-all duration-300
-              "
+          return (
+            <Link
+              to={`/products/${item.id}`}
+              key={item.id}
+              className="group block border rounded-2xl overflow-hidden hover:shadow-lg transition"
             >
-              <button
-                onClick={() =>
-                  addToCart({
-                    id: item.id,
-                    name: item.name,
-                    price: item.price,
-                    image: item.image,
-                  })
-                }
-                className="
-                  px-6 py-2 bg-black/80 text-white text-sm rounded-full
-                  hover:bg-black transition tracking-wide
-                "
-              >
-                加入購物車
-              </button>
-            </div>
+              {/* 圖片區 */}
+              <div className="relative w-full aspect-[4/5] bg-gray-100 overflow-hidden">
+                <img
+                  src={cover}
+                  alt={item.name}
+                  className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-300"
+                />
 
-          </div>
-        ))}
+                {/* ❤️ 收藏按鈕 */}
+              <button
+                className="absolute top-3 right-3 text-4xl z-10"
+                onClick={(e) => {
+                  e.preventDefault();
+                  toggleWishlist(item.id);
+                  // ⭐ 套用飛行動畫
+                }}
+              >
+                <span
+                  className={`wish-heart ${
+                    isWishlisted(item.id) ? "active" : ""
+                  }`}
+                >
+                  {isWishlisted(item.id) ? "❤️" : "🤍"}
+                </span>
+              </button>
+              </div>
+
+              {/* 文字區 */}
+              <div className="p-5">
+                {/* 📱 手機版 */}
+                <div className="md:hidden">
+                  <h2 className="text-base font-medium tracking-[0.06em] text-gray-700 font-serif truncate">
+                    {item.name}
+                  </h2>
+
+                  <div className="flex items-center justify-between mt-1">
+                    <div className="text-sx font-normal tracking-text-base font-medium tracking-wider text-gray-700 font-serif">
+                      NT${item.price}
+                    </div>
+                    <div className="text-[10px] text-gray-400">
+                      分類：{item.category}
+                    </div>
+                  </div>
+                </div>
+
+                {/* 🖥️ 桌機版（完全回到原始結構） */}
+                <div className="hidden md:block">
+                  <div className="flex items-center justify-between gap-3">
+                    <h2 className="text-base font-semibold tracking-widertruncattext-base font-medium tracking-[0.15em] text-gray-700 font-serif truncate">
+                      {item.name}
+                    </h2>
+                    <div className="text-base font-semibold tracking-wide">
+                      NT${item.price}
+                    </div>
+                  </div>
+
+                  <div className="text-xs text-gray-500 mt-0.5 opacity-60">
+                    分類：{item.category}
+                  </div>
+                </div>
+              </div>
+
+            </Link>
+          );
+        })}
       </div>
+
+      {/* 分頁（不動） */}
+      {totalPages > 1 && (
+        <div className="flex justify-center space-x-2 mt-12">
+          <button
+            onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+            className="px-4 py-2 border rounded-lg"
+          >
+            ‹
+          </button>
+
+          {Array.from({ length: totalPages }, (_, i) => i + 1).map((num) => (
+            <button
+              key={num}
+              onClick={() => setCurrentPage(num)}
+              className={`px-4 py-2 border rounded-lg ${
+                currentPage === num ? "bg-black text-white" : ""
+              }`}
+            >
+              {num}
+            </button>
+          ))}
+
+          <button
+            onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
+            className="px-4 py-2 border rounded-lg"
+          >
+            ›
+          </button>
+        </div>
+      )}
     </div>
   );
 }
-

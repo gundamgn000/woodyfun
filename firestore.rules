@@ -1,0 +1,45 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /* ========== 共用工具 ========== */
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return signedIn()
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "admin";
+    }
+
+    /* ========== users ========== */
+    match /users/{userId} {
+      allow read, write: if signedIn() && request.auth.uid == userId;
+      match /wishlist/{wishId} {
+        allow read, write: if signedIn() && request.auth.uid == userId;
+      }
+    }
+
+    /* ========== products（商品） ========== */
+    match /products/{productId} {
+      allow read: if true; // 所有人可讀商品
+      allow create, update, delete: if isAdmin();
+
+      // ⭐ 新增：商品評論規則
+      match /reviews/{reviewId} {
+        allow read: if true;               // 所有人可看評價
+        allow create: if signedIn();        // 登入者可新增評價
+        allow update, delete: if isAdmin(); // 只有管理員可刪除/修改評價
+      }
+    }
+
+    /* ========== orders（訂單） ========== */
+    match /orders/{orderId} {
+      allow read: if isAdmin();
+      allow read: if signedIn() && resource.data.userId == request.auth.uid;
+      allow create: if signedIn();
+      allow update, delete: if isAdmin();
+    }
+  }
+}

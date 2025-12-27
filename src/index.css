@@ -54,3 +54,141 @@ h1, h2, h3 {
     animation-delay: 0.5s;
   }
 }
+
+/* ❤️ 收藏跳動動畫 */
+@keyframes heart-pop {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.4); }
+  60% { transform: scale(0.9); }
+  100% { transform: scale(1); }
+}
+.heart-pop {
+  animation: heart-pop 0.35s ease-out;
+}
+
+/* 📷 主圖片淡入 */
+@keyframes fade-in {
+  from { opacity: 0; transform: scale(1.02); }
+  to { opacity: 1; transform: scale(1); }
+}
+.fade-in {
+  animation: fade-in 0.5s ease-out;
+}
+
+/* 🖼 卡片懸浮 */
+.card-hover {
+  transition: transform 0.35s ease, box-shadow 0.35s ease;
+}
+.card-hover:hover {
+  transform: translateY(-6px) scale(1.03);
+  box-shadow: 0 12px 30px rgba(0,0,0,0.15);
+}
+
+/* ⭐ 評價星星動畫 */
+.star-hover:hover {
+  transform: scale(1.25);
+  filter: brightness(1.3);
+  transition: 0.15s;
+}
+
+/* 主圖片滑動動畫 */
+@keyframes slide-left {
+  from { opacity: 0; transform: translateX(35px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes slide-right {
+  from { opacity: 0; transform: translateX(-35px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.slide-left { animation: slide-left 0.35s ease-out; }
+.slide-right { animation: slide-right 0.35s ease-out; }
+
+/* ====== Glassmorphism 評價卡片 ====== */
+.glass-card {
+  background: rgba(255, 255, 255, 0.28);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
+/* ====== Lens Zoom（滑鼠跟隨放大鏡） ====== */
+.lens-container {
+  position: relative;
+  overflow: hidden;
+  cursor: none;
+}
+
+.lens-image {
+  transition: transform 0.2s ease-out;
+}
+
+.lens-container:hover .lens-image {
+  transform: scale(1.6);
+}
+
+.lens-pointer {
+  position: absolute;
+  width: 130px;
+  height: 130px;
+  border-radius: 50%;
+  pointer-events: none;
+  border: 2px solid rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(3px);
+  display: none;
+}
+
+.lens-container:hover .lens-pointer {
+  display: block;
+}
+
+/* ====== Swiper 精品輪播美化 ====== */
+.swiper-button-next,
+.swiper-button-prev {
+  color: #ec4899 !important;
+  transform: scale(0.8);
+  transition: 0.2s;
+}
+
+.swiper-button-next:hover,
+.swiper-button-prev:hover {
+  transform: scale(1);
+}
+
+.swiper-pagination-bullet-active {
+  background: #ec4899 !important;
+}
+
+/* ================================ */
+/*     🍎 Apple 級縮放轉場效果       */
+/* ================================ */
+
+.page-apple-transition {
+  opacity: 1;
+  transform: scale(1);
+  filter: blur(0px);
+  transition:
+    opacity 0.18s ease,
+    transform 0.18s ease,
+    filter 0.18s ease;
+}
+
+/* 舊頁面：變小、變暗、微模糊 */
+.page-apple-transition.fade-out {
+  opacity: 0;
+  transform: scale(0.97);   /* Apple 常用 0.97 */
+  filter: blur(2px);
+}
+
+/* 新頁面：略微放大 1.04 → 恢復正常 */
+.page-apple-transition.fade-in {
+  opacity: 1;
+  transform: scale(1.00);
+  filter: blur(0px);
+}
+
+

@@ -40,3 +40,28 @@
 .read-the-docs {
   color: #888;
 }
+
+/* === Member Center Card === */
+.member-card {
+  transition: 
+    transform 0.25s ease,
+    box-shadow 0.25s ease,
+    border-color 0.25s ease,
+    background-color 0.25s ease;
+  
+  border: 2px solid #e5e7eb; /* 淺灰邊框 */
+}
+
+/* Hover — 光暈 + 變大 + 邊框變色 */
+.member-card:hover {
+  transform: translateY(-6px) scale(1.03);
+  border-color: #000; /* 黑色邊框 */
+  box-shadow: 
+      0 10px 25px rgba(0, 0, 0, 0.15),
+      0 0 20px rgba(0, 0, 0, 0.12); /* 光暈效果 */
+}
+
+/* 點擊 — 輕微縮小 */
+.member-card:active {
+  transform: scale(0.97);
+}
