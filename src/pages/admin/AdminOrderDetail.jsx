@@ -243,7 +243,7 @@ export default function AdminOrderDetail() {
   return (
     // 修正：使用 Fragment <>...</> 作為單一根元素
     <> 
-      <div className="max-w-4xl mx-auto px-6 space-y-8">
+      <div className="max-w-4xl mx-auto px-6 space-y-8 pb-24 md:pb-0">
         <div className="flex items-center justify-between">
             <h1 className="text-3xl font-semibold tracking-wide text-gray-800">
                 訂單詳情
@@ -258,33 +258,35 @@ export default function AdminOrderDetail() {
         
           {/* 訂單基本資訊卡片 */}
           <div className="bg-white shadow-md rounded-2xl p-6 space-y-4">
-            <div className="flex items-center justify-between">
+
+            {/* 上半部：訂單編號 + 狀態 */}
+            <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3">
               <div>
-                <p className="text-sm text-gray-500">訂單編號</p>
-                <p className="text-lg font-semibold tracking-wide">
+                <p className="flex flex-col md:grid md:grid-cols-2 gap-3 text-sm text-gray-700">訂單編號：</p>
+                <p className="text-base md:text-lg font-semibold tracking-wide break-all">
                   {orderId}
                 </p>
               </div>
 
-              <div className="text-right space-y-2">
+              <div className="flex items-center justify-between md:block md:text-right md:space-y-2">
                 <span
-                  className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${
+                  className={`inline-block px-3 py-1 rounded-full text-xs md:text-sm font-medium ${
                     STATUS_BADGE_CLASS[currentStatus] ||
                     "bg-gray-200 text-gray-700"
                   }`}
                 >
-                  {STATUS_TEXT[currentStatus] ||
-                    currentStatus ||
-                    "未知狀態"}
+                  {STATUS_TEXT[currentStatus] || currentStatus || "未知狀態"}
                 </span>
-                <p className="text-sm text-gray-600">
+
+                <p className="text-xs md:text-sm text-gray-600">
                   付款方式：{paymentMethod}
                 </p>
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4 text-sm text-gray-700">
-              <div>
+            {/* 下半部：時間 + 金額 */}
+            <div className="flex flex-col md:grid md:grid-cols-2 gap-3 text-sm text-gray-700">
+              <div className="space-y-1 text-xs md:text-sm">
                 <p>
                   <span className="font-medium">建立時間：</span>
                   {createdAt}
@@ -296,13 +298,16 @@ export default function AdminOrderDetail() {
                   </p>
                 )}
               </div>
-              <div className="text-right">
-                <p className="text-xl font-bold">
+
+              <div className="text-left md:text-right">
+                <p className="text-lg md:text-xl font-bold">
                   總金額：NT$ {order.totalAmount ?? order.total ?? 0}
                 </p>
               </div>
             </div>
+
           </div>
+
 
           {/* 訂單狀態管理卡片（桌機版按鈕仍保留） */}
           <div className="bg-white shadow-md rounded-2xl p-6 space-y-4">
