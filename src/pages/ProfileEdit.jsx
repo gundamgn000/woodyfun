@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { useAuth } from "../context/AuthContext";
-import { updateDoc, doc } from "firebase/firestore";
+import { updateDoc } from "firebase/firestore";
 import { db } from "../firebase/firebase";
 import { Link } from "react-router-dom";
+import { setDoc, doc, serverTimestamp } from "firebase/firestore";
+
 
 export default function ProfileEdit() {
   const { user, profile, refreshProfile } = useAuth();
@@ -31,6 +33,15 @@ export default function ProfileEdit() {
     } finally {
       setLoading(false);
     }
+
+    await setDoc(
+      doc(db, "users", user.uid),
+      {
+        name,
+        updatedAt: serverTimestamp(),
+      },
+      { merge: true }
+    );
   };
 
   return (

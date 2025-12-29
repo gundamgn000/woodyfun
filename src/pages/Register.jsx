@@ -1,95 +1,115 @@
-// src/pages/Register.jsx
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { auth, db } from "../firebase/firebase";
-import { createUserWithEmailAndPassword } from "firebase/auth";
+import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 
 export default function Register() {
   const navigate = useNavigate();
+
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleRegister = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setError("");
+    setLoading(true);
 
     try {
-      const result = await createUserWithEmailAndPassword(auth, email, password);
-      const uid = result.user.uid;
+      // 1️⃣ 建立 Firebase Auth 帳號
+      const cred = await createUserWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
 
-      await setDoc(doc(db, "users", uid), {
-        name: formData.name, // ⭐ 關鍵
-        email: user.email,
-        createdAt: serverTimestamp(),
-        orders: 0,
-        recentPurchase: [],
+      // 2️⃣ 更新 Auth displayName（只影響顯示）
+      await updateProfile(cred.user, {
+        displayName: name,
       });
 
-      navigate("/login");
+      // 3️⃣ Firestore 建立 users/{uid}
+      await setDoc(doc(db, "users", cred.user.uid), {
+        name,
+        email,
+        orders: 0,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      });
+
+      // 4️⃣ 導向會員中心
+      navigate("/profile");
     } catch (err) {
-      alert("註冊失敗：" + err.message);
+      console.error(err);
+
+      if (err.code === "auth/email-already-in-use") {
+        setError("此 Email 已被註冊");
+      } else {
+        setError("註冊失敗，請稍後再試");
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="pt-32 pb-20 flex justify-center">
-      <div className="w-full max-w-md bg-white p-10 rounded-2xl shadow-md border border-gray-200">
-        {/* Title */}
-        <h1 className="text-3xl font-['Playfair_Display'] text-center tracking-wide mb-10">
-          會員註冊
-        </h1>
+    <div className="min-h-screen flex justify-center bg-white pt-24">
+      <div className="w-full max-w-md bg-white shadow-lg rounded-2xl p-8">
+        <h1 className="text-2xl font-semibold text-center mb-6">會員註冊</h1>
 
-        <form onSubmit={handleRegister} className="space-y-6">
-          {/* Name */}
+        {error && (
+          <p className="text-center text-sm text-red-500 mb-4">{error}</p>
+        )}
+
+        <form className="space-y-4" onSubmit={handleSubmit}>
           <div>
-            <label className="block text-gray-700 mb-2">姓名</label>
+            <label className="block mb-1 text-gray-700">姓名</label>
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
-              className="w-full px-4 py-3 border rounded-lg bg-gray-50 focus:ring-2 focus:ring-black"
+              className="w-full border rounded-lg px-3 py-2"
             />
           </div>
 
-          {/* Email */}
           <div>
-            <label className="block text-gray-700 mb-2">Email</label>
+            <label className="block mb-1 text-gray-700">Email</label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full px-4 py-3 border rounded-lg bg-gray-50 focus:ring-2 focus:ring-black"
+              className="w-full border rounded-lg px-3 py-2"
             />
           </div>
 
-          {/* Password */}
           <div>
-            <label className="block text-gray-700 mb-2">密碼</label>
+            <label className="block mb-1 text-gray-700">密碼</label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              className="w-full px-4 py-3 border rounded-lg bg-gray-50 focus:ring-2 focus:ring-black"
+              className="w-full border rounded-lg px-3 py-2"
             />
           </div>
 
-          {/* Submit */}
           <button
             type="submit"
-            className="w-full bg-black text-white py-3 rounded-xl text-lg hover:bg-gray-800 transition"
+            disabled={loading}
+            className="w-full bg-black text-white py-2 rounded-full"
           >
-            註冊帳號
+            {loading ? "註冊中…" : "註冊"}
           </button>
         </form>
 
-        {/* Login link */}
-        <p className="text-center text-gray-600 mt-6">
-          已有帳號？{" "}
-          <Link to="/login" className="text-black underline hover:text-gray-700">
+        <p className="mt-4 text-center text-sm">
+          已有帳號？
+          <Link to="/login" className="text-blue-600 ml-1">
             前往登入
           </Link>
         </p>
