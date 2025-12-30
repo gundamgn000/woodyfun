@@ -109,7 +109,7 @@ export default function Products() {
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-20">
-      <h1 className="text-3xl font-semibold mb-10">商品列表</h1>
+      <h1 className="text-3xl font-semibold mb-10"> SHOP </h1>
 
       {/* 搜尋 + 排序（不動） */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
