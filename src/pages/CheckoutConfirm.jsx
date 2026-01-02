@@ -19,6 +19,7 @@ export default function CheckoutConfirm() {
 
   const { user, loading } = useAuth();
   const navigate = useNavigate();
+  
 
   // -----------------------------
   // 檢查購物車是否為空
@@ -53,6 +54,8 @@ export default function CheckoutConfirm() {
   // 建立訂單
   // -----------------------------
   const createOrder = async () => {
+    console.log("付款方式 =", checkoutInfo.paymentMethod);
+
     console.log("👉 createOrder 被按到");
 
     try {
@@ -127,7 +130,7 @@ export default function CheckoutConfirm() {
               email: user.email, // 買家 email（顯示用）
               items: itemsText,
               payment: checkoutInfo.paymentMethod,
-              total: totalAmount,
+              total: Math.round(Number(totalAmount)),
               address: `${checkoutInfo.city}${checkoutInfo.district}${checkoutInfo.address}`,
             },
             "_0T9aM48V9I1olpb9"
@@ -145,14 +148,64 @@ export default function CheckoutConfirm() {
 
       console.log("📌 Firestore 訂單已建立:", orderId);
 
-      // 貨到付款
+      // ✅ 貨到付款（你原本的，保持不變）
       if (checkoutInfo.paymentMethod === "貨到付款") {
         clearCart();
         navigate(`/checkout/success/${orderId}`);
         return;
       }
 
+      // ✅ 信用卡（綠界）
+      if (checkoutInfo.paymentMethod === "信用卡") {
+        try {
+          const res = await fetch("http://localhost:3000/api/ecpay/create-order", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              orderId,                 // ⭐ Firestore 訂單 ID
+              totalAmount: Math.round(Number(totalAmount)), // ⭐ 一定是整數
+            }),
+          });
+
+          const data = await res.json();
+
+          // 🔴 關鍵：你的後端是回 action + params（不是 html）
+          const { action, params } = data;
+
+          if (!action || !params) {
+            alert("金流資料異常，請稍後再試");
+            return;
+          }
+
+          // ✅ 動態建立 form → 導向綠界
+          const form = document.createElement("form");
+          form.method = "POST";
+          form.action = action;
+
+          Object.keys(params).forEach((key) => {
+            const input = document.createElement("input");
+            input.type = "hidden";
+            input.name = key;
+            input.value = params[key];
+            form.appendChild(input);
+          });
+
+          document.body.appendChild(form);
+          form.submit();
+          return;
+        } catch (err) {
+          console.error("❌ 信用卡金流錯誤:", err);
+          alert("信用卡付款失敗，請稍後再試");
+          return;
+        }
+      }
+
+      // ❌ 真的未知的付款方式
       alert("未知付款方式");
+
+
     } catch (err) {
       console.error("❌ createOrder 錯誤:", err);
       alert("無法建立訂單");

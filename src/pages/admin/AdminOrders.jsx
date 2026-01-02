@@ -13,13 +13,10 @@ import { Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { logOrderAction } from "../../utils/orderLogger";
 
-
-
 export default function AdminOrders() {
   const [orders, setOrders] = useState([]);
   const [filtered, setFiltered] = useState([]);
   const { user, userRole } = useAuth();
-
 
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -48,22 +45,48 @@ export default function AdminOrders() {
     setFiltered(list);
   };
 
-  // 狀態中文
+  // 狀態中文（C3：補齊 failed，並統一 pending 顯示）
   const statusText = {
-    pending: "訂單成立",
+    pending: "待付款",
     paid: "已付款",
+    failed: "付款失敗",
     shipped: "已出貨",
     completed: "已完成",
     cancelled: "已取消",
   };
 
-  // 狀態顏色
+  // 狀態顏色（C3：補齊 failed）
   const statusColor = {
     pending: "bg-yellow-200 text-yellow-800",
     paid: "bg-blue-200 text-blue-800",
+    failed: "bg-red-200 text-red-800",
     shipped: "bg-purple-200 text-purple-800",
     completed: "bg-green-200 text-green-800",
     cancelled: "bg-red-200 text-red-800",
+  };
+
+  // ✅ C3：更專業的狀態徽章（依付款方式 + status）
+  const renderStatusBadge = (ord) => {
+    const paymentMethod = ord.paymentMethod || ord.payment || ord.payMethod || "";
+    const isCOD = paymentMethod === "貨到付款";
+
+    // 你原本邏輯：COD 的 pending 其實是「可出貨」
+    if (ord.status === "pending" && isCOD) {
+      return (
+        <span className="inline-block px-3 py-1 rounded-full text-sm font-medium bg-yellow-200 text-yellow-800">
+          待出貨（貨到付款）
+        </span>
+      );
+    }
+
+    const cls = statusColor[ord.status] || "bg-gray-200 text-gray-700";
+    const label = statusText[ord.status] || ord.status || "未知狀態";
+
+    return (
+      <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${cls}`}>
+        {label}
+      </span>
+    );
   };
 
   // ===== 一鍵完成（shipped → completed）=====
@@ -83,20 +106,16 @@ export default function AdminOrders() {
 
       // 同步前端狀態
       setOrders((prev) =>
-        prev.map((ord) =>
-          ord.id === order.id
-            ? { ...ord, status: "completed" }
-            : ord
-        )
+        prev.map((ord) => (ord.id === order.id ? { ...ord, status: "completed" } : ord))
       );
+
       await logOrderAction({
-        orderId: shipTarget.id,
+        orderId: order.id,
         action: "status_update",
-        from: shipTarget.status,
-        to: "shipped",
+        from: order.status,
+        to: "completed",
         user: { ...user, userRole },
       });
-
 
       alert("訂單已標記為完成");
     } catch (err) {
@@ -104,7 +123,6 @@ export default function AdminOrders() {
       alert("操作失敗，請稍後再試");
     }
   };
-
 
   // 👉 重新套用搜尋/篩選
   useEffect(() => {
@@ -133,10 +151,8 @@ export default function AdminOrders() {
   // ===== 快速出貨：打開視窗 =====
   const openQuickShip = (order) => {
     // 兼容舊欄位：shippingCarrier / shippingCompany、shippingTrackingNumber / trackingNumber
-    const carrier =
-      order.shippingCarrier || order.shippingCompany || "黑貓宅急便";
-    const tracking =
-      order.shippingTrackingNumber || order.trackingNumber || "";
+    const carrier = order.shippingCarrier || order.shippingCompany || "黑貓宅急便";
+    const tracking = order.shippingTrackingNumber || order.trackingNumber || "";
 
     setShipTarget(order);
     setShipCarrier(carrier);
@@ -203,223 +219,187 @@ export default function AdminOrders() {
   };
 
   return (
-    
-      <div className="max-w-6xl mx-auto px-6 space-y-8">
-        <h1 className="text-3xl font-semibold tracking-wide text-gray-800">
-          訂單管理
-        </h1>
-        {/* 🔎 搜尋 + 篩選列 */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-10 gap-4">
-          {/* 搜尋框 */}
-          <input
-            type="text"
-            placeholder="搜尋訂單編號 / Email / 收件人姓名"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full md:w-2/3 px-4 py-2 border rounded-lg shadow-sm focus:ring-2 focus:ring-black transition"
-          />
+    <div className="max-w-6xl mx-auto px-6 space-y-8">
+      <h1 className="text-3xl font-semibold tracking-wide text-gray-800">訂單管理</h1>
 
-          {/* 狀態範圍選擇 */}
-          <select
-            className="px-4 py-2 border rounded-lg shadow-sm focus:ring-2 focus:ring-black transition"
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-          >
-            <option value="all">全部狀態</option>
-            <option value="pending">待付款</option>
-            <option value="paid">已付款</option>
-            <option value="shipped">已出貨</option>
-            <option value="completed">已完成</option>
-            <option value="cancelled">已取消</option>
-          </select>
-        </div>
+      {/* 🔎 搜尋 + 篩選列 */}
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-10 gap-4">
+        {/* 搜尋框 */}
+        <input
+          type="text"
+          placeholder="搜尋訂單編號 / Email / 收件人姓名"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="w-full md:w-2/3 px-4 py-2 border rounded-lg shadow-sm focus:ring-2 focus:ring-black transition"
+        />
 
-        {/* 訂單列表 */}
-        <div className="space-y-5">
-          {filtered.map((ord) => {
-            const carrier =
-              ord.shippingCarrier || ord.shippingCompany || null;
-            const tracking =
-              ord.shippingTrackingNumber || ord.trackingNumber || null;
-            const paymentMethod =
-              ord.paymentMethod || ord.payment || ord.payMethod || "";
+        {/* 狀態範圍選擇（C3：補上 failed） */}
+        <select
+          className="px-4 py-2 border rounded-lg shadow-sm focus:ring-2 focus:ring-black transition"
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+        >
+          <option value="all">全部狀態</option>
+          <option value="pending">待付款</option>
+          <option value="paid">已付款</option>
+          <option value="failed">付款失敗</option>
+          <option value="shipped">已出貨</option>
+          <option value="completed">已完成</option>
+          <option value="cancelled">已取消</option>
+        </select>
+      </div>
 
-            const isCOD = paymentMethod === "貨到付款";
+      {/* 訂單列表 */}
+      <div className="space-y-5">
+        {filtered.map((ord) => {
+          const carrier = ord.shippingCarrier || ord.shippingCompany || null;
+          const tracking = ord.shippingTrackingNumber || ord.trackingNumber || null;
+          const paymentMethod = ord.paymentMethod || ord.payment || ord.payMethod || "";
+          const isCOD = paymentMethod === "貨到付款";
 
-            return (
-              <div
-                key={ord.id}
-                className="p-6 rounded-xl shadow-md border hover:shadow-lg transition bg-white"
-              >
-                <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-                  {/* 左側：訂單基本資訊（點這塊可進入詳細頁） */}
-                  <div className="flex-1">
-                    <Link
-                      to={`/admin/orders/${ord.id}`}
-                      className="block group"
-                    >
-                      <p className="font-semibold text-lg tracking-wide mb-1 group-hover:underline">
-                        訂單編號：{ord.id}
-                      </p>
-
-                      <p className="text-sm text-gray-600">
-                        訂購者：{ord.shippingInfo?.name || "（無姓名）"}
-                      </p>
-
-                      <p className="text-sm text-gray-600">
-                        Email：{ord.email}
-                      </p>
-
-                      <p className="text-sm text-gray-600">
-                        建立時間：
-                        {ord.createdAt?.toDate
-                          ? ord.createdAt.toDate().toLocaleString("zh-TW")
-                          : "無資料"}
-                      </p>
-                    </Link>
-
-                    {/* 顯示物流資訊（如有） */}
-                    {tracking && (
-                      <p className="text-sm text-gray-700 mt-2">
-                        🚚 {carrier || "物流"}：{tracking}
-                      </p>
-                    )}
-                  </div>
-
-                  {/* 右側：金額 + 狀態 + 快速出貨按鈕 */}
-                  <div className="text-right flex flex-col items-end gap-2">
-                    <p className="text-xl font-semibold">
-                      NT$ {ord.total ?? ord.totalAmount ?? 0}
+          return (
+            <div
+              key={ord.id}
+              className="p-6 rounded-xl shadow-md border hover:shadow-lg transition bg-white"
+            >
+              <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+                {/* 左側：訂單基本資訊（點這塊可進入詳細頁） */}
+                <div className="flex-1">
+                  <Link to={`/admin/orders/${ord.id}`} className="block group">
+                    <p className="font-semibold text-lg tracking-wide mb-1 group-hover:underline">
+                      訂單編號：{ord.id}
                     </p>
 
-                    <span
-                      className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${
-                        statusColor[ord.status] || "bg-gray-200 text-gray-700"
-                      }`}
-                    >
-                      {statusText[ord.status] || ord.status || "未知狀態"}
-                    </span>
+                    <p className="text-sm text-gray-600">
+                      訂購者：{ord.shippingInfo?.name || "（無姓名）"}
+                    </p>
 
-                    {/* 只有「已付款」顯示快速出貨（你之後如果想擴大條件再改） */}
-                    {ord.status !== "completed" && ord.status !== "cancelled" && (
-                      <>
-                        {(
-                          (!isCOD && ord.status === "paid") ||
-                          (isCOD && ord.status === "pending")
-                        ) && (
-                          <button
-                            type="button"
-                            onClick={() => openQuickShip(ord)}
-                            className="mt-1 px-3 py-1.5 text-xs rounded-full border border-gray-800 text-gray-900 hover:bg-gray-900 hover:text-white transition"
-                          >
-                            快速出貨
-                          </button>
-                        )}
+                    <p className="text-sm text-gray-600">Email：{ord.email}</p>
 
-                        {ord.status === "shipped" && (
-                          <button
-                            type="button"
-                            onClick={() => handleMarkCompleted(ord)}
-                            className="mt-1 px-3 py-1.5 text-xs rounded-full bg-green-600 text-white hover:bg-green-700 transition"
-                          >
-                            標記完成
-                          </button>
-                        )}
-                      </>
-                    )}
+                    <p className="text-sm text-gray-600">
+                      建立時間：
+                      {ord.createdAt?.toDate
+                        ? ord.createdAt.toDate().toLocaleString("zh-TW")
+                        : "無資料"}
+                    </p>
+                  </Link>
 
-
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-
-          {filtered.length === 0 && (
-            <p className="text-center text-gray-500 mt-10">
-              尚無符合條件的訂單
-            </p>
-          )}
-        </div>
-
-        {/* ===== B 方案：彈出視窗式「快速出貨」 ===== */}
-        {shipModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-            <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl p-6 space-y-5">
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <h2 className="text-lg font-semibold text-gray-800">
-                    快速出貨
-                  </h2>
-                  {shipTarget && (
-                    <p className="text-xs text-gray-500 mt-1">
-                      訂單編號：{shipTarget.id}
+                  {/* 顯示物流資訊（如有） */}
+                  {tracking && (
+                    <p className="text-sm text-gray-700 mt-2">
+                      🚚 {carrier || "物流"}：{tracking}
                     </p>
                   )}
                 </div>
-                <button
-                  type="button"
-                  onClick={closeQuickShip}
-                  className="text-gray-400 hover:text-gray-600 text-sm"
-                >
-                  ✕
-                </button>
-              </div>
 
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm text-gray-600 mb-1">
-                    物流公司
-                  </label>
-                  <input
-                    type="text"
-                    className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-black outline-none"
-                    placeholder="例：黑貓宅急便 / 7-11 / 全家"
-                    value={shipCarrier}
-                    onChange={(e) => setShipCarrier(e.target.value)}
-                  />
+                {/* 右側：金額 + 狀態 + 快速出貨按鈕 */}
+                <div className="text-right flex flex-col items-end gap-2">
+                  <p className="text-xl font-semibold">NT$ {ord.total ?? ord.totalAmount ?? 0}</p>
+
+                  {/* ✅ C3：用專業 badge 顯示狀態 */}
+                  {renderStatusBadge(ord)}
+
+                  {/* 只有「已付款」顯示快速出貨（你之後如果想擴大條件再改） */}
+                  {ord.status !== "completed" && ord.status !== "cancelled" && (
+                    <>
+                      {((!isCOD && ord.status === "paid") || (isCOD && ord.status === "pending")) && (
+                        <button
+                          type="button"
+                          onClick={() => openQuickShip(ord)}
+                          className="mt-1 px-3 py-1.5 text-xs rounded-full border border-gray-800 text-gray-900 hover:bg-gray-900 hover:text-white transition"
+                        >
+                          快速出貨
+                        </button>
+                      )}
+
+                      {ord.status === "shipped" && (
+                        <button
+                          type="button"
+                          onClick={() => handleMarkCompleted(ord)}
+                          className="mt-1 px-3 py-1.5 text-xs rounded-full bg-green-600 text-white hover:bg-green-700 transition"
+                        >
+                          標記完成
+                        </button>
+                      )}
+                    </>
+                  )}
                 </div>
-
-                <div>
-                  <label className="block text-sm text-gray-600 mb-1">
-                    物流單號
-                  </label>
-                  <input
-                    type="text"
-                    className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-black outline-none"
-                    placeholder="例：0000-1234-5678"
-                    value={shipTracking}
-                    onChange={(e) => setShipTracking(e.target.value)}
-                  />
-                </div>
-              </div>
-
-              <div className="flex justify-end gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={closeQuickShip}
-                  className="px-4 py-2 rounded-full border text-sm text-gray-600 hover:bg-gray-50"
-                >
-                  取消
-                </button>
-                <button
-                  type="button"
-                  disabled={shipSaving}
-                  onClick={handleConfirmShip}
-                  className={`px-5 py-2 rounded-full text-sm text-white ${
-                    shipSaving
-                      ? "bg-gray-400"
-                      : "bg-black hover:bg-gray-900"
-                  }`}
-                >
-                  {shipSaving ? "處理中..." : "確認出貨"}
-                </button>
               </div>
             </div>
-          </div>
+          );
+        })}
+
+        {filtered.length === 0 && (
+          <p className="text-center text-gray-500 mt-10">尚無符合條件的訂單</p>
         )}
       </div>
-    
-    
+
+      {/* ===== B 方案：彈出視窗式「快速出貨」 ===== */}
+      {shipModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+          <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl p-6 space-y-5">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h2 className="text-lg font-semibold text-gray-800">快速出貨</h2>
+                {shipTarget && (
+                  <p className="text-xs text-gray-500 mt-1">訂單編號：{shipTarget.id}</p>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={closeQuickShip}
+                className="text-gray-400 hover:text-gray-600 text-sm"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm text-gray-600 mb-1">物流公司</label>
+                <input
+                  type="text"
+                  className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-black outline-none"
+                  placeholder="例：黑貓宅急便 / 7-11 / 全家"
+                  value={shipCarrier}
+                  onChange={(e) => setShipCarrier(e.target.value)}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm text-gray-600 mb-1">物流單號</label>
+                <input
+                  type="text"
+                  className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-black outline-none"
+                  placeholder="例：0000-1234-5678"
+                  value={shipTracking}
+                  onChange={(e) => setShipTracking(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3 pt-2">
+              <button
+                type="button"
+                onClick={closeQuickShip}
+                className="px-4 py-2 rounded-full border text-sm text-gray-600 hover:bg-gray-50"
+              >
+                取消
+              </button>
+              <button
+                type="button"
+                disabled={shipSaving}
+                onClick={handleConfirmShip}
+                className={`px-5 py-2 rounded-full text-sm text-white ${
+                  shipSaving ? "bg-gray-400" : "bg-black hover:bg-gray-900"
+                }`}
+              >
+                {shipSaving ? "處理中..." : "確認出貨"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
