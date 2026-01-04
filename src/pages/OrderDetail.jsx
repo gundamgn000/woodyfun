@@ -36,6 +36,16 @@ const getOrderHintText = (order) => {
   }
 };
 
+// 🔁 退貨原因中文對照
+const RETURN_REASON_MAP = {
+  size_not_fit: "尺寸不合",
+  not_as_expected: "商品與描述不符",
+  defect: "商品瑕疵",
+  change_mind: "改變心意",
+  other: "其他",
+};
+
+
 
 const OrderDetail = () => {
   const { id } = useParams();
@@ -333,14 +343,42 @@ const OrderDetail = () => {
           color: "#8c6d1f",
         }}
       >
-        ⚠️ 您已於{" "}
-        {order.returnRequest.requestedAt?.toDate
-          ? order.returnRequest.requestedAt
-              .toDate()
-              .toLocaleDateString("zh-TW")
-          : ""}
-        {" "}
-        申請退貨，目前狀態為「等待商家審核」。
+        {/* 退貨申請中 */}
+        {order.returnRequest.status === "requested" && (
+          <>
+            ⚠️ 您已於{" "}
+            {order.returnRequest.requestedAt?.toDate
+              ? order.returnRequest.requestedAt
+                  .toDate()
+                  .toLocaleDateString("zh-TW")
+              : ""}
+            {" "}
+            申請退貨，目前狀態為「等待商家審核」。
+          </>
+        )}
+
+        {/* 已同意退貨 */}
+        {order.returnRequest.status === "approved" && (
+          <>
+            ✅ 商家已同意您的退貨申請。<br />
+            請依客服指示將商品寄回，退款將於收件後處理。
+          </>
+        )}
+
+        {/* 退貨被拒絕 */}
+        {order.returnRequest.status === "rejected" && (
+  <>
+        ❌ 很抱歉，您的退貨申請未通過。<br />
+        {order.returnRequest.reason && (
+          <>
+            原因：
+            {RETURN_REASON_MAP[order.returnRequest.reason] ||
+              order.returnRequest.reason}
+          </>
+        )}
+      </>
+    )}
+
       </div>
     )}
 

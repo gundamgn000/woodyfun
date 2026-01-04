@@ -22,6 +22,21 @@ const STATUS_TEXT = {
   cancelled: "已取消",
 };
 
+const RETURN_STATUS_LABEL = {
+  requested: "申請中",
+  approved: "已同意退貨",
+  rejected: "已拒絕退貨",
+};
+
+const RETURN_REASON_LABEL = {
+  size_not_fit: "尺寸不合",
+  not_as_expected: "商品與描述不符",
+  defect: "商品瑕疵",
+  change_mind: "改變心意",
+  other: "其他",
+};
+
+
 const STATUS_BADGE_CLASS = {
   pending: "bg-gray-200 text-gray-700",
   paid: "bg-blue-100 text-blue-700",
@@ -247,8 +262,43 @@ export default function AdminOrderDetail() {
   const isPaidLocked =
     isAutoPayment && (currentStatus === "paid" || currentStatus === "completed");
 
+  const handleReturnDecision = async (decision) => {
+  if (!order) return;
 
+  const text =
+    decision === "approved" ? "同意退貨" : "拒絕退貨";
 
+  if (!window.confirm(`確定要${text}嗎？`)) return;
+
+  try {
+    const ref = doc(db, "orders", orderId);
+
+    await updateDoc(ref, {
+      "returnRequest.status": decision,
+      "returnRequest.handledAt": Timestamp.now(),
+      "returnRequest.handledBy": user?.email || "admin",
+    });
+
+    await logOrderAction({
+      orderId,
+      action: "return_" + decision,
+      user: { ...user, userRole },
+    });
+
+    setOrder((prev) => ({
+      ...prev,
+      returnRequest: {
+        ...prev.returnRequest,
+        status: decision,
+      },
+    }));
+
+    alert(`已${text}`);
+  } catch (err) {
+    console.error(err);
+    alert("處理退貨失敗");
+  }
+};
 
   return (
     // 修正：使用 Fragment <>...</> 作為單一根元素
@@ -372,6 +422,54 @@ export default function AdminOrderDetail() {
               )}
             </div>
           </div>
+          {order.returnRequest && (
+            <div className="bg-white shadow-md rounded-2xl p-6 space-y-4 border border-orange-200">
+              <h2 className="text-xl font-semibold text-orange-600">
+                ⚠️ 退貨申請處理
+              </h2>
+
+             <p className="text-sm">
+              <strong>狀態：</strong>
+              {RETURN_STATUS_LABEL[order.returnRequest.status] ??
+                order.returnRequest.status}
+            </p>
+
+            <p className="text-sm">
+              <strong>原因：</strong>
+              {RETURN_REASON_LABEL[order.returnRequest.reason] ??
+                order.returnRequest.reason}
+            </p>
+
+            {order.returnRequest.note && (
+              <p className="text-sm">
+                <strong>說明：</strong>
+                {order.returnRequest.note}
+              </p>
+            )}
+
+
+              {order.returnRequest.status === "requested" && (
+                <div className="flex gap-3 pt-2">
+                  <button
+                    onClick={() => handleReturnDecision("approved")}
+                    className="px-4 py-2 rounded-full bg-black text-white text-sm"
+                  >
+                    同意退貨
+                  </button>
+
+                  <button
+                    onClick={() => handleReturnDecision("rejected")}
+                    className="px-4 py-2 rounded-full border border-gray-400 text-sm"
+                  >
+                    拒絕退貨
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
+
+
 
           {/* 收件人資訊卡片 */}
           <div className="bg-white shadow-md rounded-2xl p-6 space-y-3">

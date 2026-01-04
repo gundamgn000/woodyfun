@@ -142,9 +142,13 @@ export default function AdminOrders() {
 
     // 狀態篩選
     if (statusFilter !== "all") {
-      list = list.filter((ord) => ord.status === statusFilter);
-    }
-
+      if (statusFilter === "return_only") {
+        // ✅ 只看有退貨申請的訂單（requested / approved / rejected 都算）
+        list = list.filter((ord) => !!ord.returnRequest?.status);
+      } else {
+        list = list.filter((ord) => ord.status === statusFilter);
+      }
+}
     setFiltered(list);
   }, [search, statusFilter, orders]);
 
@@ -217,6 +221,49 @@ export default function AdminOrders() {
       setShipSaving(false);
     }
   };
+  const renderReturnBadge = (ord) => {
+    if (!ord.returnRequest) return null;
+
+    if (ord.returnRequest.status === "requested") {
+      return (
+        <span
+          style={{
+            marginLeft: "8px",
+            padding: "4px 8px",
+            fontSize: "12px",
+            borderRadius: "12px",
+            background: "#FFF4E5",
+            color: "#D46B08",
+            border: "1px solid #FFD591",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "4px",
+          }}
+        >
+          ⚠️ 退貨申請中
+        </span>
+      );
+    }
+
+    if (ord.returnRequest.status === "approved") {
+      return (
+        <span className="inline-block px-3 py-1 rounded-full text-sm font-medium bg-blue-200 text-blue-800">
+          退貨處理中
+        </span>
+      );
+    }
+
+    if (ord.returnRequest.status === "rejected") {
+      return (
+        <span className="inline-block px-3 py-1 rounded-full text-sm font-medium bg-gray-300 text-gray-700">
+          退貨已拒絕
+        </span>
+      );
+    }
+
+    return null;
+  };
+
 
   return (
     <div className="max-w-6xl mx-auto px-6 space-y-8">
@@ -246,6 +293,7 @@ export default function AdminOrders() {
           <option value="shipped">已出貨</option>
           <option value="completed">已完成</option>
           <option value="cancelled">已取消</option>
+          <option value="return_only">只看退貨申請</option>
         </select>
       </div>
 
@@ -298,6 +346,7 @@ export default function AdminOrders() {
 
                   {/* ✅ C3：用專業 badge 顯示狀態 */}
                   {renderStatusBadge(ord)}
+                  {renderReturnBadge(ord)}
 
                   {/* 只有「已付款」顯示快速出貨（你之後如果想擴大條件再改） */}
                   {ord.status !== "completed" && ord.status !== "cancelled" && (
