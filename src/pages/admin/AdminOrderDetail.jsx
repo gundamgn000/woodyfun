@@ -229,9 +229,7 @@ export default function AdminOrderDetail() {
     ? order.createdAt.toDate().toLocaleString("zh-TW")
     : "無資料";
 
-  const isCOD = paymentMethod === "貨到付款";
-
-
+ 
   const updatedAt = order.updatedAt?.toDate
     ? order.updatedAt.toDate().toLocaleString("zh-TW")
     : null;
@@ -239,6 +237,18 @@ export default function AdminOrderDetail() {
   const currentStatus = order.status || status;
 
   const nextStatus = getNextStatus(currentStatus);
+
+   const isCOD = paymentMethod === "貨到付款";
+  // 是否為線上金流（信用卡 / ATM / 綠界等）
+  const isAutoPayment =
+    paymentMethod !== "貨到付款" && paymentMethod !== "無資料";
+
+  // 已付款後，禁止再手動亂改狀態（避免誤操作）
+  const isPaidLocked =
+    isAutoPayment && (currentStatus === "paid" || currentStatus === "completed");
+
+
+
 
   return (
     // 修正：使用 Fragment <>...</> 作為單一根元素
@@ -303,6 +313,10 @@ export default function AdminOrderDetail() {
                 <p className="text-lg md:text-xl font-bold">
                   總金額：NT$ {order.totalAmount ?? order.total ?? 0}
                 </p>
+                <p className="text-xs text-gray-400">
+                  金額由系統計算，無法手動修改
+                </p>
+
               </div>
             </div>
 
@@ -323,26 +337,38 @@ export default function AdminOrderDetail() {
             </p>
 
             <div className="flex gap-3 flex-wrap mt-2">
-              {nextStatus && currentStatus !== "cancelled" && (
-                <button
-                  disabled={savingStatus}
-                  onClick={() => handleUpdateStatus(nextStatus)}
-                  className="px-4 py-2 rounded-full bg-black text-white text-sm hover:bg-gray-800 transition disabled:bg-gray-400"
+              {nextStatus &&
+                currentStatus !== "cancelled" &&
+                !isPaidLocked && (
+                  <button
+                    disabled={savingStatus}
+                    onClick={() => handleUpdateStatus(nextStatus)}
+                    className="px-4 py-2 rounded-full bg-black text-white text-sm hover:bg-gray-800 transition disabled:bg-gray-400"
                 >
+
                   {savingStatus
                     ? "更新中..."
                     : `標記為「${STATUS_TEXT[nextStatus]}」`}
+                     <p className="text-xs text-red-500 mt-2">
+                      ⚠️ 請確認客戶流程再更新狀態
+                    </p>
                 </button>
               )}
 
-              {currentStatus !== "cancelled" && (
-                <button
-                  disabled={savingStatus}
-                  onClick={handleCancelOrder}
+              {currentStatus !== "cancelled" &&
+                !(isAutoPayment && currentStatus === "paid") && (
+                  
+                  <button
+                    disabled={savingStatus}
+                    onClick={handleCancelOrder}
                   className="px-4 py-2 rounded-full border border-red-400 text-red-500 text-sm hover:bg-red-50 transition disabled:bg-gray-200 disabled:text-gray-400"
                 >
                   {savingStatus ? "處理中..." : "取消訂單"}
+                  <p className="text-sm text-red-500 mt-2">
+                    ⚠️ 已付款訂單請先完成退款流程，避免帳務不一致。
+                  </p>
                 </button>
+                
               )}
             </div>
           </div>

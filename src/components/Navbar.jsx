@@ -294,7 +294,7 @@ export default function Navbar() {
             onClick={() => setMenuOpen(false)}
             className="mobile-cart-link"
           >
-            <span>購物袋</span>
+            <span>購物車</span>
             <svg
               xmlns="http://www.w3.org/2000/svg"
               width="26"

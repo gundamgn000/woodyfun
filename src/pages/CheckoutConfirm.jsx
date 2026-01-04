@@ -219,6 +219,22 @@ export default function CheckoutConfirm() {
   // -----------------------------
   return (
     <div className="max-w-3xl mx-auto px-6 py-20">
+       {/* ⚠️ 測試階段提示（只影響 UI，不影響狀態） */}
+      <div
+        style={{
+          marginBottom: "16px",
+          padding: "10px 14px",
+          border: "1px solid #f5c2c7",
+          backgroundColor: "#fff5f5",
+          color: "#842029",
+          borderRadius: "6px",
+          fontSize: "14px",
+          lineHeight: 1.6,
+        }}
+      >
+        ⚠️ 本網站目前為測試階段，付款流程僅供系統測試使用，
+        本次交易不會實際請款或產生任何費用。
+      </div>
       <h1 className="text-3xl font-bold mb-8">訂單確認</h1>
 
       <div className="border p-6 rounded-xl mb-8">
@@ -285,6 +301,8 @@ export default function CheckoutConfirm() {
         </div>
       </div>
 
+      
+
 
       <button
         className="w-full bg-pink-600 text-white py-3 rounded-lg"
@@ -292,6 +310,10 @@ export default function CheckoutConfirm() {
       >
         確認送出訂單
       </button>
+
+      
     </div>
+
+    
   );
 }

@@ -125,7 +125,7 @@ const CartPage = () => {
             className="w-full bg-black text-white py-3 rounded-full text-lg"
             onClick={() => navigate("/checkout")}
           >
-            前往結帳（第1步）
+            前往結帳
           </button>
 
           <button
