@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { db } from "../firebase/firebase";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, updateDoc, serverTimestamp } from "firebase/firestore";
 import OrderStatusTracker from "../components/OrderStatusTracker";
 
 
@@ -41,6 +41,11 @@ const OrderDetail = () => {
   const { id } = useParams();
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showReturnForm, setShowReturnForm] = useState(false);
+  const [returnReason, setReturnReason] = useState("");
+  const [returnNote, setReturnNote] = useState("");
+  const [submittingReturn, setSubmittingReturn] = useState(false);
+
 
   useEffect(() => {
     async function loadDetail() {
@@ -107,6 +112,36 @@ const OrderDetail = () => {
 
       default:
         return null;
+    }
+  };
+
+  const handleSubmitReturn = async () => {
+    if (!returnReason) {
+      alert("請選擇退貨原因");
+      return;
+    }
+
+    setSubmittingReturn(true);
+
+    try {
+      const orderRef = doc(db, "orders", id);
+
+      await updateDoc(orderRef, {
+        returnRequest: {
+          status: "requested",
+          reason: returnReason,
+          note: returnNote || "",
+          requestedAt: serverTimestamp(),
+        },
+      });
+
+      alert("退貨申請已送出，客服將盡快與您聯繫");
+      setShowReturnForm(false);
+    } catch (err) {
+      console.error(err);
+      alert("退貨申請失敗，請稍後再試");
+    } finally {
+      setSubmittingReturn(false);
     }
   };
 
@@ -197,7 +232,123 @@ const OrderDetail = () => {
         </div>
       </div>
 
+      {(order.status === "completed" || order.status === "shipped") &&
+       !order.returnRequest && (
+      <div
+        style={{
+          marginTop: "32px",
+          padding: "20px",
+          border: "1px solid #eee",
+          borderRadius: "8px",
+          background: "#fafafa",
+        }}
+      >
+        <h3 style={{ marginBottom: "8px" }}>📦 退貨申請</h3>
+
+        <p style={{ fontSize: "14px", color: "#666", marginBottom: "16px" }}>
+          若您收到商品後需辦理退貨，請於 7 日內提出申請。
+          實際退貨流程將由客服確認後通知。
+        </p>
+
+        {!showReturnForm ? (
+          <button
+            onClick={() => setShowReturnForm(true)}
+            style={{
+              padding: "10px 16px",
+              borderRadius: "6px",
+              border: "1px solid #d33",
+              background: "#fff",
+              color: "#d33",
+              cursor: "pointer",
+            }}
+          >
+            申請退貨
+          </button>
+
+          
+        ) : (
+          <>
+            {/* 退貨原因 */}
+            <div style={{ marginBottom: "12px" }}>
+              <label style={{ display: "block", marginBottom: "6px" }}>
+                退貨原因（必選）
+              </label>
+              <select
+                value={returnReason}
+                onChange={(e) => setReturnReason(e.target.value)}
+                style={{ width: "100%", padding: "8px" }}
+              >
+                <option value="">請選擇原因</option>
+                <option value="size_not_fit">尺寸不合</option>
+                <option value="not_as_expected">商品與描述不符</option>
+                <option value="defect">商品瑕疵</option>
+                <option value="change_mind">改變心意</option>
+                <option value="other">其他</option>
+              </select>
+            </div>
+
+            {/* 補充說明 */}
+            <div style={{ marginBottom: "16px" }}>
+              <label style={{ display: "block", marginBottom: "6px" }}>
+                補充說明（選填）
+              </label>
+              <textarea
+                value={returnNote}
+                onChange={(e) => setReturnNote(e.target.value)}
+                rows={3}
+                placeholder="可補充說明退貨原因（非必填）"
+                style={{ width: "100%", padding: "8px" }}
+              />
+            </div>
+
+            {/* 送出 */}
+            <button
+              disabled={submittingReturn || !returnReason}
+              onClick={handleSubmitReturn}
+              style={{
+                padding: "10px 16px",
+                borderRadius: "6px",
+                border: "none",
+                background: "#000",
+                color: "#fff",
+                cursor: "pointer",
+                opacity: !returnReason ? 0.5 : 1,
+              }}
+            >
+              送出退貨申請
+            </button>
+          </>
+        )}
+      </div>
+    )}
+    {order.returnRequest && (
+      <div
+        style={{
+          marginTop: "32px",
+          padding: "16px",
+          border: "1px solid #ffe58f",
+          background: "#fffbe6",
+          borderRadius: "8px",
+          fontSize: "14px",
+          color: "#8c6d1f",
+        }}
+      >
+        ⚠️ 您已於{" "}
+        {order.returnRequest.requestedAt?.toDate
+          ? order.returnRequest.requestedAt
+              .toDate()
+              .toLocaleDateString("zh-TW")
+          : ""}
+        {" "}
+        申請退貨，目前狀態為「等待商家審核」。
+      </div>
+    )}
+
+
+
     </div>
+
+    
   );
 };
 
