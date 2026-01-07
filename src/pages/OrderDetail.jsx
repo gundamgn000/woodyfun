@@ -357,7 +357,7 @@ const OrderDetail = () => {
           </>
         )}
 
-        {/* 已同意退貨 */}
+        {/* 商家已同意退貨 */}
         {order.returnRequest.status === "approved" && (
           <>
             ✅ 商家已同意您的退貨申請。<br />
@@ -365,28 +365,30 @@ const OrderDetail = () => {
           </>
         )}
 
-        {/* 退貨被拒絕 */}
+        {/* 商家拒絕退貨 */}
         {order.returnRequest.status === "rejected" && (
-  <>
-        ❌ 很抱歉，您的退貨申請未通過。<br />
-        {order.returnRequest.reason && (
           <>
-            原因：
-            {RETURN_REASON_MAP[order.returnRequest.reason] ||
-              order.returnRequest.reason}
+            ❌ 很抱歉，您的退貨申請未通過。<br />
+
+            {order.returnRequest.reason && (
+              <div className="mt-1">
+                原因：
+                {RETURN_REASON_MAP[order.returnRequest.reason] ||
+                  order.returnRequest.reason}
+              </div>
+            )}
+
+            {/* 🔴 新增：商家拒絕說明（後台填寫） */}
+            {order.returnRequest.adminNote && (
+              <div className="mt-2 text-sm text-gray-700">
+                商家說明：{order.returnRequest.adminNote}
+              </div>
+            )}
           </>
         )}
-      </>
-    )}
-
       </div>
     )}
-
-
-
     </div>
-
-    
   );
 };
 

@@ -55,11 +55,14 @@ export default function AdminOrderDetail() {
   const [loading, setLoading] = useState(true);
   const [savingStatus, setSavingStatus] = useState(false);
   const [savingLogistics, setSavingLogistics] = useState(false);
+  const [rejectNote, setRejectNote] = useState("");
+
 
   // 控制欄位
   const [status, setStatus] = useState("pending");
   const [shippingCarrier, setShippingCarrier] = useState("");
-  const [shippingTrackingNumber, setShippingTrackingNumber] = useState("");
+  const [shippingTrackingNumber, setShippingTrackingNumber] = useState("")
+  ;
 
   useEffect(() => {
     loadOrder();
@@ -263,42 +266,44 @@ export default function AdminOrderDetail() {
     isAutoPayment && (currentStatus === "paid" || currentStatus === "completed");
 
   const handleReturnDecision = async (decision) => {
-  if (!order) return;
+    if (!order) return;
 
-  const text =
-    decision === "approved" ? "同意退貨" : "拒絕退貨";
+    if (decision === "rejected" && !rejectNote.trim()) {
+      alert("請填寫拒絕原因說明（會顯示給客戶）");
+      return;
+    }
 
-  if (!window.confirm(`確定要${text}嗎？`)) return;
+    const text = decision === "approved" ? "同意退貨" : "拒絕退貨";
+    if (!window.confirm(`確定要${text}嗎？`)) return;
 
-  try {
-    const ref = doc(db, "orders", orderId);
+    try {
+      const ref = doc(db, "orders", orderId);
 
-    await updateDoc(ref, {
-      "returnRequest.status": decision,
-      "returnRequest.handledAt": Timestamp.now(),
-      "returnRequest.handledBy": user?.email || "admin",
-    });
+      await updateDoc(ref, {
+        "returnRequest.status": decision,
+        "returnRequest.handledAt": Timestamp.now(),
+        "returnRequest.handledBy": user?.email || "admin",
+        ...(decision === "rejected"
+          ? { "returnRequest.adminNote": rejectNote }
+          : {}),
+      });
 
-    await logOrderAction({
-      orderId,
-      action: "return_" + decision,
-      user: { ...user, userRole },
-    });
+      setOrder((prev) => ({
+        ...prev,
+        returnRequest: {
+          ...prev.returnRequest,
+          status: decision,
+          adminNote: decision === "rejected" ? rejectNote : prev.returnRequest.adminNote,
+        },
+      }));
 
-    setOrder((prev) => ({
-      ...prev,
-      returnRequest: {
-        ...prev.returnRequest,
-        status: decision,
-      },
-    }));
+      alert(`已${text}`);
+    } catch (err) {
+      console.error(err);
+      alert("處理退貨失敗");
+    }
+  };
 
-    alert(`已${text}`);
-  } catch (err) {
-    console.error(err);
-    alert("處理退貨失敗");
-  }
-};
 
   return (
     // 修正：使用 Fragment <>...</> 作為單一根元素
@@ -428,43 +433,64 @@ export default function AdminOrderDetail() {
                 ⚠️ 退貨申請處理
               </h2>
 
-             <p className="text-sm">
-              <strong>狀態：</strong>
-              {RETURN_STATUS_LABEL[order.returnRequest.status] ??
-                order.returnRequest.status}
-            </p>
+              {/* 上方狀態資訊 */}
+              <div className="space-y-1 text-sm">
+                <p>
+                  <strong>狀態：</strong>
+                  {RETURN_STATUS_LABEL[order.returnRequest.status] ??
+                    order.returnRequest.status}
+                </p>
 
-            <p className="text-sm">
-              <strong>原因：</strong>
-              {RETURN_REASON_LABEL[order.returnRequest.reason] ??
-                order.returnRequest.reason}
-            </p>
+                <p>
+                  <strong>原因：</strong>
+                  {RETURN_REASON_LABEL[order.returnRequest.reason] ??
+                    order.returnRequest.reason}
+                </p>
 
-            {order.returnRequest.note && (
-              <p className="text-sm">
-                <strong>說明：</strong>
-                {order.returnRequest.note}
-              </p>
-            )}
+                {order.returnRequest.note && (
+                  <p>
+                    <strong>說明：</strong>
+                    {order.returnRequest.note}
+                  </p>
+                )}
+              </div>
 
-
+              {/* 僅在申請中顯示操作區 */}
               {order.returnRequest.status === "requested" && (
-                <div className="flex gap-3 pt-2">
-                  <button
-                    onClick={() => handleReturnDecision("approved")}
-                    className="px-4 py-2 rounded-full bg-black text-white text-sm"
-                  >
-                    同意退貨
-                  </button>
+                <div className="flex gap-6 pt-4 items-stretch">
+                  {/* 左側：操作按鈕 */}
+                  <div className="w-48 flex flex-col justify-between gap-3">
+                    <button
+                      onClick={() => handleReturnDecision("approved")}
+                      className="px-4 py-2 rounded-full bg-black text-white text-sm"
+                    >
+                      同意退貨
+                    </button>
 
-                  <button
-                    onClick={() => handleReturnDecision("rejected")}
-                    className="px-4 py-2 rounded-full border border-gray-400 text-sm"
-                  >
-                    拒絕退貨
-                  </button>
+                    <button
+                      onClick={() => handleReturnDecision("rejected")}
+                      className="px-4 py-2 rounded-full border border-gray-400 text-sm"
+                    >
+                      拒絕退貨
+                    </button>
+                  </div>
+
+                  {/* 右側：拒絕原因說明 */}
+                  <div className="flex-1 flex flex-col">
+                    <label className="text-sm mb-2 font-medium">
+                      拒絕原因說明（會顯示給客戶）
+                    </label>
+
+                    <textarea
+                      value={rejectNote}
+                      onChange={(e) => setRejectNote(e.target.value)}
+                      placeholder="例如：商品已有明顯使用痕跡，超過退貨標準"
+                      className="flex-1 w-full p-1 border border-gray-300 rounded-lg text-sm resize-none"
+                    />
+                  </div>
                 </div>
               )}
+
             </div>
           )}
 
