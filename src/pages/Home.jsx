@@ -146,7 +146,13 @@ const Home = () => {
                 onClick={() => navigate("/products?category=毛衣")}
               >
                 <div className="week-look-card-img">
-                  <img src={knitImg} alt="毛衣 Knitwear" />
+                  <img 
+                    src={knitImg} 
+                    alt="毛衣 Knitwear" 
+                    width="153"   // 根據報告建議的顯示尺寸
+                    height="210" 
+                    loading="lazy" // 非首屏圖片建議延遲載入
+                  />
                 </div>
                 <div className="week-look-card-text">
                   <div className="zh">毛衣</div>
@@ -160,7 +166,13 @@ const Home = () => {
                 onClick={() => navigate("/products?category=短裙")}
               >
                 <div className="week-look-card-img">
-                  <img src={skirtImg} alt="短裙 Skirt" />
+                  <img 
+                    src={skirtImg} 
+                    alt="短裙 Skirt" 
+                    width="153" 
+                    height="181" // 根據報告建議的顯示尺寸
+                    loading="lazy" 
+                  />
                 </div>
                 <div className="week-look-card-text">
                   <div className="zh">短裙</div>
@@ -174,7 +186,13 @@ const Home = () => {
                 onClick={() => navigate("/products?category=外套")}
               >
                 <div className="week-look-card-img">
-                  <img src={coatImg} alt="外套 Outerwear" />
+                  <img 
+                    src={coatImg} 
+                    alt="外套 Outerwear" 
+                    width="153" 
+                    height="206" // 根據報告建議的顯示尺寸
+                    loading="lazy" 
+                  />
                 </div>
                 <div className="week-look-card-text">
                   <div className="zh">外套</div>
