@@ -4,18 +4,18 @@ import { db } from "../firebase/firebase";
 import { useNavigate } from "react-router-dom";
 import ProductCard from "../components/ProductCard";
 import "../pages/Products.css";
-import weekLookImage from "../assets/home/week-look.png";
-import weekLookMobile from "../assets/home/week-look-mobile.jpg";
+import weekLookImage from "../assets/home/week-look.webp";
+import weekLookMobile from "../assets/home/week-look-mobile.webp";
 
 // ===== This Week's Look category images =====
 // 🔧 未來主頁中間方格要換圖片，只要改這裡
-import knitImg from "../assets/week-knit.jpg";
-import skirtImg from "../assets/week-skirt.jpg";
-import coatImg from "../assets/week-coat.jpg";
+import knitImg from "../assets/week-knit.webp";
+import skirtImg from "../assets/week-skirt.webp";
+import coatImg from "../assets/week-coat.webp";
 import "./Home.css";
-import heroDesktop from "../assets/home/hero-desktop.jpg";
+import heroDesktop from "../assets/home/hero-desktop.webp";
 // 🔧 未來要換首頁TOP主圖，只改這行
-import heroMobile from "../assets/home/hero-mobile.png";
+import heroMobile from "../assets/home/hero-mobile.webp";
 
 
 
