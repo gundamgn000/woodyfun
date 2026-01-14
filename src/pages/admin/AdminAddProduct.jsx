@@ -1,103 +1,95 @@
-// ========================================================
-// AdminAddProduct.jsx — 使用 Admin UI 元件版（新增商品）
-// ========================================================
-
 import { useState } from "react";
+import { addDoc, collection, Timestamp } from "firebase/firestore";
 import { db, storage } from "../../firebase/firebase";
-import { collection, addDoc, Timestamp } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { useNavigate } from "react-router-dom";
-
 import imageCompression from "browser-image-compression";
-import {
-  DragDropContext,
-  Droppable,
-  Draggable,
-} from "@hello-pangea/dnd";
-
-// Admin UI Components
-import AdminCard from "../../components/admin/AdminCard";
-import AdminInput from "../../components/admin/AdminInput";
-import AdminTextarea from "../../components/admin/AdminTextarea";
-import AdminButton from "../../components/admin/AdminButton";
-import AdminLayout from "../../components/admin/AdminLayout";
+import { useAuth } from "../../context/AuthContext";
 
 export default function AdminAddProduct() {
-  const navigate = useNavigate();
+  const { user } = useAuth();
 
+  const [loading, setLoading] = useState(false);
   const [product, setProduct] = useState({
     name: "",
     description: "",
     price: "",
     stock: "",
     category: "",
+    status: "active",
     sizes: "",
     tags: "",
-    status: "active",
   });
 
   const [mainImage, setMainImage] = useState(null);
-  const [galleryImages, setGalleryImages] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [subImages, setSubImages] = useState([]);
 
-  // 通用欄位更新
-  const updateField = (field, value) =>
-    setProduct((prev) => ({ ...prev, [field]: value }));
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setProduct((prev) => ({ ...prev, [name]: value }));
+  };
 
-  // 壓縮圖片
-  const compressImage = async (file) =>
-    await imageCompression(file, {
-      maxSizeMB: 0.3,
-      maxWidthOrHeight: 1800,
+  const handleMainImageChange = (e) => {
+    setMainImage(e.target.files[0]);
+  };
+
+  const handleSubImagesChange = (e) => {
+    setSubImages(Array.from(e.target.files));
+  };
+
+  const uploadImage = async (file, path) => {
+    const compressedFile = await imageCompression(file, {
+      maxSizeMB: 0.8,
+      maxWidthOrHeight: 1600,
       useWebWorker: true,
     });
 
-  // 上傳圖片
-  const uploadImage = async (file) => {
-    const compressed = await compressImage(file);
-    const fileRef = ref(storage, `products/${Date.now()}-${file.name}`);
-    await uploadBytes(fileRef, compressed);
-    return await getDownloadURL(fileRef);
+    const storageRef = ref(storage, path);
+    await uploadBytes(storageRef, compressedFile);
+    return await getDownloadURL(storageRef);
   };
 
-  // 拖曳排序
-  const handleDragEnd = (result) => {
-    if (!result.destination) return;
-    const reordered = [...galleryImages];
-    const [moved] = reordered.splice(result.source.index, 1);
-    reordered.splice(result.destination.index, 0, moved);
-    setGalleryImages(reordered);
-  };
-
-  // 新增商品
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!product.name || !product.price || !mainImage) {
-      alert("請至少填入商品名稱、價格並上傳主圖");
+    // 🔒 必補：登入狀態保護
+    if (!user) {
+      alert("登入狀態異常，請重新登入後再試一次");
       return;
     }
 
-    setLoading(true);
+    if (!product.name || !product.price || !mainImage) {
+      alert("請至少填寫商品名稱、價格，並上傳主圖");
+      return;
+    }
 
     try {
+      setLoading(true);
+
       // 主圖
-      const mainImageUrl = await uploadImage(mainImage);
+      const mainImageUrl = await uploadImage(
+        mainImage,
+        `products/main/${Date.now()}_${mainImage.name}`
+      );
 
       // 副圖
       const subImageUrls = [];
-      for (let img of galleryImages) {
-        const url = await uploadImage(img);
-        if (url) subImageUrls.push(url);
+      for (const img of subImages) {
+        const url = await uploadImage(
+          img,
+          `products/sub/${Date.now()}_${img.name}`
+        );
+        subImageUrls.push(url);
       }
 
       const sizesArray = product.sizes
-        ? product.sizes.split(",").map((s) => s.trim()).filter(Boolean)
-        : [];
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
 
       const tagsArray = product.tags
-        ? product.tags.split(",").map((t) => t.trim()).filter(Boolean)
-        : [];
+        .split(",")
+        .map((t) => t.trim())
+        .filter(Boolean);
 
       await addDoc(collection(db, "products"), {
         name: product.name,
@@ -110,208 +102,115 @@ export default function AdminAddProduct() {
         tags: tagsArray,
         mainImageUrl,
         subImageUrls,
+
+        // ⭐ admin 專用欄位（關鍵）
+        createdBy: user.uid,
         createdAt: Timestamp.now(),
-        
+        updatedAt: Timestamp.now(),
       });
 
-      alert("商品已新增！");
-      navigate("/admin/products");
-    } catch (error) {
-      console.error(error);
-      alert("新增失敗，請稍後再試");
+      alert("商品新增成功");
+
+      // reset
+      setProduct({
+        name: "",
+        description: "",
+        price: "",
+        stock: "",
+        category: "",
+        status: "active",
+        sizes: "",
+        tags: "",
+      });
+      setMainImage(null);
+      setSubImages([]);
+    } catch (err) {
+      console.error("新增商品失敗", err);
+      alert("新增失敗，請確認權限或稍後再試");
     } finally {
       setLoading(false);
     }
   };
 
-  // ======================= UI ============================
   return (
-     
-      <div className="max-w-5xl mx-auto px-6 pb-16">
-        <h1 className="text-3xl font-semibold tracking-wide mb-8 text-gray-800">
-           新增商品
-        </h1>
+    <div className="max-w-4xl mx-auto">
+      <h2 className="text-2xl font-bold mb-6">新增商品</h2>
 
-        <form onSubmit={handleSubmit}>
-          <AdminCard className="space-y-12">
-            {/* 上半部：左文字欄位 + 右主圖 */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-              {/* 左側欄位 */}
-              <div className="space-y-6">
-                <AdminInput
-                  label="商品名稱"
-                  name="name"
-                  value={product.name}
-                  onChange={(e) => updateField("name", e.target.value)}
-                  placeholder="例：和服,外套"
-                />
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <input
+          name="name"
+          value={product.name}
+          onChange={handleChange}
+          placeholder="商品名稱"
+          className="w-full border p-2"
+        />
 
-                <AdminTextarea
-                  label="商品描述"
-                  name="description"
-                  value={product.description}
-                  onChange={(e) => updateField("description", e.target.value)}
-                  rows={4}
-                  placeholder="輸入材質、特色、洗滌方式……"
-                />
+        <textarea
+          name="description"
+          value={product.description}
+          onChange={handleChange}
+          placeholder="商品描述"
+          className="w-full border p-2"
+        />
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5 form-section">
-                  <AdminInput
-                    label="價格"
-                    type="number"
-                    name="price"
-                    value={product.price}
-                    onChange={(e) => updateField("price", e.target.value)}
-                    placeholder="例：1600"
-                  />
-                  <AdminInput
-                    label="庫存"
-                    type="number"
-                    name="stock"
-                    value={product.stock}
-                    onChange={(e) => updateField("stock", e.target.value)}
-                    placeholder="例：10"
-                  />
-                </div>
+        <input
+          name="price"
+          type="number"
+          value={product.price}
+          onChange={handleChange}
+          placeholder="價格"
+          className="w-full border p-2"
+        />
 
-                <AdminInput
-                  label="分類"
-                  name="category"
-                  value={product.category}
-                  onChange={(e) => updateField("category", e.target.value)}
-                  placeholder="例：外套 / 洋裝 / 和服"
-                />
+        <input
+          name="stock"
+          type="number"
+          value={product.stock}
+          onChange={handleChange}
+          placeholder="庫存"
+          className="w-full border p-2"
+        />
 
-                <AdminInput
-                  label="尺寸（逗號分隔）"
-                  name="sizes"
-                  value={product.sizes}
-                  onChange={(e) => updateField("sizes", e.target.value)}
-                  placeholder="S, M, L"
-                />
+        <input
+          name="category"
+          value={product.category}
+          onChange={handleChange}
+          placeholder="分類"
+          className="w-full border p-2"
+        />
 
-                <AdminInput
-                  label="Tags（逗號分隔）"
-                  name="tags"
-                  value={product.tags}
-                  onChange={(e) => updateField("tags", e.target.value)}
-                  placeholder="冬季, 限量, 黑色"
-                />
-              </div>
+        <input
+          name="sizes"
+          value={product.sizes}
+          onChange={handleChange}
+          placeholder="尺寸（逗號分隔）"
+          className="w-full border p-2"
+        />
 
-              {/* 右側：主圖 */}
-              <div className="space-y-4 form-section">
-                <label className="field-label">主圖（封面）</label>
-                <div
-                  className="dropzone h-64 group relative overflow-hidden"
-                  onClick={() =>
-                    document.getElementById("main-img-input")?.click()
-                  }
-                >
-                  {mainImage ? (
-                    <img
-                      src={URL.createObjectURL(mainImage)}
-                      alt="主圖預覽"
-                      className="w-full h-full object-cover rounded-2xl transition duration-300 group-hover:scale-[1.04]"
-                    />
-                  ) : (
-                    <p className="text-gray-500 text-sm">
-                      點擊選擇主圖（建議 3:4 / 4:5）
-                    </p>
-                  )}
-                </div>
+        <input
+          name="tags"
+          value={product.tags}
+          onChange={handleChange}
+          placeholder="標籤（逗號分隔）"
+          className="w-full border p-2"
+        />
 
-                <input
-                  id="main-img-input"
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={(e) => {
-                    if (e.target.files[0]) setMainImage(e.target.files[0]);
-                  }}
-                />
-              </div>
-            </div>
+        <input type="file" accept="image/*" onChange={handleMainImageChange} />
+        <input
+          type="file"
+          accept="image/*"
+          multiple
+          onChange={handleSubImagesChange}
+        />
 
-            {/* 副圖區 */}
-            <div className="space-y-4 form-section">
-              <label className="field-label">副圖（可多張、可拖曳排序）</label>
-
-              <div
-                className="dropzone h-32"
-                onClick={() =>
-                  document.getElementById("sub-img-input")?.click()
-                }
-              >
-                <p className="text-gray-500 text-sm">點擊新增副圖</p>
-              </div>
-
-              <input
-                id="sub-img-input"
-                type="file"
-                accept="image/*"
-                multiple
-                className="hidden"
-                onChange={(e) => {
-                  if (!e.target.files?.length) return;
-                  setGalleryImages([
-                    ...galleryImages,
-                    ...Array.from(e.target.files),
-                  ]);
-                }}
-              />
-
-              <DragDropContext onDragEnd={handleDragEnd}>
-                <Droppable droppableId="gallery">
-                  {(provided) => (
-                    <div
-                      ref={provided.innerRef}
-                      {...provided.droppableProps}
-                      className="grid grid-cols-3 md:grid-cols-4 gap-4"
-                    >
-                      {galleryImages.map((file, index) => (
-                        <Draggable
-                          key={file.name + index}
-                          draggableId={file.name + index}
-                          index={index}
-                        >
-                          {(provided) => (
-                            <div
-                              ref={provided.innerRef}
-                              {...provided.draggableProps}
-                              {...provided.dragHandleProps}
-                              className="relative group"
-                            >
-                              <img
-                                src={URL.createObjectURL(file)}
-                                className="h-28 w-full object-cover rounded-xl shadow group-hover:scale-[1.05] transition"
-                              />
-                            </div>
-                          )}
-                        </Draggable>
-                      ))}
-                      {provided.placeholder}
-                    </div>
-                  )}
-                </Droppable>
-              </DragDropContext>
-            </div>
-
-            {/* 送出按鈕 */}
-            <div className="pt-4">
-              <AdminButton
-                type="submit"
-                variant="primary" // 黑底白字
-                disabled={loading}
-                className="w-full justify-center"
-              >
-                {loading ? "處理中…" : "新增商品"}
-              </AdminButton>
-            </div>
-          </AdminCard>
-        </form>
-      </div>
-     
-    
+        <button
+          type="submit"
+          disabled={loading}
+          className="px-6 py-2 bg-black text-white rounded"
+        >
+          {loading ? "上傳中..." : "新增商品"}
+        </button>
+      </form>
+    </div>
   );
 }

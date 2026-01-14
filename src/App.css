@@ -4,7 +4,11 @@
   padding: 2rem;
   text-align: center;
 }
+@import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@500;700&family=Noto+Sans+TC:wght@500;700&display=swap');
 
+.font-rounded {
+  font-family: 'Quicksand', 'Noto Sans TC', sans-serif;
+}
 .logo {
   height: 6em;
   padding: 1.5em;
@@ -64,4 +68,21 @@
 /* 點擊 — 輕微縮小 */
 .member-card:active {
   transform: scale(0.97);
+}
+
+/* 確保主內容區塊不會被左側 Navbar 擋住 */
+main, 
+.home-container, 
+.products-container {
+  margin-left: 260px; /* 這裡要等於 Navbar 的寬度 */
+  width: calc(100% - 260px);
+  min-height: 100vh;
+}
+
+/* 手機版自動切換回原本的樣子 */
+@media (max-width: 768px) {
+  main, .home-container, .products-container {
+    margin-left: 0;
+    width: 100%;
+  }
 }

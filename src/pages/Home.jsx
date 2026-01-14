@@ -3,33 +3,23 @@ import { collection, getDocs, query, limit, orderBy } from "firebase/firestore";
 import { db } from "../firebase/firebase";
 import { useNavigate } from "react-router-dom";
 import ProductCard from "../components/ProductCard";
-import "../pages/Products.css";
-import weekLookImage from "../assets/home/week-look.webp";
-import weekLookMobile from "../assets/home/week-look-mobile.webp";
-
-// ===== This Week's Look category images =====
-// 🔧 未來主頁中間方格要換圖片，只要改這裡
-import knitImg from "../assets/week-knit.webp";
-import skirtImg from "../assets/week-skirt.webp";
-import coatImg from "../assets/week-coat.webp";
 import "./Home.css";
+
+// ===== 圖片導入區 =====
+// 🔧 這裡請替換成你實際的圖片路徑
+//import sensoryImg from "../assets/home/cat-sensory.jpg"; // 感官啟蒙
+//import puzzleImg from "../assets/home/cat-puzzle.jpg";   // 益智拼圖
+//import logicImg from "../assets/home/cat-logic.jpg";     // 建構邏輯
 import heroDesktop from "../assets/home/hero-desktop.webp";
-// 🔧 未來要換首頁TOP主圖，只改這行
 import heroMobile from "../assets/home/hero-mobile.webp";
-
-
-
-
-
-
-
-
-
-
+const sensoryImg = "https://placehold.co/600x400/faf9f6/6a625d?text=Sensory+Toys";
+const puzzleImg = "https://placehold.co/600x400/faf9f6/6a625d?text=Puzzles";
+const logicImg = "https://placehold.co/600x400/faf9f6/6a625d?text=Logic+Blocks";
 const Home = () => {
   const navigate = useNavigate();
   const [newArrivals, setNewArrivals] = useState([]);
 
+  // 抓取最新上架產品
   useEffect(() => {
     const fetchNewArrivals = async () => {
       try {
@@ -45,192 +35,112 @@ const Home = () => {
         }));
         setNewArrivals(items);
       } catch (err) {
-        console.error("Failed to fetch new arrivals:", err);
+        console.error("Error fetching new arrivals:", err);
       }
     };
-
     fetchNewArrivals();
   }, []);
 
   return (
-    <main>
-     {/* ================= Hero / Main Visual ================= */}
-      <section
-        className="hero hero-desktop"
-        style={{
-          backgroundImage: `url(${heroDesktop})`
-        }}
-      >
-        {/* 建議移除或淡化 overlay，讓圖片自然呈現 */}
-        {/* <div className="hero-overlay" /> */}
-
+    <div className="home-container">
+      {/* 1. Hero Section - 品牌大圖 */}
+      <section className="hero-desktop">
+        <div className="hero-overlay" />
         <div className="hero-content">
-          <h1 className="hero-title">
-            Insensible to Weight,<br />
-          As Soft as a Feather.  
+          <h1 className="text-brand-wood font-serif">
+            用自然的溫度 <br /> 
+            <span className="text-brand-orange text-5xl md:text-6xl">相伴孩子的每一天</span>
           </h1>
-
-          {/* 如果要完全還原目標圖，可以暫時移除這段中文 */}
-          {/* <p>
-            溫柔・日常・剛剛好的穿搭選擇<br />
-            為每一個平凡卻重要的日子而存在
-          </p> */}
-
-          <button
-            className="hero-button"
-            onClick={() => navigate("/products/new")}
-          >
-            Shop New Arrivals <span className="arrow">→</span>
-          </button>
-        </div>
-      </section>
-
-
-      {/* 手機版 Hero（先放結構，之後再調） */}
-      {/* Mobile Hero */}
-    
-      {/* ===== Mobile Hero ===== */}
-      <section
-        className="hero hero-mobile"
-        style={{
-          backgroundImage: `url(${heroMobile})`
-        }}
-      >
-        <div className="hero-overlay-mobile" />
-
-        <div className="hero-content-mobile">
-          <h1>
-            Insensible to Weight,<br />
-            As Soft as a Feather.
-          </h1>
-
-          <button
-            className="hero-button"
-            onClick={() => navigate("/products/new")}
-          >
-            SHOP NEW ARRIVALS
-          </button>
-        </div>
-      </section>
-
-      
-      {/* ================= This Week's Look ================= */}
-      <section className="week-look">
-        <div className="week-look-container">
-          <h2 className="week-look-title">This Week’s Look</h2>
-          <p className="week-look-subtitle">
-            A gentle knit for quiet afternoons.
+          <p className="mt-6 text-gray-600 tracking-widest text-lg leading-relaxed">
+            精選學齡前益智玩具，<br />
+            陪伴孩子啟動探索與學習的第一步。
           </p>
-
-          <div className="week-look-grid">
-            {/* 左側主視覺 */}
-            <div
-              className="week-look-image week-look-desktop"
-              style={{ backgroundImage: `url(${weekLookImage})` }}
-            >
-              <div className="week-look-gradient" />
-            </div>
-
-            {/* Mobile image */}
-            <div
-              className="week-look-image week-look-mobile"
-              style={{ backgroundImage: `url(${weekLookMobile})` }}
-            >
-            </div>
-
-            {/* 右側分類卡 */}
-            <div className="week-look-categories">
-              {/* 毛衣 */}
-              <div
-                className="week-look-card"
-                onClick={() => navigate("/products?category=毛衣")}
-              >
-                <div className="week-look-card-img">
-                  <img 
-                    src={knitImg} 
-                    alt="毛衣 Knitwear" 
-                    width="153"   // 根據報告建議的顯示尺寸
-                    height="210" 
-                    loading="lazy" // 非首屏圖片建議延遲載入
-                  />
-                </div>
-                <div className="week-look-card-text">
-                  <div className="zh">毛衣</div>
-                  <div className="en">Knitwear</div>
-                </div>
-              </div>
-
-              {/* 短裙 */}
-              <div
-                className="week-look-card"
-                onClick={() => navigate("/products?category=短裙")}
-              >
-                <div className="week-look-card-img">
-                  <img 
-                    src={skirtImg} 
-                    alt="短裙 Skirt" 
-                    width="153" 
-                    height="181" // 根據報告建議的顯示尺寸
-                    loading="lazy" 
-                  />
-                </div>
-                <div className="week-look-card-text">
-                  <div className="zh">短裙</div>
-                  <div className="en">Skirt</div>
-                </div>
-              </div>
-
-              {/* 外套 */}
-              <div
-                className="week-look-card"
-                onClick={() => navigate("/products?category=外套")}
-              >
-                <div className="week-look-card-img">
-                  <img 
-                    src={coatImg} 
-                    alt="外套 Outerwear" 
-                    width="153" 
-                    height="206" // 根據報告建議的顯示尺寸
-                    loading="lazy" 
-                  />
-                </div>
-                <div className="week-look-card-text">
-                  <div className="zh">外套</div>
-                  <div className="en">Outerwear</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-
-
-      {/* ================= New Arrivals ================= */}
-      <section style={{ padding: "4rem 1.5rem" }}>
-        <div style={{ maxWidth: 1200, margin: "0 auto" }}>
-          <h2
-            style={{
-              textAlign: "center",
-              fontWeight: 400,
-              letterSpacing: "0.15em",
-              marginBottom: "3rem"
-            }}
+          <button 
+            onClick={() => navigate("/products")}
+            className="mt-10 bg-[#f39c42] text-white px-10 py-4 rounded-full shadow-lg hover:shadow-xl hover:bg-opacity-90 transition-all font-bold tracking-widest"
           >
-            NEW ARRIVALS
-          </h2>
-
-          <div className="home-products-wrapper">
-            <div className="products-grid">
-              {newArrivals.map(product => (
-                <ProductCard key={product.id} product={product} />
-              ))}
-            </div>
-          </div>
-
+            探索木育系列
+          </button>
         </div>
       </section>
-    </main>
+
+      {/* 2. Toy Categories - 玩具分類 */}
+      <section className="week-look-section">
+        <div className="max-w-6xl mx-auto px-4">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl text-[#6a625d] tracking-[0.2em] font-bold mb-4">
+              玩具分類
+            </h2>
+            <div className="w-12 h-1 bg-[#f39c42] mx-auto"></div>
+          </div>
+          
+          <div className="week-look-grid">
+            {/* 分類 1: 感官啟蒙 */}
+            <div className="week-look-card" onClick={() => navigate("/products?category=感官啟蒙")}>
+              <div className="week-look-card-img">
+                <img src={sensoryImg} alt="感官啟蒙" loading="lazy" />
+              </div>
+              <div className="week-look-card-text">
+                <div className="zh text-[#6a625d]">感官啟蒙</div>
+                <div className="en text-[#94a672]">Sensory Play</div>
+              </div>
+            </div>
+
+            {/* 分類 2: 益智拼圖 */}
+            <div className="week-look-card" onClick={() => navigate("/products?category=益智拼圖")}>
+              <div className="week-look-card-img">
+                <img src={puzzleImg} alt="益智拼圖" loading="lazy" />
+              </div>
+              <div className="week-look-card-text">
+                <div className="zh text-[#6a625d]">益智拼圖</div>
+                <div className="en text-[#94a672]">Puzzles & Games</div>
+              </div>
+            </div>
+
+            {/* 分類 3: 建構邏輯 */}
+            <div className="week-look-card" onClick={() => navigate("/products?category=建構邏輯")}>
+              <div className="week-look-card-img">
+                <img src={logicImg} alt="建構邏輯" loading="lazy" />
+              </div>
+              <div className="week-look-card-text">
+                <div className="zh text-[#6a625d]">建構邏輯</div>
+                <div className="en text-[#94a672]">Building Blocks</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 3. New Arrivals - 最新上架 */}
+      <section className="py-24 px-8 bg-white">
+        <div className="max-w-6xl mx-auto">
+          <div className="flex items-center justify-between mb-12 border-b border-gray-100 pb-6">
+            <h2 className="text-2xl text-[#6a625d] tracking-[0.15em] font-bold">
+              NEW ARRIVALS <span className="text-gray-300 font-light ml-2">/ 最新上架</span>
+            </h2>
+            <button 
+              onClick={() => navigate("/products")}
+              className="text-[#f39c42] hover:underline text-sm font-medium"
+            >
+              查看全部 →
+            </button>
+          </div>
+
+          <div className="products-grid">
+            {newArrivals.map(product => (
+              <ProductCard key={product.id} product={product} />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* 4. Footer Placeholder - 品牌小語 */}
+      <section className="bg-[#e8a348ff] py-16 text-center text-white">
+        <p className="italic tracking-widest opacity-90">
+          " Every wooden toy has its own story and warmth. "
+        </p>
+      </section>
+    </div>
   );
 };
 

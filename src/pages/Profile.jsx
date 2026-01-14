@@ -1,110 +1,75 @@
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
-
+import "./Profile.css";
 
 export default function Profile() {
-  const { user, userProfile, logout } = useAuth(); // ✅ 一定要拿 logout
-  const navigate = useNavigate(); // ⭐ 一定要有
+  const { user, userProfile, logout } = useAuth();
+  const navigate = useNavigate();
+  
   const handleLogout = async () => {
     await logout();
-    navigate("/"); // ⭐ 關鍵
+    navigate("/");
   };
-  
-
 
   return (
-    <div className="min-h-screen bg-white pt-32 pb-20 px-6">
-      <div className="max-w-6xl mx-auto text-center">
-        <h1
-          className="text-4xl font-light mb-16 tracking-widest"
-          style={{ fontFamily: "Playfair Display, serif" }}
-        >
-          MEMBER CENTER
-        </h1>
+    <div className="member-page-container">
+      <div className="member-max-width">
+        <header className="member-header">
+          <h1 className="member-title">個人資料/訂單</h1>
+          <p className="member-subtitle">歡迎回來，親愛的家長</p>
+        </header>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-
+        <div className="member-grid">
           {/* 個人資料 */}
-          <div className="border rounded-3xl p-8 shadow-sm">
-            <h2 className="text-xl font-semibold mb-4">個人資料</h2>
-            <p className="text-gray-700">
-              姓名：{userProfile?.name || "未設定"}
-            </p>
-            <p className="text-gray-700 mt-2">
-              Email：{user?.email}
-            </p>
-          </div>
-
-          {/* 編輯資料 */}
-          <div className="border rounded-3xl p-8 shadow-sm">
-            <h2 className="text-xl font-semibold mb-4">編輯資料</h2>
-            <p className="text-gray-600 mb-4">
-              修改您的姓名、Email 等資料
-            </p>
-            <Link
-              to="/profile/edit"
-              className="text-sm underline hover:text-gray-500 tracking-wider"
-            >
-              EDIT PROFILE →
-            </Link>
-          </div>
-
-          {/* 修改密碼 */}
-          <div className="border rounded-3xl p-8 shadow-sm">
-            <h2 className="text-xl font-semibold mb-4">修改密碼</h2>
-            <p className="text-gray-600 mb-4">更改您的登入密碼</p>
-            <Link
-              to="/profile/password"
-              className="text-sm underline hover:text-gray-500 tracking-wider"
-            >
-              CHANGE PASSWORD →
+          <div className="member-card">
+            <div className="card-top">
+              <span className="card-emoji">👤</span>
+              <h2 className="card-h2">個人資料</h2>
+              <div className="card-info">
+                <p>姓名：<span>{userProfile?.name || "未設定"}</span></p>
+                <p>帳號：<span>{user?.email}</span></p>
+              </div>
+            </div>
+            <Link to="/profile/edit" className="card-link text-orange">
+              編輯帳號資料 →
             </Link>
           </div>
 
           {/* 我的收藏 */}
-          <div className="border rounded-3xl p-8 shadow-sm">
-            <h2 className="text-xl font-semibold mb-4">我的收藏</h2>
-            <p className="text-gray-600 mb-4">查看您收藏的商品</p>
-            <Link
-              to="/wishlist"
-              className="text-sm underline hover:text-gray-500 tracking-wider"
-            >
+          <div className="member-card">
+            <div className="card-top">
+              <span className="card-emoji">❤️</span>
+              <h2 className="card-h2">我的收藏</h2>
+              <p className="card-p">查看您珍藏的木育玩具清單</p>
+            </div>
+            <Link to="/wishlist" className="card-link text-green">
               VIEW WISHLIST →
             </Link>
           </div>
 
           {/* 歷史訂單 */}
-          <div className="border rounded-3xl p-8 shadow-sm">
-            <h2 className="text-xl font-semibold mb-4">歷史訂單</h2>
-            <p className="text-gray-600 mb-6">
-              查看您的過去訂單與目前訂單處理狀態
-            </p>
-            <Link
-              to="/orders"
-              className="text-sm underline tracking-wider"
-            >
+          <div className="member-card">
+            <div className="card-top">
+              <span className="card-emoji">📦</span>
+              <h2 className="card-h2">歷史訂單</h2>
+              <p className="card-p">追蹤您的訂單進度與過往紀錄</p>
+            </div>
+            <Link to="/orders" className="card-link text-wood">
               ORDER HISTORY →
             </Link>
           </div>
 
-          {/* 登出 */}
-          <div className="border border-red-300  rounded-3xl p-8 shadow-sm flex flex-col justify-between">
-            <div>
-              <h2 className="text-xl font-semibold mb-4 text-red-500">登出</h2>
-              <p className="text-red-400 mb-6">
-                登出目前帳號，返回首頁
-              </p>
+          {/* 登出卡片 */}
+          <div className="member-card logout-card">
+            <div className="card-top">
+              <h2 className="card-h2 text-red-500">安全登出</h2>
+              <p className="card-p">結束本次瀏覽，我們下次見！</p>
             </div>
-
-            <button
-              onClick={handleLogout}
-              className="text-sm underline tracking-wider text-center text-red-600 hover:text-red-800 font-medium"
-            >
-              LOG OUT →
+            <button onClick={handleLogout} className="member-logout-btn text-red-500">
+              登出帳號
             </button>
           </div>
-
         </div>
       </div>
     </div>

@@ -32,6 +32,7 @@ const Cart = lazy(() => import("./pages/Cart"));
 const NewArrivals = lazy(() => import("./pages/NewArrivals"));
 const Member = lazy(() => import("./pages/Member"));
 const Wishlist = lazy(() => import("./pages/Wishlist"));
+const About = lazy(() => import("./pages/About"));
 
 /* ===== Admin (這些是影響分數最重的部分，改為 lazy 能顯著提分) ===== */
 const AdminRoute = lazy(() => import("./routes/AdminRoute"));
@@ -62,6 +63,7 @@ function App() {
                       <Route path="/products" element={<Products />} />
                       <Route path="/products/:id" element={<ProductDetail />} />
                       <Route path="/products/new" element={<NewArrivals />} />
+                      
 
                       {/* Auth */}
                       <Route path="/login" element={<Login />} />
@@ -89,6 +91,8 @@ function App() {
                       <Route path="/new" element={<NewArrivals />} />
                       <Route path="/member" element={<Member />} />
                       <Route path="/wishlist" element={<Wishlist />} />
+                      <Route path="/about" element={<About />} />
+                      
 
                       {/* Admin */}
                       <Route

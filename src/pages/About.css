@@ -1,0 +1,14 @@
+.about-page-container {
+  margin-left: 260px;
+  padding: 100px 50px;
+  background-color: #fff;
+}
+.about-img-box {
+  background: #faf9f6;
+  border-radius: 40px;
+  overflow: hidden;
+  aspect-ratio: 4/3;
+}
+@media (max-width: 1024px) {
+  .about-page-container { margin-left: 0; padding: 60px 20px; }
+}
