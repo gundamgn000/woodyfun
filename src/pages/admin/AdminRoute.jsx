@@ -1,3 +1,8 @@
+import { Navigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import { useEffect, useState } from "react";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "../firebase/firebase"; // ✅ 統一路徑
 import { Routes, Route, Navigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 

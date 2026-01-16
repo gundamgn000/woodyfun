@@ -1,5 +1,5 @@
 import React, { Suspense, lazy } from "react"; // 引入 lazy 和 Suspense
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 
 import { AuthProvider } from "./context/AuthContext";
 import { CartProvider } from "./context/CartContext";
@@ -62,8 +62,13 @@ function App() {
                       <Route path="/" element={<Home />} />
                       <Route path="/products" element={<Products />} />
                       <Route path="/products/:id" element={<ProductDetail />} />
-                      <Route path="/products/new" element={<NewArrivals />} />
-                      
+                      <Route path="/products/new" element={<ProductDetail />} />
+
+                      <Route path="/product/new" element={<ProductDetail />} />
+                      <Route path="/product/:id" element={<ProductDetail />} />
+
+
+
 
                       {/* Auth */}
                       <Route path="/login" element={<Login />} />

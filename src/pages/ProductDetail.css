@@ -1,92 +1,197 @@
-/* 主圖容器 */
-.product-main-image-wrapper {
-  width: 100%;
-  border-radius: 8px;
+/* ProductDetail.css - WoodyFun 質感版 */
+
+.product-detail-page-v2 {
+  margin-left: 260px;
+  padding: 80px 40px;
+  background-color: #ffffff;
+  min-height: 100vh;
+}
+
+@media (max-width: 1023px) {
+  .product-detail-page-v2 {
+    margin-left: 0;
+    padding: 100px 20px 40px;
+  }
+}
+
+.detail-main-layout {
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: 60px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+@media (max-width: 900px) {
+  .detail-main-layout { grid-template-columns: 1fr; }
+}
+
+/* 圖片展現 */
+.main-image-card {
+  background-color: #faf9f6;
+  border-radius: 40px;
+  aspect-ratio: 1/1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   overflow: hidden;
 }
 
-
-/* 主圖（含切換動畫） */
-.product-main-image {
+.main-display-img {
   width: 100%;
-  height: auto;
-  border-radius: 8px;
-  cursor: zoom-in;
+  height: 100%;
+  object-fit: contain;
+  padding: 40px;
 }
 
-.fade-in {
-  animation: fadeIn 0.35s ease-in-out;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: scale(0.98);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-/* 縮圖列表 */
-.product-thumbnails {
+.detail-thumbnails {
   display: flex;
-  gap: 10px;
-  margin-top: 14px;
+  gap: 12px;
+  margin-top: 20px;
 }
 
-.thumbnail {
+.thumb-box {
   width: 70px;
   height: 70px;
-  object-fit: cover;
-  border-radius: 6px;
+  border-radius: 15px;
+  background: #faf9f6;
+  padding: 10px;
   cursor: pointer;
-  opacity: 0.75;
-  transition: all 0.2s ease;
   border: 2px solid transparent;
 }
 
-.thumbnail:hover {
-  opacity: 1;
-  transform: scale(1.05);
+.thumb-box.active { border-color: #f39c42; }
+
+/* 資訊區域 */
+.brand-tag {
+  color: #94a672;
+  font-weight: 800;
+  letter-spacing: 2px;
+  font-size: 13px;
+  margin-bottom: 10px;
 }
 
-.thumbnail.active {
-  border-color: black;
-  opacity: 1;
+.product-title-big {
+  font-size: 2.5rem;
+  color: #6a625d;
+  font-weight: 700;
+  margin-bottom: 10px;
 }
 
-/* --- 商品名稱：強化字距與日系感 --- */
-.product-name-premium {
-  font-family: 'Playfair Display', "Noto Serif TC", serif; /* 襯線體是精品感的核心 */
-  letter-spacing: 0.12em; /* 拉開字距，產生呼吸感 */
-  color: #1f2937;
-  line-height: 1.4;
+.price-tag-v2 {
+  font-size: 2rem;
+  color: #f39c42;
+  font-weight: 800;
+  margin-bottom: 30px;
 }
 
-/* --- 價格：調整為質感的玫瑰粉 --- */
-.product-price-premium {
-  /* 這是比純粉色更有質感的色號，推薦試試看 */
-  color: #D4A5A5; 
-  font-family: 'Montserrat', sans-serif;
-  letter-spacing: -0.02em; /* 數字稍微縮緊，看起來更扎實 */
+.description-text {
+  color: #8c8580;
+  line-height: 1.8;
+  margin-bottom: 40px;
 }
 
-.currency-symbol {
-  font-size: 0.6em;
-  font-weight: 300;
-  margin-right: 2px;
+/* 按鈕與控制 */
+.qty-control {
+  display: flex;
+  align-items: center;
+  border: 1px solid #f0eee9;
+  border-radius: 12px;
+  margin-right: 15px;
 }
 
-/* 商品詳情頁標題專用 */
-/* ProductDetail.css */
-.product-detail-title-custom {
-  /* 加上 !important 確保優先級 */
-  font-weight: 500 !important; 
-  letter-spacing: 0.15em !important; 
-  line-height: 1.4 !important;
-  font-family: 'Playfair Display', serif !important;
-  display: block;
+.qty-control button {
+  width: 40px;
+  height: 45px;
+  background: none;
+  border: none;
+  cursor: pointer;
 }
 
+.qty-control input {
+  width: 40px;
+  text-align: center;
+  border: none;
+  font-weight: 700;
+}
+
+.btn-add-cart {
+  flex: 1;
+  background: #6a625d;
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.btn-add-cart:hover { background: #f39c42; }
+
+.action-area { display: flex; height: 50px; gap: 10px; }
+
+/* 評價區塊 */
+.reviews-section-v2 {
+  margin-top: 100px;
+  border-top: 1px solid #f0eee9;
+  padding-top: 60px;
+}
+
+.review-layout {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr;
+  gap: 40px;
+}
+
+.write-review-card {
+  background: #faf9f6;
+  padding: 30px;
+  border-radius: 24px;
+}
+
+.star-active { color: #f39c42; font-size: 1.5rem; cursor: pointer; }
+.star-empty { color: #d1ccc0; font-size: 1.5rem; cursor: pointer; }
+
+.write-review-card textarea {
+  width: 100%;
+  height: 100px;
+  border-radius: 12px;
+  border: 1px solid #e0ddd5;
+  padding: 15px;
+  margin: 15px 0;
+}
+
+.review-item {
+  border-bottom: 1px solid #f0eee9;
+  padding: 20px 0;
+}
+
+.user-name { font-weight: 700; color: #6a625d; margin-right: 10px; }
+.user-rating { color: #f39c42; }
+
+/* 推薦商品卡片 */
+.recommend-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 30px;
+  margin-top: 40px;
+}
+
+.mini-card { text-decoration: none; }
+.mini-img-box {
+  background: #faf9f6;
+  border-radius: 20px;
+  aspect-ratio: 1/1;
+  overflow: hidden;
+  margin-bottom: 10px;
+}
+
+.mini-img-box img { width: 100%; height: 100%; object-fit: contain; padding: 15px; }
+.mini-card h4 { color: #6a625d; font-size: 1rem; }
+.mini-card p { color: #f39c42; font-weight: 700; }
+
+.loading-screen {
+  padding: 100px;
+  text-align: center;
+  color: #6a625d;
+}
