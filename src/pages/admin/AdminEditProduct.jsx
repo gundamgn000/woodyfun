@@ -237,6 +237,20 @@ export default function AdminEditProduct() {
                   <input name="stock" value={product.stock} onChange={handleChange} type="number" className={inputStyle} />
                 </div>
               </div>
+              {/* 在 AdminEditProduct.jsx 的基本資訊區 */}
+              <div>
+                <label className={labelStyle}>商品分類</label>
+                <select 
+                  name="category" 
+                  value={product.category} 
+                  onChange={handleChange} 
+                  className={inputStyle}
+                >
+                  <option value="感官啟蒙">感官啟蒙</option>
+                  <option value="益智拼圖">益智拼圖</option>
+                  <option value="建構邏輯">建構邏輯</option>
+                </select>
+              </div>
               <div>
                 <label className={labelStyle}><Baby size={16} className="text-orange-500"/> 適齡階段</label>
                 <select name="ageRange" value={product.ageRange} onChange={handleChange} className={inputStyle}>

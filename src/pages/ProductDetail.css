@@ -195,3 +195,168 @@
   text-align: center;
   color: #6a625d;
 }
+/* 修改此區塊讓副圖橫向排列 */
+.thumbnails-section {
+  display: flex;            /* 使用 flex 佈局 */
+  flex-direction: row;      /* 確保是橫向 (Row) */
+  flex-wrap: wrap;          /* 如果圖片太多自動換行 */
+  gap: 15px;                /* 圖片之間的間距 */
+  margin-top: 20px;         /* 與上方大圖的距離 */
+  justify-content: flex-start; /* 從左邊開始排 */
+}
+
+.thumb-box {
+  width: 80px;              /* 固定寬度 */
+  height: 80px;             /* 固定高度 */
+  border-radius: 15px;      /* 圓角 */
+  overflow: hidden;
+  cursor: pointer;
+  border: 2px solid transparent;
+  background-color: #faf9f6;
+  transition: all 0.3s ease;
+  flex-shrink: 0;           /* 防止圖片被擠壓變形 */
+}
+
+.thumb-box.active {
+  border-color: #f39c42;    /* 選中時的橘色邊框 */
+}
+
+.thumb-box img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;        /* 確保圖片不變形 */
+}
+
+/* 右側資訊區塊優化 */
+.info-side {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+}
+
+.category-badge {
+  
+  color: #88bf6e;
+  padding: 2px 8px;
+  border-radius: 15px;
+  font-weight: 800;
+  font-size: 1.0rem;
+  display: inline-block;  /* 很重要，讓 margin 生效得更穩 */
+  letter-spacing: 0.15em;   /* ✅ 關鍵：拉開「感官啟蒙」四個字 */
+}
+/* 教育分類標籤（感官啟蒙專用） */
+.category-badge.education {
+  background: #eef5ea;      /* 淡綠底 */
+  color: #7da36b;           /* 溫和綠字 */
+}
+
+
+.product-title {
+  font-size: 2.2rem;
+  color: #6a625d;
+  margin-top: 10px;
+  font-weight: 800;
+}
+
+.price-tag {
+  color: #f39c42;
+  font-size: 1.8rem;
+  font-weight: 800;
+  margin-top: 5px;
+}
+
+.price-symbol { font-size: 1.2rem; margin-right: 4px; }
+
+.description-text {
+  color: #8c847e;
+  line-height: 1.8;
+  font-size: 1.05rem;
+}
+
+/* 規格小卡 (Pills) */
+.toy-spec-row {
+  display: flex;
+  gap: 20px;
+}
+
+.spec-pill {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #faf9f6;
+  padding: 12px 20px;
+  border-radius: 20px;
+  flex: 1;
+}
+
+.spec-icon { font-size: 1.4rem; }
+.spec-content { display: flex; flex-direction: column; }
+.spec-content .label { font-size: 0.75rem; color: #a19a94; }
+.spec-content .value { font-size: 0.95rem; color: #6a625d; font-weight: 700; }
+
+/* 能力標籤 */
+.section-subtitle { font-size: 0.9rem; color: #a19a94; margin-bottom: 12px; }
+.ability-flex { display: flex; flex-wrap: wrap; gap: 10px; }
+.ability-pill {
+  background: #ffffff;
+  border: 1px solid #e0ddd5;
+  color: #6a625d;
+  padding: 8px 18px;
+  border-radius: 50px;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+}
+.ability-pill:hover { border-color: #f39c42; color: #f39c42; }
+
+/* 購買按鈕區 */
+.purchase-action-container {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-top: 20px;
+}
+
+.qty-stepper {
+  display: flex;
+  background: #faf9f6;
+  border-radius: 15px;
+  padding: 5px;
+}
+
+.qty-stepper button {
+  width: 40px; height: 40px; border: none; background: transparent;
+  font-size: 1.2rem; color: #6a625d; cursor: pointer;
+}
+
+.qty-stepper input {
+  width: 40px; border: none; background: transparent; text-align: center;
+  font-weight: 700; font-size: 1.1rem; color: #6a625d;
+}
+
+.primary-buy-btn {
+  flex: 1;
+  background: #f39c42;
+  color: white;
+  border: none;
+  padding: 16px;
+  border-radius: 18px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 10px 20px rgba(243, 156, 66, 0.2);
+  transition: all 0.3s ease;
+}
+
+.primary-buy-btn:hover { background: #e68a2e; transform: translateY(-2px); }
+
+.favorite-circle-btn {
+  width: 55px; height: 55px; border-radius: 50%; border: 1px solid #e0ddd5;
+  background: white; cursor: pointer; display: flex; align-items: center; justify-content: center;
+  font-size: 1.2rem; transition: all 0.3s ease;
+}
+.favorite-circle-btn.active { background: #fff1f1; border-color: #ffbaba; }
+
+.primary-buy-btn {
+  flex: 1;              /* 已有，保留 */
+  min-width: 200px;     /* ✅ 新增：避免太瘦 */
+}

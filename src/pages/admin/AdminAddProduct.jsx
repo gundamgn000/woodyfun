@@ -192,6 +192,8 @@ export default function AdminAddProduct() {
             </h2>
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
+
+                
                 <div>
                   <label className={labelStyle}>售價</label>
                   <input name="price" value={product.price} onChange={handleChange} type="number" className={inputStyle} />
@@ -200,6 +202,21 @@ export default function AdminAddProduct() {
                   <label className={labelStyle}>庫存</label>
                   <input name="stock" value={product.stock} onChange={handleChange} type="number" className={inputStyle} />
                 </div>
+              </div>
+
+              {/* 在基本資訊區塊內 */}
+              <div>
+                <label className={labelStyle}>商品分類</label>
+                <select 
+                  name="category" 
+                  value={product.category} 
+                  onChange={handleChange} 
+                  className={inputStyle}
+                >
+                  <option value="感官啟蒙">感官啟蒙</option>
+                  <option value="益智拼圖">益智拼圖</option>
+                  <option value="建構邏輯">建構邏輯</option>
+                </select>
               </div>
               <div>
                 <label className={labelStyle}><Baby size={16} className="text-orange-500"/> 適齡階段</label>
@@ -210,6 +227,8 @@ export default function AdminAddProduct() {
                   <option value="3-6歲">3-6歲</option>
                 </select>
               </div>
+
+              
               <div>
                 <label className={labelStyle}>主要材質</label>
                 <input name="material" value={product.material} onChange={handleChange} type="text" className={inputStyle} />
