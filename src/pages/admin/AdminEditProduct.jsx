@@ -1,343 +1,285 @@
-// ==========================================
-// AdminEditProduct.jsx — 使用 Admin UI 元件版（編輯商品）
-// ==========================================
-
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import {
-  doc,
-  getDoc,
-  updateDoc,
-  deleteDoc,
-} from "firebase/firestore";
+import { doc, getDoc, updateDoc, deleteDoc, Timestamp } from "firebase/firestore";
 import { db, storage } from "../../firebase/firebase";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-
-// Admin UI Components
-import AdminCard from "../../components/admin/AdminCard";
-import AdminInput from "../../components/admin/AdminInput";
-import AdminTextarea from "../../components/admin/AdminTextarea";
-import AdminButton from "../../components/admin/AdminButton";
-import AdminLayout from "../../components/admin/AdminLayout";
-// 圖片壓縮工具
-const compressImage = (file) =>
-  new Promise((resolve) => {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const img = new Image();
-      img.onload = () => {
-        const canvas = document.createElement("canvas");
-
-        let w = img.width;
-        let h = img.height;
-        const maxW = 1200;
-        const maxH = 1200;
-
-        if (w > maxW || h > maxH) {
-          const ratio = Math.min(maxW / w, maxH / h);
-          w *= ratio;
-          h *= ratio;
-        }
-
-        canvas.width = w;
-        canvas.height = h;
-        const ctx = canvas.getContext("2d");
-        ctx.drawImage(img, 0, 0, w, h);
-
-        canvas.toBlob((blob) => resolve(blob), "image/jpeg", 0.8);
-      };
-      img.src = e.target.result;
-    };
-    reader.readAsDataURL(file);
-  });
-
-// 上傳圖片
-const uploadImage = async (file) => {
-  const compressed = await compressImage(file);
-  const fileRef = ref(storage, `products/${Date.now()}-${file.name}`);
-  await uploadBytes(fileRef, compressed);
-  return await getDownloadURL(fileRef);
-};
+import imageCompression from "browser-image-compression";
+import { useAuth } from "../../context/AuthContext";
+import { 
+  Save, Trash2, ChevronLeft, ImagePlus, X, 
+  Sparkles, Baby, Layers, Info, Package 
+} from 'lucide-react';
 
 export default function AdminEditProduct() {
   const { id } = useParams();
   const navigate = useNavigate();
-
-  const [loading, setLoading] = useState(false);
-
+  const { user } = useAuth();
+  
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  
+  // 1. 初始化資料結構 (對齊玩具電商格式)
   const [product, setProduct] = useState({
     name: "",
+    description: "",
     price: "",
     stock: "",
-    category: "",
-    description: "",
-    status: "active",
-    sizes: "",
+    category: "感官啟蒙",
+    ageRange: "",
+    material: "天然實木",
+    abilities: [],
     tags: "",
+    status: "active",
     mainImageUrl: "",
-    subImageUrls: [],
+    subImageUrls: []
   });
 
-  const [newMainImage, setNewMainImage] = useState(null);
-  const [newGalleryImages, setNewGalleryImages] = useState([]);
+  const [newMainFile, setNewMainFile] = useState(null);
+  const [mainPreview, setMainPreview] = useState(null);
+  const [newSubFiles, setNewSubFiles] = useState([]);
+  const [subPreviews, setSubPreviews] = useState([]);
 
-  // 讀取商品
+  const abilityOptions = ["手眼協調", "觸覺刺激", "空間邏輯", "色彩認知", "精細動作"];
+
+  // 2. 載入原始資料
   useEffect(() => {
-    const loadProduct = async () => {
-      const refDoc = doc(db, "products", id);
-      const snap = await getDoc(refDoc);
-      if (!snap.exists()) return;
-
-      const data = snap.data();
-
-      // 舊 / 新資料格式兼容
-      const mainImage =
-        data.mainImageUrl ??
-        data.imageUrl ??
-        "";
-
-      const subs =
-        data.subImageUrls ??
-        data.images ??
-        [];
-
-      const sizes =
-        Array.isArray(data.sizes)
-          ? data.sizes.join(",")
-          : data.sizes ?? "";
-
-      const tags =
-        Array.isArray(data.tags)
-          ? data.tags.join(",")
-          : data.tags ?? "";
-
-      setProduct({
-        name: data.name ?? "",
-        price: data.price ?? "",
-        stock: data.stock ?? "",
-        category: data.category ?? "",
-        description: data.description ?? "",
-        status: data.status ?? "active",
-        sizes,
-        tags,
-        mainImageUrl: mainImage,
-        subImageUrls: subs,
-      });
+    const fetchProduct = async () => {
+      try {
+        const docSnap = await getDoc(doc(db, "products", id));
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          setProduct({
+            ...data,
+            tags: data.tags ? data.tags.join(", ") : ""
+          });
+          setMainPreview(data.mainImageUrl || data.imageUrl);
+        } else {
+          alert("找不到該商品");
+          navigate("/admin/products");
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
     };
+    fetchProduct();
+  }, [id, navigate]);
 
-    loadProduct();
-  }, [id]);
-
-  // 表單輸入
+  // --- 邏輯處理 ---
   const handleChange = (e) => {
-    setProduct({ ...product, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setProduct(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleMainChange = (e) => setNewMainImage(e.target.files[0]);
-  const handleGalleryChange = (e) =>
-    setNewGalleryImages([...e.target.files]);
-
-  const removeGalleryImage = (index) => {
-    setProduct((prev) => ({
+  const handleToggleAbility = (ability) => {
+    setProduct(prev => ({
       ...prev,
-      subImageUrls: prev.subImageUrls.filter((_, i) => i !== index),
+      abilities: prev.abilities.includes(ability) 
+        ? prev.abilities.filter(a => a !== ability)
+        : [...prev.abilities, ability]
     }));
   };
 
-  // 儲存
+  const handleMainImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setNewMainFile(file);
+      setMainPreview(URL.createObjectURL(file));
+    }
+  };
+
+  const handleSubImagesChange = (e) => {
+    const files = Array.from(e.target.files);
+    setNewSubFiles(prev => [...prev, ...files]);
+    setSubPreviews(prev => [...prev, ...files.map(f => URL.createObjectURL(f))]);
+  };
+
+  const removeExistingSubImage = (url) => {
+    setProduct(prev => ({
+      ...prev,
+      subImageUrls: prev.subImageUrls.filter(img => img !== url)
+    }));
+  };
+
+  const uploadImage = async (file, path) => {
+    const options = { maxSizeMB: 0.7, maxWidthOrHeight: 1200, useWebWorker: true };
+    const compressed = await imageCompression(file, options);
+    const storageRef = ref(storage, path);
+    await uploadBytes(storageRef, compressed);
+    return await getDownloadURL(storageRef);
+  };
+
   const handleSave = async () => {
+    if (!user) return;
     try {
-      setLoading(true);
-      const docRef = doc(db, "products", id);
-
-      const sizesArray = product.sizes
-        ? product.sizes.split(",").map((s) => s.trim()).filter(Boolean)
-        : [];
-
-      const tagsArray = product.tags
-        ? product.tags.split(",").map((t) => t.trim()).filter(Boolean)
-        : [];
-
-      // 主圖
-      let mainUrl = product.mainImageUrl;
-      if (newMainImage) {
-        mainUrl = await uploadImage(newMainImage);
+      setSaving(true);
+      let finalMainUrl = product.mainImageUrl;
+      
+      // 如果有換新主圖
+      if (newMainFile) {
+        finalMainUrl = await uploadImage(newMainFile, `products/main/${Date.now()}_edit`);
       }
 
-      // 副圖
-      const subs = [...product.subImageUrls];
-      for (let file of newGalleryImages) {
-        const url = await uploadImage(file);
-        if (url) subs.push(url);
-      }
+      // 上傳新選的副圖
+      const newlyUploadedSubUrls = await Promise.all(
+        newSubFiles.map(file => uploadImage(file, `products/sub/${Date.now()}_${file.name}`))
+      );
 
-      await updateDoc(docRef, {
-        name: product.name,
+      const finalData = {
+        ...product,
         price: Number(product.price),
         stock: Number(product.stock),
-        category: product.category,
-        description: product.description,
-        status: product.status,
-        sizes: sizesArray,
-        tags: tagsArray,
-        mainImageUrl: mainUrl,
-        subImageUrls: subs,
-      });
+        tags: product.tags.split(",").map(t => t.trim()).filter(Boolean),
+        mainImageUrl: finalMainUrl,
+        imageUrl: finalMainUrl,
+        subImageUrls: [...product.subImageUrls, ...newlyUploadedSubUrls],
+        updatedAt: Timestamp.now()
+      };
 
-      alert("商品已更新成功！");
+      await updateDoc(doc(db, "products", id), finalData);
+      alert("更新成功！");
       navigate("/admin/products");
     } catch (err) {
       console.error(err);
-      alert("儲存失敗，請稍後重試");
+      alert("更新失敗");
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
   };
 
-  // 刪除
   const handleDelete = async () => {
-    const confirmDelete = window.confirm(
-      "確定要刪除這個商品嗎？刪除後將無法復原。"
-    );
-    if (!confirmDelete) return;
-
-    try {
+    if (window.confirm("確定要徹底刪除此玩具嗎？")) {
       await deleteDoc(doc(db, "products", id));
-      alert("商品已成功刪除！");
       navigate("/admin/products");
-    } catch (err) {
-      console.error(err);
-      alert("刪除失敗，請稍後再試");
     }
   };
 
-  // ======================= UI ============================
+  if (loading) return <div className="p-20 text-center text-gray-400">載入中...</div>;
+
+  const inputStyle = "w-full p-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 outline-none transition-all";
+  const labelStyle = "block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2";
+
   return (
-    
-      <div className="max-w-5xl mx-auto px-6 pb-16">
-        <h1 className="text-3xl font-semibold tracking-wide mb-8 text-gray-800">
-          編輯商品
-        </h1>
-
-        {/* 基本資料 */}
-        <AdminCard className="space-y-8">
-          <AdminInput
-            label="商品名稱"
-            name="name"
-            value={product.name}
-            onChange={handleChange}
-            placeholder="商品名稱"
-          />
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 form-section">
-            <AdminInput
-              label="價格"
-              name="price"
-              type="number"
-              value={product.price}
-              onChange={handleChange}
-            />
-            <AdminInput
-              label="庫存"
-              name="stock"
-              type="number"
-              value={product.stock}
-              onChange={handleChange}
-            />
+    <div className="p-8 max-w-6xl mx-auto min-h-screen">
+      <header className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <button onClick={() => navigate(-1)} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+            <ChevronLeft size={24} />
+          </button>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-800">編輯玩具商品</h1>
+            <p className="text-sm text-gray-500">正在編輯：{product.name}</p>
           </div>
+        </div>
+        <div className="flex gap-3">
+          <button onClick={handleDelete} className="flex items-center gap-2 px-4 py-2 text-red-600 font-semibold hover:bg-red-50 rounded-xl transition-colors">
+            <Trash2 size={18} /> 刪除
+          </button>
+          <button 
+            onClick={handleSave} 
+            disabled={saving}
+            className="bg-orange-600 hover:bg-orange-700 text-white px-8 py-3 rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-orange-100 disabled:opacity-50"
+          >
+            {saving ? "儲存中..." : <><Save size={18} /> 儲存變更</>}
+          </button>
+        </div>
+      </header>
 
-          <AdminInput
-            label="分類"
-            name="category"
-            value={product.category}
-            onChange={handleChange}
-          />
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-2 space-y-6">
+          <section className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+            <h2 className="text-lg font-bold mb-4 flex items-center gap-2 text-gray-700"><Info size={18} className="text-orange-500" /> 基本資訊</h2>
+            <div className="space-y-4">
+              <div>
+                <label className={labelStyle}>商品名稱</label>
+                <input name="name" value={product.name} onChange={handleChange} type="text" className={inputStyle} />
+              </div>
+              <div>
+                <label className={labelStyle}>詳細描述</label>
+                <textarea name="description" value={product.description} onChange={handleChange} rows="6" className={inputStyle}></textarea>
+              </div>
+            </div>
+          </section>
 
-          <AdminInput
-            label="尺寸（逗號分隔）"
-            name="sizes"
-            value={product.sizes}
-            onChange={handleChange}
-            placeholder="S,M,L"
-          />
-
-          <AdminInput
-            label="Tags（逗號分隔）"
-            name="tags"
-            value={product.tags}
-            onChange={handleChange}
-            placeholder="冬季, 可愛, 黑色"
-          />
-
-          <AdminTextarea
-            label="商品描述"
-            name="description"
-            value={product.description}
-            onChange={handleChange}
-            rows={4}
-          />
-        </AdminCard>
-
-        {/* 圖片管理 */}
-        <AdminCard className="space-y-8 mt-10">
-          <h2 className="text-xl font-semibold text-gray-700">圖片管理</h2>
-
-          {/* 主圖 */}
-          <div className="form-section">
-            <label className="field-label">主圖（封面）</label>
-            {product.mainImageUrl && (
-              <img
-                src={product.mainImageUrl}
-                className="w-40 h-40 rounded-xl object-cover shadow mb-4"
-              />
-            )}
-            <input type="file" onChange={handleMainChange} />
-          </div>
-
-          {/* 副圖 */}
-          <div className="form-section">
-            <label className="field-label">副圖（可新增 / 刪除）</label>
-            <div className="flex flex-wrap gap-4">
-              {product.subImageUrls?.map((img, i) => (
-                <div key={i} className="relative">
-                  <img
-                    src={img}
-                    className="w-28 h-28 rounded-xl object-cover shadow"
-                  />
-                  <button
-                    onClick={() => removeGalleryImage(i)}
-                    className="absolute top-1 right-1 bg-red-500 text-white text-xs px-2 py-1 rounded-full"
-                  >
-                    X
-                  </button>
-                </div>
+          <section className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+            <h2 className="text-lg font-bold mb-4 flex items-center gap-2 text-gray-700"><Sparkles size={18} className="text-orange-500" /> 發展能力</h2>
+            <div className="flex flex-wrap gap-2">
+              {abilityOptions.map(option => (
+                <button
+                  key={option}
+                  type="button"
+                  onClick={() => handleToggleAbility(option)}
+                  className={`px-4 py-2 rounded-full border text-sm transition-all ${
+                    product.abilities?.includes(option) 
+                    ? "bg-orange-100 border-orange-500 text-orange-700 font-bold" 
+                    : "bg-white border-gray-200 text-gray-600 hover:border-orange-300"
+                  }`}
+                >
+                  {option}
+                </button>
               ))}
             </div>
-            <input
-              type="file"
-              multiple
-              className="mt-3"
-              onChange={handleGalleryChange}
-            />
-          </div>
-        </AdminCard>
+          </section>
+        </div>
 
-        {/* 底部按鈕 */}
-        <div className="flex justify-between mt-8 gap-4">
-          <AdminButton variant="danger" onClick={handleDelete}>
-            刪除商品
-          </AdminButton>
+        <div className="space-y-6">
+          <section className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+            <h2 className="text-lg font-bold mb-4 flex items-center gap-2 text-gray-700"><Layers size={18} className="text-orange-500" /> 規格與庫存</h2>
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className={labelStyle}>售價</label>
+                  <input name="price" value={product.price} onChange={handleChange} type="number" className={inputStyle} />
+                </div>
+                <div>
+                  <label className={labelStyle}>庫存</label>
+                  <input name="stock" value={product.stock} onChange={handleChange} type="number" className={inputStyle} />
+                </div>
+              </div>
+              <div>
+                <label className={labelStyle}><Baby size={16} className="text-orange-500"/> 適齡階段</label>
+                <select name="ageRange" value={product.ageRange} onChange={handleChange} className={inputStyle}>
+                  <option value="0-1歲">0-1歲</option>
+                  <option value="1-3歲">1-3歲</option>
+                  <option value="3-6歲">3-6歲</option>
+                </select>
+              </div>
+            </div>
+          </section>
 
-          <AdminButton
-            variant="save"
-            onClick={handleSave}
-            disabled={loading}
-          >
-            {loading ? "儲存中..." : "儲存變更"}
-          </AdminButton>
+          <section className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+            <h2 className="text-lg font-bold mb-4 text-gray-700">圖片管理</h2>
+            <div className="space-y-4">
+              <label className="block">
+                <span className="text-xs text-gray-500 mb-2 block">商品主圖 (點擊更換)</span>
+                <input type="file" className="hidden" onChange={handleMainImageChange} />
+                <div className="cursor-pointer border-2 border-dashed border-gray-200 rounded-xl overflow-hidden hover:bg-orange-50 transition-all">
+                  <img src={mainPreview} className="w-full h-40 object-cover" alt="Main" />
+                </div>
+              </label>
+
+              <div>
+                <span className="text-xs text-gray-500 mb-2 block">副圖清單 ({product.subImageUrls?.length})</span>
+                <div className="grid grid-cols-3 gap-2">
+                  {product.subImageUrls?.map((url, i) => (
+                    <div key={i} className="relative group aspect-square">
+                      <img src={url} className="w-full h-full object-cover rounded-lg border" />
+                      <button onClick={() => removeExistingSubImage(url)} className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-1 shadow-md opacity-0 group-hover:opacity-100 transition-opacity">
+                        <X size={12} />
+                      </button>
+                    </div>
+                  ))}
+                  <label className="cursor-pointer border-2 border-dashed border-gray-200 rounded-lg aspect-square flex items-center justify-center hover:bg-orange-50 text-gray-400">
+                    <input type="file" multiple className="hidden" onChange={handleSubImagesChange} />
+                    <ImagePlus size={20} />
+                  </label>
+                </div>
+              </div>
+            </div>
+          </section>
         </div>
       </div>
-    
-    
+    </div>
   );
 }

@@ -1,43 +1,98 @@
+import { useState, useEffect } from 'react';
+import { db } from '../../firebase/firebase'; // 👈 請確保此路徑正確指向你的 firebase 設定檔
+import { collection, getDocs } from 'firebase/firestore';
+import { Package, PlusCircle, ClipboardList, BarChart3, Loader2 } from 'lucide-react';
+
 export default function AdminHome() {
-  // Border Pulse Style: 懸停縮放、點擊凹陷，並強調邊框顏色動畫
-  const cardStyle = "block p-6 bg-white shadow-md rounded-xl border border-transparent " + // 預設透明邊框
-                    "transform transition duration-300 ease-in-out " + 
-                    
-                    // 1. 懸停狀態 (Hover State): 放大、陰影加重，並將邊框顏色設為藍色
-                    "hover:scale-[1.05] hover:shadow-xl hover:border-blue-500 hover:shadow-blue-200/50 " + // 放大 5%，邊框和陰影變藍
-                    
-                    // 2. 點擊狀態 (Active State): 模擬按下的凹陷感
-                    "active:scale-[0.98] active:shadow-md active:border-blue-600 active:bg-gray-50"; 
+  // 1. 設定儲存數據的狀態
+  const [orderCount, setOrderCount] = useState(0);
+  const [loading, setLoading] = useState(true);
+
+  // 2. 從 Firestore 抓取真實數據
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        setLoading(true);
+        // 抓取 orders 集合的所有文件
+        const ordersSnapshot = await getDocs(collection(db, "orders"));
+        
+        // 設定目前的訂單總數
+        setOrderCount(ordersSnapshot.size);
+      } catch (error) {
+        console.error("抓取後台數據失敗:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStats();
+  }, []);
+
+  // 樣式定義
+  const cardStyle = "group block p-6 bg-white shadow-sm rounded-2xl border border-gray-100 " + 
+                    "transform transition-all duration-300 ease-out " + 
+                    "hover:-translate-y-2 hover:shadow-2xl hover:border-orange-200 " + 
+                    "active:scale-[0.98]"; 
+
+  const iconContainerStyle = "w-12 h-12 rounded-lg bg-orange-50 flex items-center justify-center mb-4 " +
+                             "group-hover:bg-orange-100 transition-colors duration-300";
 
   return (
-    <div className="p-6">
-      <h1 className="text-3xl font-bold mb-6">後台首頁</h1>
+    <div className="p-8 max-w-7xl mx-auto">
+      <header className="mb-10">
+        <h1 className="text-3xl font-bold text-gray-800 mb-2">管理後台</h1>
+        <p className="text-gray-500">
+          Hi, <span className="text-orange-600 font-semibold">gundamgn000</span> 👋 這是您目前的商店實時概況。
+        </p>
+      </header>
 
-      <p className="text-gray-600 mb-8">
-        Hi, gundamgn000 👋 歡迎回來！請選擇要管理的項目。
-      </p>
+      {/* 區塊一：快速統計摘要 */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-10">
+        <div className="p-4 bg-orange-50 rounded-xl border border-orange-100">
+          <p className="text-sm text-orange-600 font-medium">總訂單數</p>
+          {loading ? (
+            <Loader2 className="animate-spin text-orange-600 mt-1" size={20} />
+          ) : (
+            <p className="text-2xl font-bold text-gray-800">{orderCount}</p> // ✅ 顯示真實數據
+          )}
+        </div>
+        {/* 你可以依此類推增加商品總數等統計 */}
+      </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {/* 區塊二：主要管理功能 */}
+      <h2 className="text-xl font-semibold text-gray-700 mb-6">快速選單</h2>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         
-        {/* 應用新的動畫樣式 cardStyle */}
         <a href="/admin/products" className={cardStyle}>
-          <p className="text-lg font-medium text-gray-800">商品管理</p>
-          <p className="text-sm text-gray-500 mt-1">編輯、新增、刪除商品資料</p>
+          <div className={iconContainerStyle}>
+            <Package className="text-orange-600" size={24} />
+          </div>
+          <p className="text-lg font-bold text-gray-800">商品管理</p>
+          <p className="text-sm text-gray-500 mt-2">編輯、新增、刪除所有木玩商品資料</p>
         </a>
 
         <a href="/admin/products/new" className={cardStyle}>
-          <p className="text-lg font-medium text-gray-800">新增商品</p>
-          <p className="text-sm text-gray-500 mt-1">快速建立新的商品項目</p>
+          <div className={iconContainerStyle}>
+            <PlusCircle className="text-orange-600" size={24} />
+          </div>
+          <p className="text-lg font-bold text-gray-800">新增商品</p>
+          <p className="text-sm text-gray-500 mt-2">快速上架新的精選玩具</p>
         </a>
 
         <a href="/admin/orders" className={cardStyle}>
-          <p className="text-lg font-medium text-gray-800">訂單管理</p>
-          <p className="text-sm text-gray-500 mt-1">處理客戶訂單、狀態追蹤</p>
+          <div className={iconContainerStyle}>
+            <ClipboardList className="text-orange-600" size={24} />
+          </div>
+          <p className="text-lg font-bold text-gray-800">訂單管理</p>
+          <p className="text-sm text-gray-500 mt-2">處理客戶訂單、物流狀態追蹤</p>
         </a>
 
         <a href="/admin/dashboard" className={cardStyle}>
-          <p className="text-lg font-medium text-gray-800">數據儀表板 (Dashboard)</p>
-          <p className="text-sm text-gray-500 mt-1">查看銷售趨勢與統計數據</p>
+          <div className={iconContainerStyle}>
+            <BarChart3 className="text-orange-600" size={24} />
+          </div>
+          <p className="text-lg font-bold text-gray-800">數據報表</p>
+          <p className="text-sm text-gray-500 mt-2">查看銷售走勢與熱門商品統計</p>
         </a>
       </div>
     </div>
