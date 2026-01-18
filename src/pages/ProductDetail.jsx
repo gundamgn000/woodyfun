@@ -35,6 +35,7 @@ const ProductDetail = () => {
   const [reviewText, setReviewText] = useState("");
   const [rating, setRating] = useState(0);
   const [recommendedProducts, setRecommendedProducts] = useState([]);
+  
 
   // --- 1. 抽離 fetchReviews 邏輯 ---
   const fetchReviews = useCallback(async () => {
@@ -88,6 +89,8 @@ const ProductDetail = () => {
     fetchReviews(); // 初始呼叫
   }, [id, fetchReviews]);
 
+ 
+
   // --- 3. 提交評論邏輯 ---
   const handleReviewSubmit = async () => {
     if (!user) return alert("請先登入");
@@ -117,6 +120,13 @@ const ProductDetail = () => {
   };
 
   if (!product) return <div className="loading-screen">木玩載入中...</div>;
+
+  const descriptionLines = product.description
+    .split("\n")
+    .map(line => line.trim())
+    .filter(Boolean);
+
+    
 
   return (
     <div className="product-detail-page-v2">
@@ -159,8 +169,24 @@ const ProductDetail = () => {
             </div>
           </div>
 
+          
+
           <div className="description-text">
-            {product.description}
+            {descriptionLines.map((line, index) => {
+              if (line.startsWith("✔")) {
+                return <li key={index} className="feature-item">{line}</li>;
+              }
+
+              if (line.startsWith("👶") || line.startsWith("📦")) {
+                return <h4 key={index}>{line}</h4>;
+              }
+
+              if (line.startsWith("「") && line.endsWith("」")) {
+                return <p key={index} className="quote-line">{line}</p>;
+              }
+
+              return <p key={index}>{line}</p>;
+            })}
           </div>
 
           <div className="toy-spec-row">

@@ -18,6 +18,11 @@ export default function Products() {
 
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 6;
+  const safeImg = (url) =>
+  url && url.trim() !== ""
+    ? url
+    : "https://placehold.co/400x400?text=No+Image";
+
 
   // ⭐【飛行動畫】完全保留
   const createFlyingHeart = (startElement) => {
@@ -75,6 +80,8 @@ export default function Products() {
 
   const totalPages = Math.ceil(displayItems.length / itemsPerPage);
   const currentItems = displayItems.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  
+
 
   return (
     <div className="products-page-container">
@@ -122,34 +129,50 @@ export default function Products() {
       </div>
 
       {/* 商品列表 */}
+      
       <div className="products-grid">
-        {currentItems.map((item) => (
-          <div key={item.id} className="product-card-wrapper">
-            <Link to={`/product/${item.id}`} className="product-card-link">
-              <div className="product-image-box">
-                <img src={item.image} alt={item.name} className="main-img" />
-                {item.images?.[1] && <img src={item.images[1]} alt={item.name} className="sub-img" />}
-              </div>
-              <div className="product-info">
-                <div className="category-tag">{item.category}</div>
-                <h2 className="product-name">{item.name}</h2>
-                <div className="product-price">NT$ {item.price}</div>
-              </div>
-            </Link>
-            
-            <button
-              className="wishlist-btn"
-              onClick={(e) => {
-                e.preventDefault();
-                toggleWishlist(item);
-                if (!isWishlisted(item.id)) createFlyingHeart(e.currentTarget);
-              }}
-            >
-              {isWishlisted(item.id) ? <HeartFilled color="#f39c42" /> : <HeartOutline color="#ccc" />}
-            </button>
-          </div>
-        ))}
+        {currentItems.map((item) => {
+          const mainImage =
+            item.images?.[0]?.url ||        // images 是 [{url}]
+            item.images?.[0] ||             // images 是 ["url"]
+            item.image ||                   // image 是單一字串
+            "/placeholder-product.png";
+
+
+          return (
+            <div key={item.id} className="product-card-wrapper">
+              <Link to={`/product/${item.id}`} className="product-card-link">
+                <div className="product-image-wrapper">
+                  <img
+                    src={safeImg(item.mainImageUrl || item.imageUrl)}
+                    alt={item.name}
+                  />
+                </div>
+
+                <div className="product-info">
+                  <div className="category-tag">{item.category}</div>
+                  <h2 className="product-name">{item.name}</h2>
+                  <div className="product-price">NT$ {item.price}</div>
+                </div>
+              </Link>
+
+              <button
+                className="wishlist-btn"
+                onClick={(e) => {
+                  e.preventDefault();
+                  toggleWishlist(item);
+                  if (!isWishlisted(item.id)) createFlyingHeart(e.currentTarget);
+                }}
+              >
+                {isWishlisted(item.id)
+                  ? <HeartFilled color="#f39c42" />
+                  : <HeartOutline color="#ccc" />}
+              </button>
+            </div>
+          );
+        })}
       </div>
+
 
       {/* 分頁 */}
       {totalPages > 1 && (
