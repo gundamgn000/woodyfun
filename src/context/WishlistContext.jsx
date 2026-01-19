@@ -55,6 +55,11 @@ export const WishlistProvider = ({ children }) => {
       return;
     }
 
+   if (typeof productId !== "string") {
+    console.warn("toggleWishlist 收到非 productId:", productId);
+    return;
+  }
+
     const isInList = wishlistIds.includes(productId);
 
     // ----- 1. UI 立即更新（不等待 Firestore） -----
@@ -96,7 +101,7 @@ export const WishlistProvider = ({ children }) => {
   // -----------------------------
   // 📌 判斷是否已收藏
   // -----------------------------
-  const isWishlisted = (productId) => wishlistIds.includes(productId);
+  const isWishlisted = (productId) => Array.isArray(wishlistIds) && wishlistIds.includes(productId);
 
   // -----------------------------
   // 📌 當 user 變動，自動刷新 wishlist

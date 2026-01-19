@@ -15,7 +15,7 @@ export default function Products() {
   const [filteredCategory, setFilteredCategory] = useState("全部");
   const [searchTerm, setSearchTerm] = useState("");
   const [sortMethod, setSortMethod] = useState("default");
-
+  const [justAddedId, setJustAddedId] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 6;
   const safeImg = (url) =>
@@ -161,10 +161,21 @@ export default function Products() {
                 className="wishlist-btn"
                 onClick={(e) => {
                   e.preventDefault();
-                  toggleWishlist(item);
-                  if (!isWishlisted(item.id)) createFlyingHeart(e.currentTarget);
+
+                  const willAdd = !isWishlisted(item.id);
+                  toggleWishlist(item.id);
+
+                  if (willAdd) {
+                    createFlyingHeart(e.currentTarget);
+                    setJustAddedId(item.id);
+                    setTimeout(() => setJustAddedId(null), 1200);
+                  }
                 }}
               >
+                {justAddedId === item.id && (
+                  <div className="wishlist-hint">已加入收藏</div>
+                )}
+
                 {isWishlisted(item.id)
                   ? <HeartFilled color="#f39c42" />
                   : <HeartOutline color="#ccc" />}

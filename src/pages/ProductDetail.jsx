@@ -226,12 +226,14 @@ const ProductDetail = () => {
             <button className="primary-buy-btn" onClick={() => addToCart(product, qty)}>
               加入購物車
             </button>
-            <button 
-              className={`favorite-circle-btn ${isWishlisted(product.id) ? "active" : ""}`}
-              onClick={() => toggleWishlist(product)}
+            <button
+              className={`wishlist-btn ${isWishlisted(id) ? "active" : ""}`}
+              onClick={() => toggleWishlist(id)}
+              aria-label="加入收藏"
             >
-              {isWishlisted(product.id) ? "❤️" : "🤍"}
+              {isWishlisted(id) ? "❤️" : "🤍"}
             </button>
+
           </div>
         </div>
       </div>
@@ -277,7 +279,13 @@ const ProductDetail = () => {
                 onChange={(e) => setReviewText(e.target.value)} 
                 placeholder="分享您的使用心得..."
               />
-              <button onClick={handleReviewSubmit} className="btn-submit-review">送出評論</button>
+              <button
+                onClick={handleReviewSubmit}
+                className="submit-review-btn"
+              >
+                送出評論
+              </button>
+
             </div>
           )}
         </div>
