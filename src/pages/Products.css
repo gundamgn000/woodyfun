@@ -131,3 +131,37 @@
   position: relative; /* ⭐ 關鍵 */
 }
 
+.page-num {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: none;
+  background: #f6f5f2;
+  color: #6a625d;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.pagination {
+  display: flex;
+  justify-content: center;   /* ⭐ 水平置中 */
+  align-items: center;       /* 垂直置中（保險） */
+  gap: 12px;
+  margin: 50px auto 0;       /* ⭐ auto 讓整個區塊置中 */
+  width: 100%;
+}
+
+/* 滑鼠停留 */
+.page-num:hover {
+  background: #f4a259;      /* Woodyfun 橘 */
+  color: #fff;
+}
+
+/* 目前頁面 */
+.page-num.active {
+  background: #f4a259;      /* 同一個橘色 */
+  color: #fff;
+  font-weight: 600;
+}
