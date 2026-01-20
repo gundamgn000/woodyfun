@@ -1,24 +1,23 @@
-// src/pages/Cart.jsx (請用此內容覆蓋)
+// src/pages/Cart.jsx (Woodyfun 最終校正版)
 
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useCart } from "../context/CartContext";
 
 const CartPage = () => {
-  const { cart, totalAmountNumber, removeFromCart, clearCart } = useCart();
+  const { cart, removeFromCart, clearCart } = useCart();
   const navigate = useNavigate();
 
-  // ✅ 運費（只新增這一行）
   const SHIPPING_FEE = 80;
 
-  // 取得數量（兼容 quantity / qty）
+  // 取得數量（兼容不同命名）
   const getQty = (item) => {
     if (typeof item.quantity === "number") return item.quantity;
     if (typeof item.qty === "number") return item.qty;
     return 1;
   };
 
-  // 處理價格欄位，確保是數字
+  // 處理價格（兼容數字與字串格式）
   const getPrice = (item) => {
     if (typeof item.price === "number") return item.price;
     if (typeof item.price === "string") {
@@ -30,114 +29,174 @@ const CartPage = () => {
 
   const getLineTotal = (item) => getQty(item) * getPrice(item);
 
-  // 商品小計
   const computedTotal = (cart || []).reduce(
     (sum, item) => sum + getLineTotal(item),
     0
   );
 
-  // ✅ 最終總金額（只改這裡）
   const finalTotal = computedTotal + SHIPPING_FEE;
 
   const handleRemove = (item) => {
-    if (window.confirm(`確定移除 ${item.name} (${item.size}) 嗎？`)) {
+    if (window.confirm(`確定要將「${item.name}」移出購物籃嗎？`)) {
       removeFromCart(item.id, item.size);
     }
   };
 
+  // 購物車為空的狀態
   if (cart.length === 0) {
     return (
-      <div className="py-40 text-center">
-        <h1 className="text-3xl mb-4">購物車是空的</h1>
-        <p className="text-gray-600">請先選購商品後再進行結帳。</p>
-        <Link to="/products" className="text-blue-600 underline mt-4 block">
-          前往商品列表
+      <div className="lg:pl-[260px] py-40 text-center px-6 min-h-screen flex flex-col justify-center items-center">
+        <div className="mb-6 inline-block p-10 bg-gray-50 rounded-full">
+           <svg className="w-20 h-20 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+           </svg>
+        </div>
+        <h1 className="text-2xl font-medium text-gray-800 mb-2">購物車目前空空的</h1>
+        <p className="text-gray-500 mb-8">快去為孩子挑選第一份溫暖的木製禮物吧！</p>
+        <Link 
+          to="/products" 
+          className="bg-[#ef9d51] text-white px-8 py-3 rounded-full hover:bg-[#d68a44] transition-all shadow-md"
+        >
+          探索木育玩具
         </Link>
       </div>
     );
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-6 py-20">
-      <h1 className="text-3xl font-light mb-10">購物車 ({cart.length})</h1>
+    <div className="w-full lg:pl-[260px] px-6 py-16 lg:py-24 min-h-screen">
+      <div className="max-w-6xl mx-auto">
+        <header className="mb-12 border-b border-gray-100 pb-6">
+          <h1 className="text-3xl font-bold text-gray-800 tracking-tight">購物車</h1>
+          <p className="text-gray-400 mt-2 italic text-sm">Shopping Cart ({cart.length} items)</p>
+        </header>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* 左：商品列表 */}
-        <div className="lg:col-span-2">
-          {cart.map((item) => {
-            const lineTotal = getLineTotal(item);
-            return (
-              <div
-                key={`${item.id}-${item.size}`}
-                className="flex items-start border-b py-6 last:border-b-0"
-              >
-                <img
-                  src={item.image}
-                  alt={item.name}
-                  className="w-24 h-24 object-cover rounded-lg mr-6"
-                />
-                <div className="flex-grow">
-                  <h3 className="text-lg font-medium">{item.name}</h3>
-                  <p className="text-sm text-gray-500">尺寸：{item.size}</p>
-                  <p className="text-sm text-gray-500">數量：{getQty(item)}</p>
-                  <p className="font-semibold mt-1">
-                    NT$ {getPrice(item).toLocaleString()} / 件
-                  </p>
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-12">
+          {/* 左：商品列表 */}
+          <div className="xl:col-span-2 space-y-8">
+            {cart.map((item) => {
+              const lineTotal = getLineTotal(item);
+              // 自動匹配資料庫欄位，確保圖片顯示
+              const itemImg = item.mainImageUrl || item.image || item.imageUrl || "https://placehold.co/200x200?text=No+Image";
+              
+              return (
+                <div
+                  key={`${item.id}-${item.size}`}
+                  className="flex items-start border-b border-gray-50 pb-8 last:border-b-0 group"
+                >
+                  {/* 圖片展示：縮小並靠左 */}
+                  <div className="flex-shrink-0 mr-6">
+                    <div className="w-20 h-20 sm:w-24 sm:h-24 overflow-hidden rounded-xl bg-gray-50 border border-gray-100 shadow-sm">
+                      <img
+                        src={itemImg}
+                        alt={item.name}
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        onError={(e) => { e.target.src = "https://placehold.co/200x200?text=WoodyFun"; }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* 商品資訊區 */}
+                  <div className="flex-grow flex flex-col sm:flex-row justify-between min-h-[5rem]">
+                    <div className="text-left">
+                      <h3 className="text-lg font-semibold text-gray-800 mb-1 group-hover:text-[#ef9d51] transition-colors">
+                        {item.name}
+                      </h3>
+                      
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        {/* 適合年齡標籤 */}
+                        <span className="bg-[#fff7ed] text-[#d68a44] px-3 py-1 rounded-full text-[10px] font-medium border border-[#ffedd5] flex items-center">
+                          <span className="mr-1">👶</span>
+                          適合年齡：{item.ageRange || "全齡適用"}
+                        </span>
+                        <span className="bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-[10px] font-medium">
+                          數量：{getQty(item)}
+                        </span>
+                      </div>
+                      
+                      <p className="text-gray-400 text-xs mt-3 italic">
+                        單價 NT$ {getPrice(item).toLocaleString()}
+                      </p>
+                    </div>
+
+                    {/* 右側：價格與移除按鈕 */}
+                    <div className="flex flex-col justify-between items-end mt-4 sm:mt-0 sm:pl-4">
+                      <p className="font-bold text-xl text-gray-800">
+                        NT$ {lineTotal.toLocaleString()}
+                      </p>
+                      <button
+                        className="text-xs text-gray-500 hover:text-red-500 transition-colors flex items-center group/btn font-medium"
+                        onClick={() => handleRemove(item)}
+                      >
+                        <span className="mr-1 group-hover/btn:underline">移除商品</span>
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
                 </div>
-                <div className="text-right">
-                  <p className="font-bold text-xl mb-4">
-                    NT$ {lineTotal.toLocaleString()}
-                  </p>
-                  <button
-                    className="text-sm text-red-500 hover:text-red-700"
-                    onClick={() => handleRemove(item)}
-                  >
-                    移除
-                  </button>
+              );
+            })}
+          </div>
+
+          {/* 右：結帳總覽卡片 */}
+          <div className="xl:col-span-1">
+            <div className="lg:sticky lg:top-24 border border-gray-100 rounded-3xl p-8 bg-white shadow-sm">
+              <h2 className="text-lg font-bold text-gray-800 mb-6 flex items-center">
+                訂單摘要
+                <div className="ml-2 h-1 w-8 bg-[#ef9d51] rounded-full"></div>
+              </h2>
+
+              <div className="space-y-4 mb-8 text-gray-600">
+                <div className="flex justify-between items-center text-sm">
+                  <span className="font-light">商品合計 Subtotal</span>
+                  <span className="font-medium text-gray-800">NT$ {computedTotal.toLocaleString()}</span>
+                </div>
+
+                <div className="flex justify-between items-center text-sm">
+                  <span className="font-light">預估運費 Shipping</span>
+                  <span className="font-medium text-gray-800">NT$ {SHIPPING_FEE}</span>
                 </div>
               </div>
-            );
-          })}
-        </div>
 
-        {/* 右：結帳總覽 */}
-        <div className="border rounded-xl p-6 bg-gray-50">
-          <h2 className="text-xl font-semibold mb-4">訂單摘要</h2>
+              <div className="border-t border-dashed border-gray-200 pt-6 flex justify-between items-center mb-8">
+                <span className="text-gray-800 font-bold">應付總額 Total</span>
+                <div className="text-right">
+                  <span className="text-2xl font-bold text-[#ef9d51]">
+                    NT$ {finalTotal.toLocaleString()}
+                  </span>
+                </div>
+              </div>
 
-          <div className="flex justify-between text-sm mb-2">
-            <span>商品金額</span>
-            <span>NT$ {computedTotal.toLocaleString()}</span>
+              {/* 前往結帳按鈕 */}
+              <button
+                className="w-full bg-[#ef9d51] text-white py-4 rounded-full text-lg font-medium hover:bg-[#d68a44] transition-all shadow-lg shadow-orange-100 active:scale-[0.98]"
+                onClick={() => navigate("/checkout")}
+              >
+                前往結帳 Checkout
+              </button>
+
+              {/* 清空購物車按鈕：樣式同步 */}
+              <button
+                className="w-full mt-4 bg-gray-100 text-gray-500 py-4 rounded-full text-sm font-medium hover:bg-gray-200 transition-all active:scale-[0.98]"
+                onClick={() => {
+                  if (window.confirm("確定要清空購物籃中所有商品嗎？")) {
+                    clearCart();
+                  }
+                }}
+              >
+                清空購物車 CLEAR ALL
+              </button>
+              
+              {/* 中文品牌標語 */}
+              <div className="mt-8 p-6 bg-[#fffcf9] rounded-2xl border border-orange-50">
+                  <p className="text-[12px] text-[#d68a44] leading-relaxed text-center font-medium">
+                    「 每一件木製玩具，都承載著自然的溫度與成長的故事 」
+                  </p>
+              </div>
+            </div>
           </div>
-
-          <div className="flex justify-between text-sm mb-4">
-            <span>運費</span>
-            <span>NT$ {SHIPPING_FEE}</span>
-          </div>
-
-          <div className="border-t pt-4 flex justify-between items-center mb-4">
-            <span className="text-lg font-semibold">總金額</span>
-            <span className="text-2xl font-bold text-pink-600">
-              NT$ {finalTotal.toLocaleString()}
-            </span>
-          </div>
-
-          <button
-            className="w-full bg-black text-white py-3 rounded-full text-lg"
-            onClick={() => navigate("/checkout")}
-          >
-            前往結帳
-          </button>
-
-          <button
-            className="w-full border border-gray-400 text-gray-700 py-3 rounded-full text-sm tracking-widest hover:bg-gray-100 mt-3"
-            onClick={() => {
-              if (window.confirm("確定清空購物車嗎？")) {
-                clearCart();
-              }
-            }}
-          >
-            清空購物車
-          </button>
         </div>
       </div>
     </div>
