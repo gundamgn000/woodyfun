@@ -315,32 +315,125 @@
   gap: 14px;
 }
 
-/* 愛心按鈕本體 */
-.wishlist-btn {
-  width: 48px;
-  height: 48px;
+.purchase-action-wrapper {
+  position: relative;
+}
+
+.pdp-wishlist-btn {
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
-  border: none;
+  border: 1px solid #e6e2da;
   background: #fff;
+
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 22px;
+
+  font-size: 20px;
   cursor: pointer;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+  flex-shrink: 0;
+
   transition: all 0.2s ease;
 }
 
-/* hover 狀態 */
-.wishlist-btn:hover {
+.pdp-wishlist-btn .heart-icon {
+  width: 22px;
+  height: 22px;
+  background: url("/icons/heart-outline.svg") center/contain no-repeat;
+}
+
+.pdp-wishlist-btn.active .heart-icon {
+  background-image: url("/icons/heart-fill.svg");
+}
+.pdp-wishlist-btn:hover {
   transform: scale(1.08);
 }
 
-/* 已收藏 */
-.wishlist-btn.active {
-  background: #fff0f0;
-  color: #ff6b6b;
+.pdp-wishlist-btn.active {
+  background: #fff1f1;
+  border-color: #ffbaba;
+  animation: heart-pop 0.5s ease;
 }
+@keyframes heart-pop {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.25); }
+  70%  { transform: scale(0.95); }
+  100% { transform: scale(1); }
+}
+
+
+
+
+
+/* 🔒 把寬度競爭鎖在這一層 */
+.buy-and-wishlist {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 0; /* 非常重要，防止 flex 撐爆 */
+}
+
+.primary-buy-btn {
+  flex: 1;
+  min-width: 260px;
+}
+
+.wishlist-slot {
+  width: 55px;
+  height: 55px;
+  flex-shrink: 0;
+}
+
+.wishlist-animate-wrapper {
+  position: relative;
+  flex-shrink: 0;
+}
+
+/* PDP 已加入收藏提示 */
+.wishlist-toast {
+  position: absolute;
+  right: 0;
+  bottom: -36px;
+
+  background: #fff;
+  border: 1px solid #ffd6d6;
+  color: #ff6b6b;
+
+  padding: 6px 14px;
+  border-radius: 999px;
+
+  font-size: 0.85rem;
+  font-weight: 700;
+
+  white-space: nowrap;
+
+  box-shadow: 0 6px 14px rgba(255, 107, 107, 0.2);
+
+  animation: wishlist-toast-fade 1.2s ease forwards;
+  pointer-events: none;
+}
+
+@keyframes wishlist-toast-fade {
+  0% {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  15% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  85% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+
+
 
 .qty-stepper {
   display: flex;
@@ -420,3 +513,10 @@
   cursor: not-allowed;
   transform: none;
 }
+
+.primary-buy-btn.added {
+  background: #6fbf73;          /* 成功綠 */
+  box-shadow: 0 10px 20px rgba(111, 191, 115, 0.25);
+  transform: translateY(-1px);
+}
+

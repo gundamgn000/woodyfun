@@ -35,6 +35,9 @@ const ProductDetail = () => {
   const [reviewText, setReviewText] = useState("");
   const [rating, setRating] = useState(0);
   const [recommendedProducts, setRecommendedProducts] = useState([]);
+  const [added, setAdded] = useState(false);
+  const [wishlistToast, setWishlistToast] = useState(false);
+
   
 
   // --- 1. 抽離 fetchReviews 邏輯 ---
@@ -125,6 +128,27 @@ const ProductDetail = () => {
     .split("\n")
     .map(line => line.trim())
     .filter(Boolean);
+
+
+  const handleAddToCart = () => {
+    addToCart(product, qty);
+    setAdded(true);
+
+    setTimeout(() => {
+      setAdded(false);
+    }, 1500);
+  };
+
+  const handleWishlistClick = () => {
+    toggleWishlist(id);
+    setWishlistToast(true);
+
+    setTimeout(() => {
+      setWishlistToast(false);
+    }, 1200);
+  };
+
+
 
     
 
@@ -217,26 +241,55 @@ const ProductDetail = () => {
             </div>
           )}
 
-          <div className="purchase-action-container">
+          <div className="purchase-action-wrapper">
+             <div className="purchase-action-container">
             <div className="qty-stepper">
               <button onClick={() => setQty(Math.max(1, qty - 1))}>−</button>
               <input type="number" value={qty} readOnly />
               <button onClick={() => setQty(qty + 1)}>+</button>
             </div>
-            <button className="primary-buy-btn" onClick={() => addToCart(product, qty)}>
-              加入購物車
-            </button>
+            
+            <div className="buy-and-wishlist">
+              <button
+                className={`primary-buy-btn ${added ? "added" : ""}`}
+                onClick={handleAddToCart}
+                disabled={added}
+              >
+                {added ? "✓ 已加入購物車" : "加入購物車"}
+              </button>
+
+            </div>
+            {/* ❤️ PDP 收藏（不進 flex） */}
             <button
-              className={`wishlist-btn ${isWishlisted(id) ? "active" : ""}`}
-              onClick={() => toggleWishlist(id)}
+              className={`pdp-wishlist-btn ${isWishlisted(id) ? "active" : ""}`}
+              onClick={(e) => {
+                e.preventDefault();
+
+                const willAdd = !isWishlisted(id);
+                toggleWishlist(id);
+
+                if (willAdd) {
+                  setWishlistToast(true);
+                  setTimeout(() => setWishlistToast(false), 1200);
+                }
+              }}
               aria-label="加入收藏"
             >
               {isWishlisted(id) ? "❤️" : "🤍"}
             </button>
 
+
+            {wishlistToast && (
+              <div className="wishlist-toast">
+                已加入收藏
+              </div>
+            )}
           </div>
         </div>
       </div>
+          </div>
+
+         
 
       {/* 評價區 */}
       <div className="reviews-section-v2">
