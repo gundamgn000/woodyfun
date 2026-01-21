@@ -62,7 +62,8 @@ export default function Navbar() {
           Desktop Sidebar / Mobile Drawer
          ========================= */}
       <aside
-        className={`fixed left-0 top-0 h-screen w-[260px] bg-[#faf9f6] border-r border-gray-100 flex flex-col z-50 p-6 overflow-y-auto transition-transform duration-300
+        className={`fixed left-0 top-0 md:top-0 top-[56px] h-[calc(100vh-56px)] md:h-screen w-[260px]
+        bg-[#faf9f6] border-r border-gray-100 flex flex-col z-50 p-6 overflow-y-auto transition-transform duration-300
         ${menuOpen ? "translate-x-0" : "-translate-x-full"} md:translate-x-0`}
       >
         {/* Logo */}

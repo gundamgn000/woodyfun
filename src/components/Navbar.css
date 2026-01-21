@@ -349,3 +349,14 @@
   }
 }
 
+.mobile-drawer {
+  position: fixed;
+  top: 56px;
+  left: 0;
+  width: 80%;
+  max-width: 320px;
+  height: calc(100vh - 56px);
+  background: #faf9f6;
+  z-index: 250;
+  padding: 20px;
+}
