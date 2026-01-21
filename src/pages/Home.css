@@ -122,6 +122,13 @@
 }
 
 /* ===== 手機版 (RWD) ===== */
+/* ✅ 手機版：2 欄 */
+@media (max-width: 640px) {
+  .products-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px; /* 手機間距要縮，不然會擠 */
+  }
+}
 @media (max-width: 1024px) {
   .home-container {
     margin-left: 0; /* 手機版導覽通常變回頂部，歸零邊距 */

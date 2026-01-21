@@ -226,3 +226,29 @@
   color: #fff;
   font-weight: 600;
 }
+
+/* 📱 手機版：一行兩張（參考 ADIAFOROS） */
+@media (max-width: 640px) {
+  .products-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+
+  .product-card-wrapper {
+    border-radius: 18px;
+  }
+
+  .product-info {
+    padding: 8px 4px;
+    min-height: auto;
+  }
+
+  .product-name {
+    font-size: 14px;
+    line-height: 1.3;
+  }
+
+  .product-price {
+    font-size: 14px;
+  }
+}

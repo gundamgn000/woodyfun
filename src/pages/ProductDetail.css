@@ -520,3 +520,9 @@
   transform: translateY(-1px);
 }
 
+@media (max-width: 640px) {
+  .recommend-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+}
