@@ -142,13 +142,19 @@ const ProductDetail = () => {
   };
 
   const handleWishlistClick = () => {
-    toggleWishlist(id);
+  const wasWishlisted = isWishlisted(id); // 🔑 點擊前狀態
+
+  toggleWishlist(id);
+
+  // ✅ 只有「未收藏 → 收藏」才顯示提示
+  if (!wasWishlisted) {
     setWishlistToast(true);
 
     setTimeout(() => {
       setWishlistToast(false);
     }, 1200);
-  };
+  }
+};
 
 
 
@@ -244,48 +250,40 @@ const ProductDetail = () => {
           )}
 
           <div className="purchase-action-wrapper">
-             <div className="purchase-action-container">
+             {/* 找到這個容器 */}
+          <div className="purchase-action-container">
+            
+            {/* 1. 數量加減器 (保持不變) */}
             <div className="qty-stepper">
               <button onClick={() => setQty(Math.max(1, qty - 1))}>−</button>
               <input type="number" value={qty} readOnly />
               <button onClick={() => setQty(qty + 1)}>+</button>
             </div>
             
-            <div className="buy-and-wishlist">
+            {/* 2. 重點：新增這層 action-buttons-group 把兩個按鈕包在一起 */}
+            <div className="action-buttons-group">
               <button
                 className={`primary-buy-btn ${added ? "added" : ""}`}
                 onClick={handleAddToCart}
-                disabled={added}
               >
                 {added ? "✓ 已加入購物車" : "加入購物車"}
               </button>
 
+              <button
+                className={`pdp-wishlist-btn-v2 ${isWishlisted(id) ? "active" : ""}`}
+                onClick={handleWishlistClick}
+              >
+                {isWishlisted(id) ? "❤️" : "🤍"}
+              </button>
+            
+
+
+              {wishlistToast && (
+                <div className="wishlist-toast">
+                  已加入收藏
+                </div>
+              )}
             </div>
-            {/* ❤️ PDP 收藏（不進 flex） */}
-            <button
-              className={`pdp-wishlist-btn ${isWishlisted(id) ? "active" : ""}`}
-              onClick={(e) => {
-                e.preventDefault();
-
-                const willAdd = !isWishlisted(id);
-                toggleWishlist(id);
-
-                if (willAdd) {
-                  setWishlistToast(true);
-                  setTimeout(() => setWishlistToast(false), 1200);
-                }
-              }}
-              aria-label="加入收藏"
-            >
-              {isWishlisted(id) ? "❤️" : "🤍"}
-            </button>
-
-
-            {wishlistToast && (
-              <div className="wishlist-toast">
-                已加入收藏
-              </div>
-            )}
           </div>
         </div>
       </div>

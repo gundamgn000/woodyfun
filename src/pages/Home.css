@@ -143,3 +143,39 @@
     height: 65vh;
   }
 }
+/* ===== 玩具分類 - 手機版改成 ADIAFOROS 風格 ===== */
+@media (max-width: 640px) {
+  .week-look-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+  }
+
+  .week-look-card {
+    border-radius: 18px;
+    box-shadow: none;
+    border: 1px solid rgba(0,0,0,0.04);
+  }
+
+  .week-look-card-img {
+    height: 130px;
+  }
+
+  .week-look-card-img img {
+    object-fit: cover;
+  }
+
+  .week-look-card-text {
+    padding: 14px 10px;
+  }
+
+  .week-look-card-text .zh {
+    font-size: 0.85rem;
+    margin-bottom: 2px;
+  }
+
+  .week-look-card-text .en {
+    font-size: 0.65rem;
+    letter-spacing: 0.08em;
+  }
+}

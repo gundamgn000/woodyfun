@@ -4,15 +4,24 @@
   margin-left: 260px;
   padding: 80px 40px;
   background-color: #ffffff;
-  min-height: 100vh;
+  min-height: auto;
+  width: calc(100% - 260px); /* ✅ 關鍵 */
+  overflow-x: hidden;
 }
 
 @media (max-width: 1023px) {
   .product-detail-page-v2 {
     margin-left: 0;
-    padding: 100px 20px 40px;
+    padding: 16px 20px 40px;
   }
 }
+@media (max-width: 768px) {
+  .product-detail-page-v2 {
+    width: 100%;
+    overflow-x: hidden;
+  }
+}
+
 
 .detail-main-layout {
   display: grid;
@@ -312,11 +321,36 @@
 .purchase-action-container {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 16px; /* 數量器與按鈕組的間距 */
+  width: 100%;
 }
 
 .purchase-action-wrapper {
   position: relative;
+  margin-top: 24px;
+}
+
+/* 修正後的彈窗 UI/UX */
+.wishlist-toast-pop {
+  position: absolute;
+  top: -45px;      /* 出現在按鈕上方 */
+  right: 0;        /* 對齊右側愛心位置 */
+  background: rgba(50, 50, 50, 0.9);
+  color: #fff;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  pointer-events: none;
+  animation: toastFadeInOut 2s ease-in-out forwards;
+  z-index: 100;
+}
+
+@keyframes toastFadeInOut {
+  0% { opacity: 0; transform: translateY(10px); }
+  15% { opacity: 1; transform: translateY(0); }
+  85% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(-10px); }
 }
 
 .pdp-wishlist-btn {
@@ -375,11 +409,50 @@
   min-width: 0; /* 非常重要，防止 flex 撐爆 */
 }
 
-.primary-buy-btn {
-  flex: 1;
-  min-width: 260px;
+/* 新增：按鈕組容器 */
+.action-buttons-group {
+  display: flex;
+  gap: 10px;   /* 購物車按鈕與愛心的間距 */
+  flex: 1;     /* 讓這組按鈕佔滿右側剩餘的所有空間 */
 }
 
+.pdp-wishlist-btn-v2 {
+  width: 54px;
+  height: 54px;
+  flex-shrink: 0; /* 防止被左邊按鈕擠扁 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #ffffff;
+  border: 1px solid #eee;
+  border-radius: 50%;
+  font-size: 20px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.pdp-wishlist-btn-v2.active {
+  background: #fff5f5;
+  border-color: #ffbaba;
+  animation: heart-pop 0.45s ease;
+}
+/* 滑過愛心的視覺反饋 */
+.pdp-wishlist-btn-v2:hover {
+  background: #fff5ed;
+  border-color: #ef9d51;
+}
+
+.primary-buy-btn {
+  flex: 1;      /* 關鍵：它會自動延伸，但因為愛心有固定寬度，它就不會佔滿全寬 */
+  height: 54px; /* 跟愛心一樣高 */
+  background: #ef9d51;
+  color: white;
+  border-radius: 100px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  white-space: nowrap; /* 防止文字在小螢幕換行 */
+}
 .wishlist-slot {
   width: 55px;
   height: 55px;
@@ -415,22 +488,12 @@
   pointer-events: none;
 }
 
+
 @keyframes wishlist-toast-fade {
-  0% {
-    opacity: 0;
-    transform: translateY(6px);
-  }
-  15% {
-    opacity: 1;
-    transform: translateY(0);
-  }
-  85% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0;
-    transform: translateY(-4px);
-  }
+  0%   { opacity: 0; transform: translateY(6px); }
+  15%  { opacity: 1; transform: translateY(0); }
+  85%  { opacity: 1; }
+  100% { opacity: 0; transform: translateY(-4px); }
 }
 
 
@@ -526,3 +589,70 @@
     gap: 16px;
   }
 }
+
+@media (max-width: 640px) {
+  .purchase-action-container {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .qty-stepper {
+    justify-content: center;
+  }
+
+  .primary-buy-btn {
+    min-width: unset;   /* ❗一定要解除 */
+    width: 100%;
+  }
+
+  .pdp-wishlist-btn {
+    align-self: center;
+  }
+}
+
+/* 價格 + 愛心（手機專用排版） */
+.price-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 8px;
+}
+
+/* 手機板才啟用 */
+@media (min-width: 641px) {
+  .price-row .pdp-wishlist-btn {
+    display: none;
+  }
+}
+
+/* 手機板愛心微調 */
+@media (max-width: 640px) {
+  .price-row .pdp-wishlist-btn {
+    width: 40px;
+    height: 40px;
+    font-size: 18px;
+    border-radius: 50%;
+    border: 1px solid #e0ddd5;
+    background: #fff;
+    flex-shrink: 0;
+  }
+}
+
+.price-wishlist-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 8px;
+}
+
+.pdp-wishlist-btn {
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+.action-buttons-group {
+  position: relative;
+}
+
