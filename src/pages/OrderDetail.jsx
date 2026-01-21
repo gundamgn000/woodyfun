@@ -12,14 +12,18 @@ const getOrderHintText = (order) => {
 
   const isCOD = order.paymentMethod === "貨到付款";
 
+  // 貨到付款
   if (isCOD) {
     switch (order.status) {
       case "pending":
-        return "訂單已成立，將於出貨時再付款，請耐心等候出貨通知。";
+        return "訂單已成立，我們正在為你準備商品，出貨時再付款即可。";
+
       case "shipped":
-        return "商品已出貨，請留意收件並準備付款。";
+        return "商品已出貨，請留意收件，並於收貨時完成付款。";
+
       case "completed":
-        return "訂單已完成，感謝您的購買！";
+        return "訂單已完成，感謝你選擇木趣小屋，希望孩子喜歡這份禮物。";
+
       default:
         return "";
     }
@@ -28,13 +32,16 @@ const getOrderHintText = (order) => {
   // 非貨到付款（信用卡 / ATM）
   switch (order.status) {
     case "pending":
-      return "付款處理中，請稍候系統確認。";
+      return "我們正在確認你的付款資訊，完成後將立即為你安排出貨。";
+
     case "completed":
-      return "付款完成，訂單已成立，感謝您的購買！";
+      return "付款完成，訂單已成立，感謝你選擇木趣小屋。";
+
     default:
       return "";
   }
 };
+
 
 // 🔁 退貨原因中文對照
 const RETURN_REASON_MAP = {
@@ -99,31 +106,31 @@ const OrderDetail = () => {
       case "paid":
         return {
           text: "付款完成，準備為你出貨。",
-          className: "bg-blue-100 text-blue-700",
+          className: "bg-orange-100 text-orange-700",
         };
 
       case "shipped":
         return {
           text: "你的訂單已出貨，請留意收件。",
-          className: "bg-blue-50 text-blue-800",
+          className: "bg-orange-50 text-orange-800",
         };
 
       case "completed":
         return {
           text: "訂單已完成，感謝你的購買。",
-          className: "bg-green-50 text-green-700",
+          className: "bg-emerald-50 text-emerald-700",
         };
 
       case "cancelled":
         return {
           text: "此訂單已取消，如有疑問請聯絡客服。",
-          className: "bg-red-50 text-red-700",
+          className: "bg-rose-50 text-rose-700",
         };
 
-      default:
-        return null;
-    }
-  };
+            default:
+              return null;
+          }
+        };
 
   const handleSubmitReturn = async () => {
     if (!returnReason) {
@@ -158,7 +165,7 @@ const OrderDetail = () => {
 
   return (
     <div className="max-w-4xl mx-auto p-6">
-      <Link to="/orders" className="text-blue-600 underline">
+      <Link to="/orders" className="text-green-500 underline">
         ← 返回訂單列表
       </Link>
 
@@ -173,7 +180,7 @@ const OrderDetail = () => {
         <p><strong>狀態：</strong> {order.status}</p>
         <p><strong>付款方式：</strong> {paymentMethod || "無資料"}</p>
         {getOrderHintText(order) && (
-          <div className="mt-3 rounded-md bg-blue-50 p-3 text-sm text-blue-700">
+          <div className="mt-3 rounded-md bg-orange-50 p-3 text-sm text-orange-700">
             {getOrderHintText(order)}
           </div>
         )}
@@ -204,21 +211,38 @@ const OrderDetail = () => {
 
       <h3 className="text-xl font-bold mb-3">商品項目</h3>
       <div className="space-y-4">
-        {orderItems?.map((item, idx) => (
-          <div key={idx} className="flex gap-4 border p-4 rounded shadow">
-            <img
-              src={item.image}
-              alt={item.name}
-              className="w-24 h-24 object-cover rounded"
-            />
-            <div>
-              <p className="font-semibold">{item.name}</p>
-              <p>適合年齡：{item.ageRange || "全齡適用"}</p>
-              <p>數量：{item.quantity}</p>
-              <p className="text-orange-400 font-bold">NT$ {item.price}</p>
+        {orderItems?.map((item, idx) => {
+          const itemImg =
+            item.mainImageUrl ||
+            item.image ||
+            item.imageUrl ||
+            "https://placehold.co/200x200?text=WoodyFun";
+
+          return (
+            <div key={idx} className="flex gap-4 border p-4 rounded shadow">
+              <div className="w-24 h-24 overflow-hidden rounded bg-gray-50 border border-gray-100">
+                <img
+                  src={itemImg}
+                  alt={item.name}
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    e.target.src =
+                      "https://placehold.co/200x200?text=WoodyFun";
+                  }}
+                />
+              </div>
+
+              <div>
+                <p className="font-semibold">{item.name}</p>
+                <p>適合年齡：{item.ageRange || "全齡適用"}</p>
+                <p>數量：{item.quantity}</p>
+                <p className="text-orange-400 font-bold">
+                  NT$ {item.price}
+                </p>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       <div className="mt-8 border-t pt-4 space-y-2 text-right">
