@@ -72,7 +72,7 @@ const ProductDetail = () => {
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
           const data = docSnap.data();
-          setProduct(data);
+          setProduct({ id: docSnap.id, ...data });
           setSelectedImage(safeImg(data.mainImageUrl || data.imageUrl));
 
           const q = query(
@@ -131,6 +131,8 @@ const ProductDetail = () => {
 
 
   const handleAddToCart = () => {
+    if (!product) return;
+    
     addToCart(product, qty);
     setAdded(true);
 

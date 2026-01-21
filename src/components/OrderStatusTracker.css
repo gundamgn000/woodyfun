@@ -3,13 +3,15 @@
 ------------------------------ */
 
 :root {
-  --primary-color: #4fc3c6;
-  --primary-light: #7ee3e3;
-  --primary-glow: rgba(127, 227, 227, 0.55);
+  /* Woodyfun 橘色主題 */
+  --primary-color: #f97316;        /* orange-500 */
+  --primary-light: #fdba74;        /* orange-300 */
+  --primary-glow: rgba(249, 115, 22, 0.45);
 
   --inactive-color: #d5d5d5;
   --inactive-line: #e0e0e0;
 }
+
 
 .order-tracker {
   display: flex;

@@ -220,33 +220,20 @@ export default function CheckoutConfirm() {
   return (
     <div className="max-w-3xl mx-auto px-6 py-20">
        {/* ⚠️ 測試階段提示（只影響 UI，不影響狀態） */}
-      <div
-        style={{
-          marginBottom: "16px",
-          padding: "10px 14px",
-          border: "1px solid #f5c2c7",
-          backgroundColor: "#fff5f5",
-          color: "#842029",
-          borderRadius: "6px",
-          fontSize: "14px",
-          lineHeight: 1.6,
-        }}
-      >
+      <div className="mb-6 px-4 py-3 rounded-xl bg-amber-50 text-amber-800 text-sm leading-relaxed">
         ⚠️ 本網站目前為測試階段，付款流程僅供系統測試使用，
         本次交易不會實際請款或產生任何費用。
       </div>
       <h1 className="text-3xl font-bold mb-8">訂單確認</h1>
 
-      <div className="border p-6 rounded-xl mb-8">
-        <h2 className="text-xl font-semibold mb-4">收件資訊</h2>
-        <p>姓名：{checkoutInfo.name}</p>
-        <p>電話：{checkoutInfo.phone}</p>
-        <p>
-          地址：{checkoutInfo.city}
-          {checkoutInfo.district}
-          {checkoutInfo.address}
+      <div className="bg-white p-6 rounded-2xl shadow-sm mb-8">
+        <h2 className="text-lg font-semibold mb-4">收件資訊</h2>
+        <p className="text-sm text-gray-700">姓名：{checkoutInfo.name}</p>
+        <p className="text-sm text-gray-700">電話：{checkoutInfo.phone}</p>
+        <p className="text-sm text-gray-700">
+          地址：{checkoutInfo.city}{checkoutInfo.district}{checkoutInfo.address}
         </p>
-        <p>付款方式：{checkoutInfo.paymentMethod}</p>
+        <p className="text-sm text-gray-700">付款方式：{checkoutInfo.paymentMethod}</p>
       </div>
 
       <div className="border p-6 rounded-xl mb-8">
@@ -255,30 +242,52 @@ export default function CheckoutConfirm() {
         {cart.map((item, idx) => {
           const price = parseInt(String(item.price).replace(/[^0-9]/g, ""), 10);
           const lineTotal = price * item.quantity;
+          const itemImg =
+            item.mainImageUrl ||
+            item.image ||
+            item.imageUrl ||
+            "https://placehold.co/200x200?text=WoodyFun";
+
 
           return (
-            <div key={idx} className="flex justify-between py-3 border-b">
-              <div className="flex space-x-4">
-                <img
-                  src={item.image}
-                  className="w-16 h-16 rounded object-cover"
-                />
+            <div
+              key={idx}
+              className="flex justify-between items-center py-4 last:border-b-0 border-b border-gray-100"
+            >
+              {/* 左側：圖片 + 資訊 */}
+              <div className="flex items-center gap-4">
+                {/* 圖片 */}
+                <div className="w-16 h-16 overflow-hidden rounded-lg bg-gray-50 border border-gray-100">
+                  <img
+                    src={itemImg}
+                    alt={item.name}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.target.src = "https://placehold.co/200x200?text=WoodyFun";
+                    }}
+                  />
+                </div>
+
+                {/* 商品文字資訊（⬅️ 關鍵：移到圖片外） */}
                 <div>
-                  <p className="font-medium">{item.name}</p>
+                  <p className="font-medium text-gray-900">{item.name}</p>
                   <p className="text-gray-500 text-sm">
-                    尺寸：{item.size}／數量：{item.quantity}
+                    適合年齡：{item.ageRange || "全齡適用"}／數量：{item.quantity}
                   </p>
                 </div>
               </div>
-              <p className="font-semibold">
+
+              {/* 右側：金額 */}
+              <p className="font-medium text-gray-800">
                 NT$ {lineTotal.toLocaleString()}
               </p>
             </div>
+
           );
         })}
       </div>
 
-      <div className="border p-6 rounded-xl bg-gray-50 mb-8 space-y-3">
+      <div className="bg-gray-50 p-6 rounded-2xl mb-10 space-y-3">
         {/* 商品小計 */}
         <div className="flex justify-between text-sm text-gray-700">
           <span>商品小計</span>
@@ -293,23 +302,32 @@ export default function CheckoutConfirm() {
           </div>
         )}
 
-        <div className="border-t pt-4 flex justify-between text-xl font-bold">
-          <span>總金額</span>
-          <span className="text-red-600">
+        <div className="border-t pt-4 flex justify-between items-center">
+          <span className="text-base font-medium">總金額</span>
+          <span className="text-2xl font-semibold text-gray-900">
             NT$ {totalAmount.toLocaleString()}
           </span>
         </div>
       </div>
 
-      
-
-
       <button
-        className="w-full bg-pink-600 text-white py-3 rounded-lg"
+        className="w-full bg-orange-400 text-white py-4 rounded-full text-base hover:bg-orange-200 active:bg-orange-600 transition"
         onClick={createOrder}
       >
         確認送出訂單
       </button>
+      
+      <div className="flex justify-center mt-4">
+        <button
+          onClick={() => navigate("/checkout")}
+          className="text-gray-400 text-sm hover:text-gray-600 hover:underline py-2"
+        >
+          回上一步修改
+        </button>
+      </div>
+
+
+
 
       
     </div>

@@ -213,9 +213,9 @@ const OrderDetail = () => {
             />
             <div>
               <p className="font-semibold">{item.name}</p>
-              <p>尺寸：{item.size}</p>
+              <p>適合年齡：{item.ageRange || "全齡適用"}</p>
               <p>數量：{item.quantity}</p>
-              <p className="text-pink-600 font-bold">NT$ {item.price}</p>
+              <p className="text-orange-400 font-bold">NT$ {item.price}</p>
             </div>
           </div>
         ))}
@@ -236,7 +236,7 @@ const OrderDetail = () => {
           </div>
         )}
 
-        <div className="flex justify-end gap-6 text-2xl font-bold mt-2">
+        <div className="flex justify-end gap-6 text-2xl font-bold mt-2 text-orange-400">
           <span>總金額</span>
           <span>NT$ {order.total.toLocaleString()}</span>
         </div>
