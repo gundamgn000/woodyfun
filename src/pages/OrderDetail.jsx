@@ -236,7 +236,7 @@ const OrderDetail = () => {
                 <p className="font-semibold">{item.name}</p>
                 <p>適合年齡：{item.ageRange || "全齡適用"}</p>
                 <p>數量：{item.quantity}</p>
-                <p className="text-orange-400 font-bold">
+                <p className="flex gap-4 p-4 rounded-2xl bg-white shadow-sm">
                   NT$ {item.price}
                 </p>
               </div>

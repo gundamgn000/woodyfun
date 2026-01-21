@@ -71,7 +71,7 @@ export default function Navbar() {
           className="flex flex-col items-center gap-2 mb-12 mt-4 no-underline"
           onClick={() => setMenuOpen(false)}
         >
-          <img src="/src/assets/logo.png" alt="Logo" className="h-16 w-auto" />
+        <img src="/logo.png" alt="Woodyfun Logo" className="h-16 w-auto" />
           <div className="text-center">
             <div className="text-xl tracking-[0.15em] font-bold text-[#6a625d]">
               木趣小屋
@@ -184,7 +184,7 @@ export default function Navbar() {
                   )}
                   <button
                     onClick={handleLogout}
-                    className="text-left text-gray-400"
+                    className="text-left text-red-600"
                   >
                     登出
                   </button>
