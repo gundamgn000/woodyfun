@@ -8,7 +8,7 @@ import "./Wishlist.css";
 
 export default function Wishlist() {
   const { user, loading } = useAuth(); 
-  const { wishlistIds, toggleWishlist, loadingWishlist } = useWishlist();
+  const { wishlistIds, toggleWishlist, isWishlisted, loadingWishlist } = useWishlist();
 
   const [allProducts, setAllProducts] = useState([]);
   const [products, setProducts] = useState([]);

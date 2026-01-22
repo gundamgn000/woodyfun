@@ -6,6 +6,8 @@ import { collection, getDocs } from "firebase/firestore";
 import { useWishlist } from "../context/WishlistContext";
 import { HeartOutline, HeartFilled } from "../components/HeartIcons";
 import "./Products.css"; // 確保導入 CSS
+import "../styles/ProductCard.css";
+
 
 export default function Products() {
   const { toggleWishlist, isWishlisted } = useWishlist();
@@ -151,9 +153,9 @@ export default function Products() {
                 </div>
 
                 <div className="product-info">
-                  <div className="category-tag">{item.category}</div>
+                  <div className="product-card-category">{item.category}</div>
                   <h2 className="product-name">{item.name}</h2>
-                  <div className="product-price">NT$ {item.price}</div>
+                  <div className="product-card-price">NT$ {item.price}</div>
                 </div>
               </Link>
 

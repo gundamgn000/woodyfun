@@ -86,20 +86,24 @@
 
 
 .product-price {
+  margin-top: 4px;
   color: #f39c42 !important; /* 把原本的粉色改為品牌橘 */
   font-size: 1.1rem;
   font-weight: 700;
   white-space: nowrap;      /* ⭐ 關鍵：不允許 NT$ 換行 */
-  display: inline-block;
+  display: inline-block;              /* 品牌橘 */
+  font-size: 15px;
+ 
 }
 
 .product-info {
-  padding: 12px 6px 8px;
-  min-height: 110px;        /* ⭐ 視你的字級可調 */
+  padding: 14px 10px 10px;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  justify-content: flex-end;   /* ⭐ 重點：資訊往下沉 */
+  gap: 2px;
 }
+
 
 
 /* 分頁按鈕 */
@@ -242,13 +246,29 @@
     padding: 8px 4px;
     min-height: auto;
   }
+/* ================================
+   Wishlist 風格文字語言（套用到 Products）
+   ================================ */
 
-  .product-name {
-    font-size: 14px;
-    line-height: 1.3;
-  }
+/* 分類標籤（感官啟蒙 / 益智拼圖 / 建構邏輯） */
+.category-tag {
+  font-size: 11px;
+  color: #94a672;
+  letter-spacing: 0.12em;
+}
 
-  .product-price {
-    font-size: 14px;
-  }
+.product-name {
+  font-size: 14.5px;
+  font-weight: 600;
+  color: #6a625d;
+  line-height: 1.45;
+}
+
+.product-card-wrapper {
+  padding-bottom: 6px;
+}
+
+
+
+
 }
