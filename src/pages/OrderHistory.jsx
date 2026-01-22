@@ -12,17 +12,39 @@ const OrderHistory = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!user) return;
-    async function loadOrders() {
+  // 🔴 尚未登入 → 不查詢，但要結束 loading
+  if (!user) {
+    setLoading(false);
+    return;
+  }
+
+  async function loadOrders() {
+    try {
       const ref = collection(db, "orders");
-      const q = query(ref, where("userId", "==", user.uid), orderBy("createdAt", "desc"));
+      const q = query(
+        ref,
+        where("userId", "==", user.uid),
+        orderBy("createdAt", "desc")
+      );
+
       const snap = await getDocs(q);
-      const list = snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+      const list = snap.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+
       setOrders(list);
+    } catch (err) {
+      console.error("讀取訂單失敗：", err);
+    } finally {
+      // ✅ 無論成功或失敗，都關閉 loading
       setLoading(false);
     }
-    loadOrders();
-  }, [user]);
+  }
+
+  loadOrders();
+}, [user]);
+
 
   if (loading) return <div className="member-page-container"><p className="text-[#6a625d]">讀取中...</p></div>;
 
