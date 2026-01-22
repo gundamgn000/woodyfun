@@ -126,8 +126,18 @@ export default function Navbar() {
                 {cat}
               </NavLink>
             ))}
-          </div>
+          </div>          
         </nav>
+
+         <NavLink
+            to="/Wishlist"
+            className={({ isActive }) =>
+              `nav-side-link ${isActive ? "active" : ""}`
+            }
+            onClick={() => setMenuOpen(false)}
+          >
+            我的收藏
+          </NavLink>
 
         {/* 底部功能 */}
         <div className="border-t border-gray-200 pt-6 mt-auto flex flex-col gap-2">
