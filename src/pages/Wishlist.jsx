@@ -4,7 +4,9 @@ import { collection, getDocs } from "firebase/firestore";
 import { db } from "../firebase/firebase";
 import { useAuth } from "../context/AuthContext";
 import { useWishlist } from "../context/WishlistContext";
+import { HeartOutline, HeartFilled } from "../components/HeartIcons";
 import "./Wishlist.css";
+import "../styles/ProductCard.css";
 
 export default function Wishlist() {
   const { user, loading } = useAuth(); 
@@ -48,6 +50,12 @@ export default function Wishlist() {
     );
   }
 
+  const safeImg = (url) =>
+  url && url.trim() !== ""
+    ? url
+    : "https://placehold.co/400x400?text=No+Image";
+
+
   return (
     <div className="wishlist-page-container">
       <div className="wishlist-header">
@@ -68,29 +76,38 @@ export default function Wishlist() {
       ) : (
         <div className="wishlist-grid">
           {products.map((item) => (
-            <div key={item.id} className="wishlist-item-card group">
-              <Link to={`/product/${item.id}`} className="wishlist-card-link">
-                <div className="wishlist-img-box">
-                  <img src={item.image} alt={item.name} />
+            <div key={item.id} className="product-card-wrapper">
+
+              {/* 點卡片本體 → 商品頁 */}
+              <Link to={`/product/${item.id}`} className="product-card-link">
+                <div className="product-image-wrapper">
+                  <img
+                    src={item.mainImageUrl || item.imageUrl}
+                    alt={item.name}
+                  />
                 </div>
-                <div className="wishlist-info">
-                  <span className="wishlist-category">{item.category}</span>
-                  <h2 className="wishlist-name">{item.name}</h2>
-                  <div className="wishlist-price">NT$ {item.price?.toLocaleString()}</div>
+
+                <div className="product-info">
+                  <div className="product-card-category">{item.category}</div>
+                  <h2 className="product-name">{item.name}</h2>
+                  <div className="product-card-price">NT$ {item.price}</div>
                 </div>
               </Link>
 
-              {/* 移除按鈕 - 換成優雅的 X 或 實心心型 */}
+              {/* ❤️ 愛心（完全對齊 Products） */}
               <button
+                className="wishlist-btn"
                 onClick={(e) => {
                   e.preventDefault();
-                  toggleWishlist(item);
+                  toggleWishlist(item.id);
                 }}
-                className="wishlist-remove-btn"
-                title="從收藏移除"
               >
-                ❤️
+                {isWishlisted(item.id)
+                  ? <HeartFilled color="#f39c42" />
+                  : <HeartOutline color="#ccc" />
+                }
               </button>
+
             </div>
           ))}
         </div>

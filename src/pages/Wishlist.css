@@ -27,21 +27,22 @@
 /* 收藏格柵 */
 .wishlist-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: 35px;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 30px;
 }
 
+
 /* 收藏卡片 */
-.wishlist-item-card {
+/*.wishlist-item-card {
   position: relative;
   background: #fff;
   border-radius: 30px;
   border: 1px solid #f5f5f5;
   padding: 15px;
   transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-}
+}*/
 
-.wishlist-item-card:hover {
+/*.wishlist-item-card:hover {
   transform: translateY(-8px);
   box-shadow: 0 15px 35px rgba(243, 156, 66, 0.1);
   border-color: #f39c42;
@@ -89,10 +90,10 @@
   color: #f39c42;
   font-size: 1.2rem;
   font-weight: 700;
-}
+}*/
 
 /* 移除按鈕 */
-.wishlist-remove-btn {
+/*.wishlist-remove-btn {
   position: absolute;
   top: 25px;
   right: 25px;
@@ -114,7 +115,7 @@
 .wishlist-remove-btn:hover {
   transform: scale(1.1);
   background: #fff0f0;
-}
+}*/
 
 /* 空狀態 */
 .wishlist-empty-state {
@@ -149,3 +150,68 @@
     padding: 40px 20px;
   }
 }
+
+.product-card-wrapper {
+  position: relative;
+  border-radius: 24px;
+  background: #fff;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+  padding: 14px;                /* ✅ 關鍵 */
+  display: flex;                /* ✅ 關鍵 */
+  flex-direction: column;       /* ✅ 關鍵 */
+  transition: 
+    transform 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.15),
+    box-shadow 0.35s ease;
+}
+
+.product-card-wrapper:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.08);
+}
+
+
+.product-image-wrapper {
+  aspect-ratio: 1 / 1;
+  border-radius: 18px;
+  overflow: hidden;
+  background: #fdfcfb;
+  position: relative;
+}
+
+
+.product-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+
+.product-card-wrapper:hover .product-image {
+  transform: scale(1.06);
+}
+
+/* ❤️ 愛心 */
+.wishlist-btn {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  z-index: 2;
+  transition: transform 0.25s ease, opacity 0.25s ease;
+}
+
+.product-card-wrapper:hover .wishlist-btn {
+  transform: scale(1.15);
+}
+
+.wishlist-btn:hover {
+  transform: scale(1.08);
+}
+
+.wishlist-btn svg {
+  filter: drop-shadow(0 2px 6px rgba(0,0,0,0.15));
+}
+
