@@ -146,6 +146,10 @@ const ProductDetail = () => {
   };
 
   const handleWishlistClick = () => {
+    if (!user) {
+    alert("登入後才能收藏喔 💛");
+    return;
+  }
   const wasWishlisted = isWishlisted(id); // 🔑 點擊前狀態
 
   toggleWishlist(id);

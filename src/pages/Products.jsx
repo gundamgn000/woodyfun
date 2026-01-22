@@ -7,6 +7,8 @@ import { useWishlist } from "../context/WishlistContext";
 import { HeartOutline, HeartFilled } from "../components/HeartIcons";
 import "./Products.css"; // 確保導入 CSS
 import "../styles/ProductCard.css";
+import { useAuth } from "../context/AuthContext";
+
 
 
 export default function Products() {
@@ -19,7 +21,26 @@ export default function Products() {
   const [sortMethod, setSortMethod] = useState("default");
   const [justAddedId, setJustAddedId] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const { user } = useAuth();
   const itemsPerPage = 6;
+  const handleWishlistClick = (e, productId) => {
+  e.preventDefault();
+
+  if (!user) {
+    alert("登入後才能收藏喔 💛");
+    return;
+  }
+
+  const willAdd = !isWishlisted(productId);
+  toggleWishlist(productId);
+
+  if (willAdd) {
+    createFlyingHeart(e.currentTarget);
+    setJustAddedId(productId);
+    setTimeout(() => setJustAddedId(null), 1200);
+  }
+};
+
   const safeImg = (url) =>
   url && url.trim() !== ""
     ? url
@@ -159,21 +180,11 @@ export default function Products() {
                 </div>
               </Link>
 
-              <button
+             <button
                 className="wishlist-btn"
-                onClick={(e) => {
-                  e.preventDefault();
-
-                  const willAdd = !isWishlisted(item.id);
-                  toggleWishlist(item.id);
-
-                  if (willAdd) {
-                    createFlyingHeart(e.currentTarget);
-                    setJustAddedId(item.id);
-                    setTimeout(() => setJustAddedId(null), 1200);
-                  }
-                }}
-              >
+                onClick={(e) => handleWishlistClick(e, item.id)}
+             
+             >
                 {justAddedId === item.id && (
                   <div className="wishlist-hint">已加入收藏</div>
                 )}
@@ -181,7 +192,8 @@ export default function Products() {
                 {isWishlisted(item.id)
                   ? <HeartFilled color="#f39c42" />
                   : <HeartOutline color="#ccc" />}
-              </button>
+             </button>
+
             </div>
           );
         })}
