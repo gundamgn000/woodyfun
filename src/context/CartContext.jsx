@@ -90,6 +90,29 @@ export function CartProvider({ children }) {
     }, 0);
   }, [cart]);
 
+  const increaseQty = (id, size) => {
+  setCart((prev) =>
+    prev.map((item) =>
+      item.id === id && item.size === size
+        ? { ...item, quantity: item.quantity + 1 }
+        : item
+    )
+  );
+};
+
+const decreaseQty = (id, size) => {
+  setCart((prev) =>
+    prev
+      .map((item) =>
+        item.id === id && item.size === size
+          ? { ...item, quantity: item.quantity - 1 }
+          : item
+      )
+      .filter((item) => item.quantity > 0) // 0 就自動移除（像蝦皮）
+  );
+};
+
+
   // ─────────────────────────────
   // 🧩 購物車操作
   // ─────────────────────────────
@@ -150,23 +173,26 @@ export function CartProvider({ children }) {
   };
 
   const value = {
-    cart,
-    addToCart,
-    removeFromCart,
-    updateQuantity,
-    clearCart,
+  cart,
+  addToCart,
+  removeFromCart,
+  clearCart,
 
-    totalItems,
-    subtotal,
-    shippingFee,
-    totalAmount,
+  increaseQty,
+  decreaseQty,
 
-    checkoutInfo,
-    setCheckoutInfo,
+  totalItems,
+  subtotal,
+  shippingFee,
+  totalAmount,
 
-    lastAddedItem,
-    setLastAddedItem,
-  };
+  checkoutInfo,
+  setCheckoutInfo,
+
+  lastAddedItem,
+  setLastAddedItem,
+};
+
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }

@@ -133,7 +133,11 @@ const ProductDetail = () => {
   const handleAddToCart = () => {
     if (!product) return;
     
-    addToCart(product, qty);
+    addToCart({
+      ...product,
+      quantity: qty,
+    });
+
     setAdded(true);
 
     setTimeout(() => {

@@ -5,7 +5,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useCart } from "../context/CartContext";
 
 const CartPage = () => {
-  const { cart, removeFromCart, clearCart } = useCart();
+  const { cart, removeFromCart, clearCart, increaseQty, decreaseQty} = useCart();
   const navigate = useNavigate();
 
   const SHIPPING_FEE = 80;
@@ -109,9 +109,32 @@ const CartPage = () => {
                           <span className="mr-1">👶</span>
                           適合年齡：{item.ageRange || "全齡適用"}
                         </span>
-                        <span className="bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-[10px] font-medium">
-                          數量：{getQty(item)}
-                        </span>
+                        <div className="flex items-center gap-2 mt-2 bg-gray-50 px-2 py-1 rounded-full">
+                          <button
+                            onClick={() => decreaseQty(item.id, item.size)}
+                            disabled={getQty(item) <= 1}
+                            className={`w-7 h-7 flex items-center justify-center rounded-full border
+                              ${getQty(item) <= 1
+                                ? "border-gray-200 text-gray-300 cursor-not-allowed"
+                                : "border-gray-300 text-gray-600 hover:bg-gray-100"}
+                            `}
+                          >
+                            −
+                          </button>
+
+
+                          <span className="min-w-[28px] text-center text-sm font-medium">
+                            {getQty(item)}
+                          </span>
+
+                          <button
+                            onClick={() => increaseQty(item.id, item.size)}
+                            className="w-7 h-7 flex items-center justify-center rounded-full border border-gray-300 text-gray-600 hover:bg-gray-100"
+                          >
+                            +
+                          </button>
+                        </div>
+
                       </div>
                       
                       <p className="text-gray-400 text-xs mt-3 italic">
