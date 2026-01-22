@@ -114,7 +114,8 @@ const Home = () => {
         <div className="max-w-6xl mx-auto">
           <div className="flex items-center justify-between mb-12 border-b border-gray-100 pb-6">
             <h2 className="text-2xl text-[#6a625d] tracking-[0.15em] font-bold">
-              NEW ARRIVALS <span className="text-gray-300 font-light ml-2">/ 最新上架</span>
+              新品上架 <br /> 
+              <span className="text-gray-300 font-light ml-1">/ NEW ARRIVALS</span>
             </h2>
             <button 
               onClick={() => navigate("/products")}

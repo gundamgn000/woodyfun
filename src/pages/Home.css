@@ -152,7 +152,7 @@
   .week-look-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 18px;
+    gap: 5px;
   }
 
   .week-look-card {
@@ -162,7 +162,7 @@
   }
 
   .week-look-card-img {
-    height: 260px;
+    height: 120px;
   }
 
   .week-look-card-img img {
