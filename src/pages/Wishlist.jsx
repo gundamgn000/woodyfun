@@ -59,7 +59,7 @@ export default function Wishlist() {
   return (
     <div className="wishlist-page-container">
       <div className="wishlist-header">
-        <h1 className="wishlist-title">MY WISHLIST</h1>
+        <h1 className="wishlist-title">我的收藏💕</h1>
         <p className="wishlist-subtitle">收藏那些想與孩子分享的快樂瞬間</p>
       </div>
 
