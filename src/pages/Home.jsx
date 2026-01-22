@@ -7,14 +7,12 @@ import "./Home.css";
 
 // ===== 圖片導入區 =====
 // 🔧 這裡請替換成你實際的圖片路徑
-//import sensoryImg from "../assets/home/cat-sensory.jpg"; // 感官啟蒙
-//import puzzleImg from "../assets/home/cat-puzzle.jpg";   // 益智拼圖
-//import logicImg from "../assets/home/cat-logic.jpg";     // 建構邏輯
 import heroDesktop from "../assets/home/hero-desktop.webp";
 import heroMobile from "../assets/home/hero-mobile.webp";
-const sensoryImg = "https://placehold.co/600x400/faf9f6/6a625d?text=Sensory+Toys";
-const puzzleImg = "https://placehold.co/600x400/faf9f6/6a625d?text=Puzzles";
-const logicImg = "https://placehold.co/600x400/faf9f6/6a625d?text=Logic+Blocks";
+import sensoryImg from "../assets/home/categories/sensory.jpg";
+import puzzleImg  from "../assets/home/categories/puzzles.jpg";
+import logicImg   from "../assets/home/categories/logic.jpg";
+
 const Home = () => {
   const navigate = useNavigate();
   const [newArrivals, setNewArrivals] = useState([]);
