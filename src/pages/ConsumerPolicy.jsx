@@ -29,18 +29,22 @@ export default function ConsumerPolicy() {
 
           {/* Quick actions */}
           <div className="mt-5 flex flex-wrap items-center gap-3 text-sm">
-            <Link
-              to="/contact"
-              className="inline-flex items-center rounded-full border border-[#e6e0d6] px-4 py-2 text-[#2b2b2b] hover:bg-white"
-            >
-              前往聯絡客服
-            </Link>
             <a
-              href="#contact"
-              className="inline-flex items-center rounded-full border border-[#e6e0d6] px-4 py-2 text-[#2b2b2b] hover:bg-white"
+             href="https://line.me/R/ti/p/@153bbxjj"
+             target="_blank"
+             rel="noopener noreferrer"
+             className="inline-flex items-center rounded-full border border-[#e6e0d6] px-4 py-2 text-[#2b2b2b] hover:bg-white"
             >
-              查看客服資訊
+             前往 LINE 客服
             </a>
+
+            <a
+             href="#contact"
+             className="inline-flex items-center rounded-full border border-[#e6e0d6] px-4 py-2 text-[#2b2b2b] hover:bg-white"
+            >
+             查看客服資訊
+            </a>
+
           </div>
         </header>
 
