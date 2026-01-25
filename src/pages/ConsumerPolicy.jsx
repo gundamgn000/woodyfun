@@ -164,33 +164,39 @@ export default function ConsumerPolicy() {
             </Section>
 
             <Section id="contact" title="七、客服聯絡方式">
-              <p className="mb-3">
-                若您對訂單、商品或本網站服務有任何疑問，歡迎與我們聯繫：
-              </p>
-              <div className="rounded-2xl border border-[#eee7dd] bg-white/70 p-5 space-y-2">
+             <p className="mb-3">
+                若您對訂單、商品或本網站服務有任何疑問，歡迎透過以下方式與我們聯繫：
+             </p>
+
+             <div className="rounded-2xl border border-[#eee7dd] bg-white/70 p-5 space-y-3">
                 <p>
-                  客服信箱：{" "}
-                  <a
-                    href="mailto:support@woodyfun.com"
-                    className="font-semibold underline underline-offset-4"
-                  >
-                    support@woodyfun.com
-                  </a>
+                <span className="font-semibold">LINE 官方客服：</span>
+                <a
+                    href="https://line.me/R/ti/p/@153bbxjj"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-semibold underline underline-offset-4 ml-1"
+                >
+                    木趣小屋 Woodyfun
+                </a>
                 </p>
-                <p>
-                  或前往：{" "}
-                  <Link
-                    to="/contact"
-                    className="font-semibold underline underline-offset-4"
-                  >
-                    聯絡客服頁面
-                  </Link>
-                </p>
+
                 <p className="text-sm text-[#6a6a6a]">
-                  我們將盡快為您提供協助。
+                建議加入官方帳號與我們聯繫，我們將於工作時間內盡快回覆。
                 </p>
-              </div>
+
+                <p className="pt-2">
+                <span className="font-semibold">客服信箱（備用）：</span>
+                <a
+                    href="mailto:woodyfun85@gmail.com"
+                    className="font-semibold underline underline-offset-4 ml-1"
+                >
+                    woodyfun85@gmail.com
+                </a>
+                 </p>
+            </div>
             </Section>
+
 
             <Section id="others" title="八、其他說明">
               <p>
