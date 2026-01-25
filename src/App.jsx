@@ -9,7 +9,7 @@ import { ToastProvider } from "./context/ToastContext";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import PageTransition from "./components/PageTransition";
-
+import ConsumerPolicy from "./pages/ConsumerPolicy";
 // 1. 將所有頁面改為 lazy import
 const Home = lazy(() => import("./pages/Home"));
 const Products = lazy(() => import("./pages/Products"));
@@ -97,6 +97,7 @@ function App() {
                       <Route path="/member" element={<Member />} />
                       <Route path="/wishlist" element={<Wishlist />} />
                       <Route path="/about" element={<About />} />
+                      <Route path="/consumer-policy" element={<ConsumerPolicy />} />
                       
 
                       {/* Admin */}

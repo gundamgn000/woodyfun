@@ -9,7 +9,7 @@ export default function Footer() {
       <div className="max-w-7xl mx-auto px-8 py-16 lg:pl-[300px]"> 
         {/* lg:pl-[300px] 確保在桌機版時，內容不會被左側 Navbar 擠壓得太難看 */}
         
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-12 items-start">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-12 items-start">
           
           {/* 左側：品牌精神 */}
           <div className="space-y-4">
@@ -22,39 +22,31 @@ export default function Footer() {
             </p>
           </div>
 
-          {/* 中間：快速導覽 */}
+          {/* 中左：快速連結 */}
           <div className="flex flex-col space-y-4">
-            <h3 className="text-[#94a672] font-bold tracking-widest text-xs uppercase">快速連結 / Explore</h3>
+            <h3 className="text-[#94a672] font-bold tracking-widest text-xs uppercase">
+              快速連結 / Explore
+            </h3>
             <nav className="flex flex-col space-y-3">
               <Link to="/products" className="footer-link">所有商品 Products</Link>
               <Link to="/about" className="footer-link">品牌故事 Our Story</Link>
               <Link to="/wishlist" className="footer-link">收藏清單 Wishlist</Link>
               <Link to="/profile" className="footer-link">會員中心 Member</Link>
             </nav>
-
-           <div className="flex flex-col space-y-4">
-            <h3 className="text-[#94a672] font-bold tracking-widest text-xs uppercase">
-              消費者資訊
-            </h3>
-            <nav className="flex flex-col space-y-3 text-sm">
-              <Link to="/consumer-policy" className="footer-link">
-                消費者權益與購物須知
-              </Link>
-              <Link to="/consumer-policy#privacy" className="footer-link">
-                隱私權政策
-              </Link>
-              <Link to="/consumer-policy#terms" className="footer-link">
-                服務條款
-              </Link>
-              <Link to="/consumer-policy#refund" className="footer-link">
-                退換貨政策
-              </Link>
-              <Link to="/contact" className="footer-link">
-                聯絡客服
-              </Link>
-            </nav>
           </div>
 
+          {/* ✅ 中右：消費者資訊（獨立一欄） */}
+          <div className="flex flex-col space-y-4">
+            <h3 className="text-[#94a672] font-bold tracking-widest text-xs uppercase">
+              消費者資訊 / Consumer Information
+            </h3>
+            <nav className="flex flex-col space-y-3 text-sm">
+              <Link to="/consumer-policy" className="footer-link">消費者權益與購物須知</Link>
+              <Link to="/consumer-policy#privacy" className="footer-link">隱私權政策</Link>
+              <Link to="/consumer-policy#terms" className="footer-link">服務條款</Link>
+              <Link to="/consumer-policy#refund" className="footer-link">退換貨政策</Link>
+              <Link to="/contact" className="footer-link">聯絡客服</Link>
+            </nav>
           </div>
 
           {/* 右側：聯繫與社群 */}
