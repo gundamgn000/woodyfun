@@ -54,8 +54,8 @@ export default function Footer() {
             <h3 className="text-[#94a672] font-bold tracking-widest text-xs uppercase">關注我們 / Follow Us</h3>
             <div className="flex space-x-4">
               {/* 這裡可以放你的社群圖標或連結 */}
-              <a href="#" className="social-icon">Instagram</a>
-              <a href="#" className="social-icon">Facebook</a>
+              <a href="https://www.instagram.com/woodyfun2026/" className="social-icon">Instagram</a>
+              <a href="https://www.facebook.com/share/1DGSY1avqB/?mibextid=wwXIfr" className="social-icon">Facebook</a>
             </div>
             <div className="pt-4">
               <p className="text-[11px] text-[#b2adaa] tracking-widest uppercase">
