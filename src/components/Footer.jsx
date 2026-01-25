@@ -31,6 +31,30 @@ export default function Footer() {
               <Link to="/wishlist" className="footer-link">收藏清單 Wishlist</Link>
               <Link to="/profile" className="footer-link">會員中心 Member</Link>
             </nav>
+
+           <div className="flex flex-col space-y-4">
+            <h3 className="text-[#94a672] font-bold tracking-widest text-xs uppercase">
+              消費者資訊
+            </h3>
+            <nav className="flex flex-col space-y-3 text-sm">
+              <Link to="/consumer-policy" className="footer-link">
+                消費者權益與購物須知
+              </Link>
+              <Link to="/consumer-policy#privacy" className="footer-link">
+                隱私權政策
+              </Link>
+              <Link to="/consumer-policy#terms" className="footer-link">
+                服務條款
+              </Link>
+              <Link to="/consumer-policy#refund" className="footer-link">
+                退換貨政策
+              </Link>
+              <Link to="/contact" className="footer-link">
+                聯絡客服
+              </Link>
+            </nav>
+          </div>
+
           </div>
 
           {/* 右側：聯繫與社群 */}
