@@ -67,7 +67,7 @@ export default function OrderStatus() {
             <img src={item.image} alt="" className="w-16 h-16 object-cover mr-4" />
             <div>
               <p>{item.name}</p>
-              <p>尺寸：{item.size}</p>
+              <p> 適合年齡: {item.ageRange || "全齡適用"} </p>
               <p>數量：{item.quantity}</p>
             </div>
           </div>

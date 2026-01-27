@@ -7,8 +7,8 @@ import "./Home.css";
 
 // ===== 圖片導入區 =====
 // 🔧 這裡請替換成你實際的圖片路徑
-import heroDesktop from "../assets/home/hero-desktop.webp";
-import heroMobile from "../assets/home/hero-mobile.webp";
+
+
 import sensoryImg from "../assets/home/categories/sensory.jpg";
 import puzzleImg  from "../assets/home/categories/puzzles.jpg";
 import logicImg   from "../assets/home/categories/logic.jpg";

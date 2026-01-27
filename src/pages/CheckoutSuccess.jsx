@@ -136,7 +136,7 @@ export default function CheckoutSuccess() {
                 <div>
                   <p className="font-medium text-gray-900">{item.name}</p>
                   <p className="text-sm text-gray-500">
-                    尺寸：{item.size || "—"}／數量：{item.quantity}
+                    適合年齡: {item.ageRange || "全齡適用"}／數量：{item.quantity}
                   </p>
                 </div>
               </div>

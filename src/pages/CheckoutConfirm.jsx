@@ -68,7 +68,7 @@ export default function CheckoutConfirm() {
       const itemsText = cart
         .map(
           (item) =>
-            `${item.name}（尺寸：${item.size}，數量：${item.quantity}）`
+            `${item.name}（適合年齡：${item.ageRange || "全齡適用"}，數量：${item.quantity}）`
         )
         .join("\n");
 
@@ -100,19 +100,21 @@ export default function CheckoutConfirm() {
       // ===============================
       try {
         await emailjs.send(
-          "service_ra9779e",
-          "template_jdanagy",
+          "service_4i7f37e",
+          "template_ig9xw2j",
           {
-            customerName: checkoutInfo.name,
-            orderId: orderId,
-            orderDate: new Date().toLocaleString("zh-TW"),
+            customer_name: checkoutInfo.name,
+            customer_email: user.email,
+            order_id: orderId,
+            created_at: new Date().toLocaleString("zh-TW"),
             items: itemsText,
-            payment: checkoutInfo.paymentMethod,
+            subtotal: subtotal,
+            shipping: shippingFee,
+            payment_method: checkoutInfo.paymentMethod,
             total: totalAmount,
             address: `${checkoutInfo.city}${checkoutInfo.district}${checkoutInfo.address}`,
-            email: user.email,
           },
-          "_0T9aM48V9I1olpb9"
+          "jF4MDMUjdZNpY-Wi8"
         );
 
 
@@ -121,19 +123,21 @@ export default function CheckoutConfirm() {
         // ===============================
         try {
           await emailjs.send(
-            "service_ra9779e",
-            "template_hr9jbus", // admin_order_notice
+            "service_4i7f37e",
+            "template_qrt9ay5", // admin_order_notice
             {
-              orderId: orderId,
-              orderDate: new Date().toLocaleString("zh-TW"),
-              customerName: checkoutInfo.name,
-              email: user.email, // 買家 email（顯示用）
+              customer_name: checkoutInfo.name,
+              customer_email: user.email,
+              order_id: orderId,
+              created_at: new Date().toLocaleString("zh-TW"),
               items: itemsText,
-              payment: checkoutInfo.paymentMethod,
-              total: Math.round(Number(totalAmount)),
+              payment_method: checkoutInfo.paymentMethod,
+              subtotal: subtotal,
+              shipping: shippingFee,
+              total: totalAmount,
               address: `${checkoutInfo.city}${checkoutInfo.district}${checkoutInfo.address}`,
             },
-            "_0T9aM48V9I1olpb9"
+            "jF4MDMUjdZNpY-Wi8"
           );
 
           console.log("📧 admin_order_notice（賣家信）已送出");
