@@ -2,11 +2,21 @@ const { onRequest } = require("firebase-functions/v2/https");
 const { defineString } = require("firebase-functions/params");
 const CryptoJS = require("crypto-js");
 
+// 🔧 CORS：正式環境收斂 origin
+const cors = require("cors")({
+  origin: ["https://woodyfun.vercel.app"],
+});
+
+/* =========================
+   NewebPay Secrets
+========================= */
 const HASH_KEY = defineString("NEWEBPAY_HASH_KEY");
 const HASH_IV = defineString("NEWEBPAY_HASH_IV");
 const MERCHANT_ID = defineString("NEWEBPAY_MERCHANT_ID");
-const cors = require("cors")({ origin: true });
 
+/* =========================
+   NewebPay 加密工具
+========================= */
 function createTradeInfo(data) {
   const sorted = Object.keys(data)
     .sort()
@@ -14,7 +24,8 @@ function createTradeInfo(data) {
     .join("&");
 
   const raw = `HashKey=${HASH_KEY.value()}&${sorted}&HashIV=${HASH_IV.value()}`;
-  const encrypted = CryptoJS.AES.encrypt(
+
+  return CryptoJS.AES.encrypt(
     raw,
     CryptoJS.enc.Utf8.parse(HASH_KEY.value()),
     {
@@ -22,22 +33,48 @@ function createTradeInfo(data) {
       mode: CryptoJS.mode.CBC,
       padding: CryptoJS.pad.Pkcs7,
     }
-  );
-
-  return encrypted.toString();
+  ).toString();
 }
 
 function createTradeSha(tradeInfo) {
-  const sha = CryptoJS.SHA256(
+  return CryptoJS.SHA256(
     `HashKey=${HASH_KEY.value()}&${tradeInfo}&HashIV=${HASH_IV.value()}`
-  );
-  return sha.toString(CryptoJS.enc.Hex).toUpperCase();
+  )
+    .toString(CryptoJS.enc.Hex)
+    .toUpperCase();
 }
 
+/* =========================
+   ① 建立 NewebPay 訂單
+========================= */
 exports.createNewebPayOrder = onRequest((req, res) => {
   cors(req, res, async () => {
+
+    // 🔧 OPTIONS 預檢
+    if (req.method === "OPTIONS") {
+      return res.status(204).send("");
+    }
+
     try {
+      if (req.method !== "POST") {
+        return res.status(405).send("Method Not Allowed");
+      }
+
       const { orderId, amount, itemDesc, email } = req.body;
+
+      // 🔧 debug log
+      console.log("🚀 createNewebPayOrder", {
+        orderId,
+        amount,
+        itemDesc,
+      });
+
+      if (!orderId || !amount || !itemDesc) {
+        return res.status(400).json({
+          ok: false,
+          message: "缺少必要參數",
+        });
+      }
 
       const tradeData = {
         MerchantID: MERCHANT_ID.value(),
@@ -47,9 +84,10 @@ exports.createNewebPayOrder = onRequest((req, res) => {
         MerchantOrderNo: orderId,
         Amt: Math.round(Number(amount)),
         ItemDesc: itemDesc,
-        Email: email,
+        Email: email || "",
         NotifyURL:
           "https://us-central1-woodyfun-official.cloudfunctions.net/newebpayNotify",
+        ReturnURL: "https://woodyfun.vercel.app/checkout/success",
       };
 
       const TradeInfo = createTradeInfo(tradeData);
@@ -67,29 +105,25 @@ exports.createNewebPayOrder = onRequest((req, res) => {
         },
       });
     } catch (err) {
-      console.error(err);
-      return res.status(500).send("NewebPay Error");
+      console.error("❌ createNewebPayOrder error:", err);
+      return res.status(500).json({
+        ok: false,
+        message: "NewebPay 建單失敗",
+      });
     }
   });
 });
 
-
 /* =========================
-   ② NewebPay Notify（藍新主動通知）
+   ② NewebPay Notify（後端回呼）
 ========================= */
 exports.newebpayNotify = onRequest(async (req, res) => {
   try {
+    // 🔧 保險用
+    res.set("Access-Control-Allow-Origin", "*");
+
     console.log("📩 NewebPay Notify 收到");
-
-    const { TradeInfo } = req.body;
-
-    if (!TradeInfo) {
-      console.error("❌ 缺少 TradeInfo");
-      return res.status(400).send("Missing TradeInfo");
-    }
-
-    // 👉 下一步我們會在這裡「解密 TradeInfo」
-    console.log("🔐 TradeInfo:", TradeInfo);
+    console.log("🔐 TradeInfo:", req.body?.TradeInfo);
 
     return res.send("SUCCESS");
   } catch (err) {
