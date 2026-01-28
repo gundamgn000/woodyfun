@@ -159,26 +159,31 @@ export default function CheckoutConfirm() {
         return;
       }
 
-      // ✅ 信用卡（綠界）
+      // ✅ 信用卡（NewebPay）
       if (checkoutInfo.paymentMethod === "信用卡") {
         try {
-          const res = await fetch("http://localhost:3000/api/ecpay/create-order", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              orderId,                 // ⭐ Firestore 訂單 ID
-              totalAmount: Math.round(Number(totalAmount)), // ⭐ 一定是整數
-            }),
-          });
+          const res = await fetch(
+            "https://us-central1-woodyfun-official.cloudfunctions.net/createNewebPayOrder", 
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                orderId,                 // ⭐ Firestore 訂單 ID
+                 amount: Math.round(Number(totalAmount)), // ⭐ 後端要的是 amount
+                 itemDesc: cart.map(i => i.name).join(" / "), // ⭐ 必填
+                 email: user.email || "", 
+              }),
+            }
+          );
 
           const data = await res.json();
 
           // 🔴 關鍵：你的後端是回 action + params（不是 html）
-          const { action, params } = data;
+          const { ok, action, params  } = data;
 
-          if (!action || !params) {
+          if ( !ok || !action || !params) {
             alert("金流資料異常，請稍後再試");
             return;
           }
@@ -196,11 +201,13 @@ export default function CheckoutConfirm() {
             form.appendChild(input);
           });
 
+          console.log("🚀 redirect to NewebPay", action, params); // ✅ 放這裡
+
           document.body.appendChild(form);
           form.submit();
           return;
         } catch (err) {
-          console.error("❌ 信用卡金流錯誤:", err);
+          console.error("❌ NewebPay 金流錯誤:", err);
           alert("信用卡付款失敗，請稍後再試");
           return;
         }

@@ -1,5 +1,8 @@
 {
   "projects": {
-    "default": "adiaforos-store"
-  }
+    "default": "adiaforos-store",
+    "woodyfun": "woodyfun-official"
+  },
+  "targets": {},
+  "etags": {}
 }
