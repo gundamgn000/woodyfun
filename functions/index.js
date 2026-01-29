@@ -19,7 +19,6 @@ const NEWEBPAY_MERCHANT_ID = defineSecret("NEWEBPAY_MERCHANT_ID");
    AES + SHA 工具
 ========================= */
 function createTradeInfo(data, hashKey, hashIV) {
-  // ⚠️ 藍新要求「固定順序」
   const raw =
     `MerchantID=${data.MerchantID}` +
     `&RespondType=${data.RespondType}` +
@@ -28,8 +27,7 @@ function createTradeInfo(data, hashKey, hashIV) {
     `&MerchantOrderNo=${data.MerchantOrderNo}` +
     `&Amt=${data.Amt}` +
     `&ItemDesc=${encodeURIComponent(data.ItemDesc)}` +
-    `&LoginType=${data.LoginType}` +
-    (data.Email ? `&Email=${encodeURIComponent(data.Email)}` : "");
+    `&LoginType=${data.LoginType}`;
 
   const encrypted = CryptoJS.AES.encrypt(
     raw,
@@ -43,6 +41,7 @@ function createTradeInfo(data, hashKey, hashIV) {
 
   return encrypted.ciphertext.toString(CryptoJS.enc.Hex).toUpperCase();
 }
+
 
 
 

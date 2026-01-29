@@ -172,7 +172,7 @@ export default function CheckoutConfirm() {
               body: JSON.stringify({
                 orderId,                 // ⭐ Firestore 訂單 ID
                  amount: Math.round(Number(totalAmount)), // ⭐ 後端要的是 amount
-                 itemDesc: cart.map(i => i.name).join(" / "), // ⭐ 必填
+                 itemDesc: "TEST", // ⭐ 必填 ///1/30暫時改成這樣
                  email: user.email || "", 
               }),
             }
