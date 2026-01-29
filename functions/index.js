@@ -96,7 +96,7 @@ exports.createNewebPayOrder = onRequest((req, res) => {
       return res.json({
         ok: true,
         gateway: "newebpay",
-        action: "https://ccore.newebpay.com/MPG/mpg_gateway",
+        action: "https://core.newebpay.com/MPG/mpg_gateway",
         params: {
           MerchantID: MERCHANT_ID.value(),
           TradeInfo,
