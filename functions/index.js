@@ -89,7 +89,7 @@ exports.createNewebPayOrder = onRequest((req, res) => {
         Email: email || "",
         NotifyURL:
           "https://us-central1-woodyfun-official.cloudfunctions.net/newebpayNotify",
-        ReturnURL: "https://woodyfun.vercel.app/checkout/success",
+        ReturnURL: "https://us-central1-woodyfun-official.cloudfunctions.net/newebpayReturn",
       };
 
       const TradeInfo = createTradeInfo(tradeData);
