@@ -19,9 +19,17 @@ const NEWEBPAY_MERCHANT_ID = defineSecret("NEWEBPAY_MERCHANT_ID");
    AES + SHA 工具
 ========================= */
 function createTradeInfo(data, hashKey, hashIV) {
-  // 使用 querystring 庫來確保編碼行為較為標準
-  // 藍新要求：key1=value1&key2=value2...
-  const raw = qs.stringify(data); 
+  // ⚠️ 藍新要求「固定順序」
+  const raw =
+    `MerchantID=${data.MerchantID}` +
+    `&RespondType=${data.RespondType}` +
+    `&TimeStamp=${data.TimeStamp}` +
+    `&Version=${data.Version}` +
+    `&MerchantOrderNo=${data.MerchantOrderNo}` +
+    `&Amt=${data.Amt}` +
+    `&ItemDesc=${encodeURIComponent(data.ItemDesc)}` +
+    `&LoginType=${data.LoginType}` +
+    (data.Email ? `&Email=${encodeURIComponent(data.Email)}` : "");
 
   const encrypted = CryptoJS.AES.encrypt(
     raw,
@@ -37,8 +45,8 @@ function createTradeInfo(data, hashKey, hashIV) {
 }
 
 
+
 function createTradeSha(tradeInfoHex, hashKey, hashIV) {
-  // 確保留順序：HashKey -> TradeInfo -> HashIV
   const plainText = `HashKey=${hashKey}&TradeInfo=${tradeInfoHex}&HashIV=${hashIV}`;
   return CryptoJS.SHA256(plainText).toString(CryptoJS.enc.Hex).toUpperCase();
 }
