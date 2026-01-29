@@ -19,10 +19,19 @@ const NEWEBPAY_MERCHANT_ID = defineSecret("NEWEBPAY_MERCHANT_ID");
    AES + SHA 工具
 ========================= */
 function createTradeInfo(data, hashKey, hashIV) {
-  const queryString = qs.stringify(data);
+  // ❗手動組字串，避免 querystring 的隱性行為
+  const pairs = [];
+
+  Object.entries(data).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== "") {
+      pairs.push(`${key}=${encodeURIComponent(value)}`);
+    }
+  });
+
+  const raw = pairs.join("&");
 
   const encrypted = CryptoJS.AES.encrypt(
-    queryString,
+    raw,
     CryptoJS.enc.Utf8.parse(hashKey),
     {
       iv: CryptoJS.enc.Utf8.parse(hashIV),
@@ -33,6 +42,7 @@ function createTradeInfo(data, hashKey, hashIV) {
 
   return encrypted.ciphertext.toString(CryptoJS.enc.Hex).toUpperCase();
 }
+
 
 function createTradeSha(tradeInfoHex, hashKey, hashIV) {
   const plainText = `HashKey=${hashKey}&TradeInfo=${tradeInfoHex}&HashIV=${hashIV}`;
@@ -76,7 +86,7 @@ exports.createNewebPayOrder = onRequest(
 
         const action = "https://core.newebpay.com/MPG/mpg_gateway";
 
-        const tradeData = {
+       const tradeData = {
           MerchantID: merchantId,
           RespondType: "JSON",
           TimeStamp: String(TimeStamp),
@@ -84,9 +94,13 @@ exports.createNewebPayOrder = onRequest(
           MerchantOrderNo: String(orderId),
           Amt: String(Amt),
           ItemDesc: String(itemDesc),
-          Email: email || "",
           LoginType: "0",
         };
+
+        if (email) {
+          tradeData.Email = email;
+        }
+
 
         const TradeInfo = createTradeInfo(tradeData, hashKey, hashIV);
         const TradeSha = createTradeSha(TradeInfo, hashKey, hashIV);
