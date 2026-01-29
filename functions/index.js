@@ -18,28 +18,30 @@ const MERCHANT_ID = defineString("NEWEBPAY_MERCHANT_ID");
    NewebPay 加密工具
 ========================= */
 function createTradeInfo(data) {
-  const sorted = Object.keys(data)
+  const query = Object.keys(data)
     .sort()
     .map((key) => `${key}=${data[key]}`)
     .join("&");
 
-  const raw = `HashKey=${HASH_KEY.value()}&${sorted}&HashIV=${HASH_IV.value()}`;
-
-  return CryptoJS.AES.encrypt(
-    raw,
+  const encrypted = CryptoJS.AES.encrypt(
+    query,
     CryptoJS.enc.Utf8.parse(HASH_KEY.value()),
     {
       iv: CryptoJS.enc.Utf8.parse(HASH_IV.value()),
       mode: CryptoJS.mode.CBC,
       padding: CryptoJS.pad.Pkcs7,
     }
-  ).toString();
+  );
+
+  // 🔴 強制輸出 HEX（藍新規定）
+  return encrypted.ciphertext.toString(CryptoJS.enc.Hex);
 }
 
+
 function createTradeSha(tradeInfo) {
-  return CryptoJS.SHA256(
-    `HashKey=${HASH_KEY.value()}&${tradeInfo}&HashIV=${HASH_IV.value()}`
-  )
+  const plainText = `HashKey=${HASH_KEY.value()}&TradeInfo=${tradeInfo}&HashIV=${HASH_IV.value()}`;
+
+  return CryptoJS.SHA256(plainText)
     .toString(CryptoJS.enc.Hex)
     .toUpperCase();
 }
