@@ -1,16 +1,16 @@
 const { onRequest } = require("firebase-functions/v2/https");
-const { defineSecret } = require("firebase-functions/params");
 const CryptoJS = require("crypto-js");
 const corsLib = require("cors");
 
 const cors = corsLib({ origin: ["https://woodyfun.vercel.app"] });
 
-// 僅定義正式環境 Secrets
-const NEWEBPAY_HASH_KEY = defineSecret("NEWEBPAY_HASH_KEY");
-const NEWEBPAY_HASH_IV = defineSecret("NEWEBPAY_HASH_IV");
-const NEWEBPAY_MERCHANT_ID = defineSecret("NEWEBPAY_MERCHANT_ID");
+// ⚠️【除錯模式】直接將金鑰寫入，排除環境變數讀取問題
+const MERCHANT_ID = "MS1812982970";
+const HASH_KEY = "y4VruhR6gUmMkTskrjhKfQzwMXjFFekC";
+const HASH_IV = "Ps8veSSs1stEdf8C";
 
-function createTradeInfo(data, hashKey, hashIV) {
+// 交易資料加密函數
+function createTradeInfo(data) {
   const params = [
     `MerchantID=${data.MerchantID}`,
     `RespondType=${data.RespondType}`,
@@ -21,27 +21,30 @@ function createTradeInfo(data, hashKey, hashIV) {
     `ItemDesc=${encodeURIComponent(data.ItemDesc)}`,
     `LoginType=${data.LoginType}`,
   ];
-  if (data.Email) params.push(`Email=${data.Email}`);
+  
+  // 只有當 Email 存在且不為空時才加入
+  if (data.Email) {
+    params.push(`Email=${data.Email}`);
+  }
 
   const raw = params.join('&');
-  const encrypted = CryptoJS.AES.encrypt(raw, CryptoJS.enc.Utf8.parse(hashKey), {
-    iv: CryptoJS.enc.Utf8.parse(hashIV),
+  
+  const encrypted = CryptoJS.AES.encrypt(raw, CryptoJS.enc.Utf8.parse(HASH_KEY), {
+    iv: CryptoJS.enc.Utf8.parse(HASH_IV),
     mode: CryptoJS.mode.CBC,
     padding: CryptoJS.pad.Pkcs7,
   });
   return encrypted.ciphertext.toString(CryptoJS.enc.Hex).toUpperCase();
 }
 
-function createTradeSha(tradeInfoHex, hashKey, hashIV) {
-  const plainText = `HashKey=${hashKey}&TradeInfo=${tradeInfoHex}&HashIV=${hashIV}`;
+// 雜湊檢查碼函數
+function createTradeSha(tradeInfoHex) {
+  const plainText = `HashKey=${HASH_KEY}&TradeInfo=${tradeInfoHex}&HashIV=${HASH_IV}`;
   return CryptoJS.SHA256(plainText).toString(CryptoJS.enc.Hex).toUpperCase();
 }
 
 exports.createNewebPayOrder = onRequest(
-  {
-    region: "us-central1",
-    secrets: [NEWEBPAY_HASH_KEY, NEWEBPAY_HASH_IV, NEWEBPAY_MERCHANT_ID],
-  },
+  { region: "us-central1" },
   (req, res) => {
     cors(req, res, async () => {
       try {
@@ -50,13 +53,8 @@ exports.createNewebPayOrder = onRequest(
         // 強制使用正式環境網址
         const action = "https://core.newebpay.com/MPG/mpg_gateway";
         
-        // 取得正式環境 Keys
-        const hashKey = NEWEBPAY_HASH_KEY.value();
-        const hashIV = NEWEBPAY_HASH_IV.value();
-        const merchantId = NEWEBPAY_MERCHANT_ID.value();
-
         const tradeData = {
-          MerchantID: merchantId,
+          MerchantID: MERCHANT_ID,
           RespondType: "JSON",
           TimeStamp: String(Math.floor(Date.now() / 1000)),
           Version: "2.0",
@@ -67,15 +65,18 @@ exports.createNewebPayOrder = onRequest(
           Email: email || ""
         };
 
-        const TradeInfo = createTradeInfo(tradeData, hashKey, hashIV);
-        const TradeSha = createTradeSha(TradeInfo, hashKey, hashIV);
+        const TradeInfo = createTradeInfo(tradeData);
+        const TradeSha = createTradeSha(TradeInfo);
 
         return res.json({
           ok: true,
           action,
-          params: { MerchantID: merchantId, TradeInfo, TradeSha, Version: "2.0" },
+          params: { MerchantID: MERCHANT_ID, TradeInfo, TradeSha, Version: "2.0" },
         });
-      } catch (err) { return res.status(500).json({ ok: false }); }
+      } catch (err) {
+        console.error("Error:", err);
+        return res.status(500).json({ ok: false });
+      }
     });
   }
 );
