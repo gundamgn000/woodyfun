@@ -1,24 +1,23 @@
 const { onRequest } = require("firebase-functions/v2/https");
 const CryptoJS = require("crypto-js");
 const corsLib = require("cors");
-const qs = require("querystring"); // 已確認引入
+const qs = require("querystring"); // 確保引入
 
 const cors = corsLib({
-  origin: ["https://woodyfun.vercel.app"], 
+  origin: ["https://woodyfun.vercel.app"],
 });
 
-// ⚠️【正式環境金鑰】直接寫入，確保數值絕對正確
+// ⚠️ 請再次確認這些金鑰與你的「正式環境」商店後台完全一致
 const MERCHANT_ID = "MS1812982970";
 const HASH_KEY = "y4VruhR6gUmMkTskrjhKfQzwMXjFFekC";
 const HASH_IV = "Ps8veSSs1stEdf8C";
 
 /* =========================
    AES 加密函數 (修正版)
-   使用 qs.stringify 處理所有編碼細節
 ========================= */
 function createTradeInfo(data) {
-  // 使用 qs.stringify 會自動將物件轉為 key1=value1&key2=value2 格式
-  // 並自動處理 URL 編碼（例如：空格會轉為 +），這最符合藍新規範
+  // 1. 使用 qs.stringify 自動處理所有欄位的編碼與拼接
+  // 這會處理好 ItemDesc 的編碼，並確保格式為 key1=value1&key2=value2
   const raw = qs.stringify(data);
 
   const encrypted = CryptoJS.AES.encrypt(
@@ -31,14 +30,15 @@ function createTradeInfo(data) {
     }
   );
 
-  // 必須將 ciphertext 轉為 Hex 並大寫
+  // 必須轉為 Hex 格式的大寫字串
   return encrypted.ciphertext.toString(CryptoJS.enc.Hex).toUpperCase();
 }
 
 /* =========================
-   SHA256 壓碼函數 (維持穩定)
+   SHA256 壓碼函數
 ========================= */
 function createTradeSha(tradeInfoHex) {
+  // 順序必須死守：HashKey -> TradeInfo -> HashIV
   const plainText = `HashKey=${HASH_KEY}&TradeInfo=${tradeInfoHex}&HashIV=${HASH_IV}`;
   return CryptoJS.SHA256(plainText).toString(CryptoJS.enc.Hex).toUpperCase();
 }
@@ -59,10 +59,9 @@ exports.createNewebPayOrder = onRequest(
           return res.status(400).json({ ok: false, message: "缺少必要欄位" });
         }
 
-        // 強制鎖定正式環境網址
         const action = "https://core.newebpay.com/MPG/mpg_gateway";
         
-        // 準備傳給藍新的原始資料物件
+        // 準備原始資料物件
         const tradeData = {
           MerchantID: MERCHANT_ID,
           RespondType: "JSON",
@@ -70,19 +69,16 @@ exports.createNewebPayOrder = onRequest(
           Version: "2.0",
           MerchantOrderNo: String(orderId),
           Amt: String(Math.round(Number(amount))),
-          ItemDesc: String(itemDesc), // 這裡不需要先 encode，qs.stringify 會幫你處理
+          ItemDesc: String(itemDesc), // 不要在此手動 encode，qs 會幫你處理
           LoginType: "0",
         };
 
-        // 只有在 email 有值時才加入，避免空字串影響加密
         if (email) {
           tradeData.Email = email;
         }
 
         const TradeInfo = createTradeInfo(tradeData);
         const TradeSha = createTradeSha(TradeInfo);
-
-        console.log(`建立訂單: ${orderId}, 金額: ${amount}, Info長度: ${TradeInfo.length}`);
 
         return res.json({
           ok: true,
@@ -96,7 +92,7 @@ exports.createNewebPayOrder = onRequest(
         });
       } catch (err) {
         console.error("❌ Error:", err);
-        return res.status(500).json({ ok: false, error: err.message });
+        return res.status(500).json({ ok: false });
       }
     });
   }
