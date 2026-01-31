@@ -1,19 +1,21 @@
 const { onRequest } = require("firebase-functions/v2/https");
 const CryptoJS = require("crypto-js");
 const corsLib = require("cors");
-const qs = require("querystring"); 
+const qs = require("querystring"); // 確保這行有在最上面
 
 const cors = corsLib({
-  origin: ["https://woodyfun.vercel.app"], 
+  origin: ["https://woodyfun.vercel.app"],
 });
 
-// ⚠️ 請再次確認這三組資料與你藍新後台「正式環境」完全一致
 const MERCHANT_ID = "MS1812982970";
 const HASH_KEY = "y4VruhR6gUmMkTskrjhKfQzwMXjFFekC";
 const HASH_IV = "Ps8veSSs1stEdf8C";
 
+/* =========================
+   AES 加密函數 (使用 qs 確保編碼 100% 正確)
+========================= */
 function createTradeInfo(data) {
-  // 使用 qs.stringify 自動處理所有欄位，這是最穩定的做法
+  // 不再手動拼接，改用 qs.stringify 處理整個物件
   const raw = qs.stringify(data);
 
   const encrypted = CryptoJS.AES.encrypt(
@@ -33,6 +35,9 @@ function createTradeSha(tradeInfoHex) {
   return CryptoJS.SHA256(plainText).toString(CryptoJS.enc.Hex).toUpperCase();
 }
 
+/* =========================
+   API 主程式
+========================= */
 exports.createNewebPayOrder = onRequest(
   { region: "us-central1" },
   (req, res) => {
@@ -49,18 +54,17 @@ exports.createNewebPayOrder = onRequest(
           Version: "2.0",
           MerchantOrderNo: String(orderId),
           Amt: String(Math.round(Number(amount))),
-          ItemDesc: String(itemDesc), 
+          ItemDesc: String(itemDesc || "WoodyFun Order"), // 確保有值
           LoginType: "0",
+          Email: email || ""
         };
-
-        if (email) { tradeData.Email = email; }
 
         const TradeInfo = createTradeInfo(tradeData);
         const TradeSha = createTradeSha(TradeInfo);
 
         return res.json({
           ok: true,
-          v: "DEBUG_VERSION_101", // <--- 這是用來確認有沒有部署成功的標記
+          v: "FINAL_FIX_V1", // 版本標記
           action: "https://core.newebpay.com/MPG/mpg_gateway",
           params: {
             MerchantID: MERCHANT_ID,
