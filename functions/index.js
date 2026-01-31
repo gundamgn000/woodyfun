@@ -63,7 +63,7 @@ exports.createNewebPayOrder = onRequest(
         return res.json({
           ok: true,
           v: "ULTIMATE_V5", 
-          action: "https://ccore.newebpay.com/MPG/mpg_gateway",
+          action: "https://core.newebpay.com/MPG/mpg_gateway",
           params: {
             MerchantID: M_ID,
             TradeInfo: TradeInfoHex,
