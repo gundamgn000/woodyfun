@@ -1,12 +1,14 @@
 const { onRequest } = require("firebase-functions/v2/https");
 const CryptoJS = require("crypto-js");
 const corsLib = require("cors");
-const qs = require("querystring"); // 確保這行有在最上面
+const qs = require("querystring"); 
 
+// 允許你的前端網址跨網域存取
 const cors = corsLib({
-  origin: ["https://woodyfun.vercel.app"],
+  origin: ["https://woodyfun.vercel.app"], 
 });
 
+// ⚠️ 請確保這三組資料與藍新管理後台完全一致
 const MERCHANT_ID = "MS1812982970";
 const HASH_KEY = "y4VruhR6gUmMkTskrjhKfQzwMXjFFekC";
 const HASH_IV = "Ps8veSSs1stEdf8C";
@@ -15,11 +17,11 @@ const HASH_IV = "Ps8veSSs1stEdf8C";
    AES 加密函數 (使用 qs 確保編碼 100% 正確)
 ========================= */
 function createTradeInfo(data) {
-  // 不再手動拼接，改用 qs.stringify 處理整個物件
-  const raw = qs.stringify(data);
+  // 使用 qs.stringify 自動處理特殊字元與空格，這是藍新最推薦的格式
+  const rawString = qs.stringify(data);
 
   const encrypted = CryptoJS.AES.encrypt(
-    raw,
+    rawString,
     CryptoJS.enc.Utf8.parse(HASH_KEY),
     {
       iv: CryptoJS.enc.Utf8.parse(HASH_IV),
@@ -42,11 +44,13 @@ exports.createNewebPayOrder = onRequest(
   { region: "us-central1" },
   (req, res) => {
     cors(req, res, async () => {
+      // 處理瀏覽器預檢請求
       if (req.method === "OPTIONS") return res.status(204).send("");
       
       try {
         const { orderId, amount, itemDesc, email } = req.body || {};
         
+        // 準備送給藍新的原始欄位
         const tradeData = {
           MerchantID: MERCHANT_ID,
           RespondType: "JSON",
@@ -54,7 +58,7 @@ exports.createNewebPayOrder = onRequest(
           Version: "2.0",
           MerchantOrderNo: String(orderId),
           Amt: String(Math.round(Number(amount))),
-          ItemDesc: String(itemDesc || "WoodyFun Order"), // 確保有值
+          ItemDesc: String(itemDesc || "WoodyFunOrder"), 
           LoginType: "0",
           Email: email || ""
         };
@@ -64,7 +68,7 @@ exports.createNewebPayOrder = onRequest(
 
         return res.json({
           ok: true,
-          v: "FINAL_FIX_V1", // 版本標記
+          v: "FINAL_FIX_V1", // <--- 部署後請檢查 F12 是否看到這個版本號
           action: "https://core.newebpay.com/MPG/mpg_gateway",
           params: {
             MerchantID: MERCHANT_ID,

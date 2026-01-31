@@ -55,7 +55,8 @@ export default function CheckoutConfirm() {
           }),
         });
 
-        const data = await res.json();
+        const data = await response.json();
+        console.log("後端回傳資料:", data); // 測試時可以用這行確認有沒有收到 v: "FINAL_FIX_V1"
         
         if (data.ok) {
           // 動態建立表單並自動送出
