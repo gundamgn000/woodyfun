@@ -17,8 +17,20 @@ const HASH_IV = "Ps8veSSs1stEdf8C";
    AES 加密函數 (使用 qs 確保編碼 100% 正確)
 ========================= */
 function createTradeInfo(data) {
-  // 強制將空格轉為 %20，這是藍新最穩定的接收格式
-  const rawString = qs.stringify(data).replace(/\+/g, '%20');
+  // 手動拼接，確保順序與內容完全掌控
+  const components = [
+    `MerchantID=${data.MerchantID}`,
+    `RespondType=${data.RespondType}`,
+    `TimeStamp=${data.TimeStamp}`,
+    `Version=${data.Version}`,
+    `MerchantOrderNo=${data.MerchantOrderNo}`,
+    `Amt=${data.Amt}`,
+    `ItemDesc=${data.ItemDesc}`,
+    `LoginType=${data.LoginType}`,
+    `Email=${data.Email}`
+  ];
+  
+  const rawString = components.join('&');
 
   const encrypted = CryptoJS.AES.encrypt(
     rawString,
@@ -58,7 +70,7 @@ exports.createNewebPayOrder = onRequest(
           Version: "2.0",
           MerchantOrderNo: String(orderId),
           Amt: String(Math.round(Number(amount))),
-          ItemDesc: String(itemDesc || "WoodyFunOrder"), 
+          ItemDesc: String(itemDesc || "WoodyFunOrder").replace(/\s/g, ""), // 強制過濾所有空格
           LoginType: "0",
           Email: email || ""
         };
