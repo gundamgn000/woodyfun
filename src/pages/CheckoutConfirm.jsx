@@ -17,10 +17,15 @@ export default function CheckoutConfirm() {
     }
   }, [loading, user, navigate]);
 
-  const createOrder = async () => {
+ const createOrder = async () => {
     try {
-      if (!cart || cart.length === 0) return;
+      // 0. 安全檢查
+      if (!cart || cart.length === 0) {
+        alert("購物車是空的");
+        return;
+      }
 
+      console.log("Step 1: 正在建立 Firestore 訂單...");
       const orderData = {
         userId: user.uid,
         email: user.email || "",
@@ -34,23 +39,39 @@ export default function CheckoutConfirm() {
 
       const docRef = await addDoc(collection(db, "orders"), orderData);
       const orderId = docRef.id;
+      console.log("Step 2: 訂單已寫入，ID:", orderId);
 
       if (checkoutInfo.paymentMethod === "信用卡") {
+        console.log("Step 3: 呼叫金流 API...");
+        
+        // 建議這裡加入 try-catch 專門包覆 fetch，因為最容易斷在這裡
         const response = await fetch("https://createnewebpayorder-l7op6fj4oq-uc.a.run.app", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { 
+            "Content-Type": "application/json",
+            // 如果還是無回應，可以嘗試移除不需要的 headers，讓請求更簡單
+          },
           body: JSON.stringify({
             orderId: orderId,
             amount: totalAmount,
-            itemDesc: "WoodyFunOrder", // 建議先用英文測試，穩定後再換回中文
+            itemDesc: "WoodyFunOrder", 
             email: user.email,
           }),
+        }).catch(fetchErr => {
+           // 這裡能抓到連線被擋住（如 CORS）的錯誤
+           throw new Error("無法連線至金流伺服器: " + fetchErr.message);
         });
 
-        // ✅ 修正點：變數名稱由 res 改為 response
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`API 伺服器回報錯誤 (${response.status}): ${errorText}`);
+        }
+
         const data = await response.json(); 
+        console.log("Step 4: API 回傳結果:", data);
         
         if (data.ok) {
+          console.log("Step 5: 準備導向藍新付款頁面...");
           const form = document.createElement("form");
           form.method = "POST";
           form.action = data.action;
@@ -66,15 +87,17 @@ export default function CheckoutConfirm() {
           document.body.appendChild(form);
           form.submit();
         } else {
-          alert("金流失敗: " + (data.error || "未知錯誤"));
+          throw new Error(data.error || "金流參數解析失敗");
         }
       } else {
+        // 非信用卡支付邏輯
         clearCart();
         navigate(`/checkout/success/${orderId}`);
       }
     } catch (err) {
-      console.error("訂單錯誤:", err);
-      alert("訂單建立失敗，請檢查控制台");
+      console.error("❌ 訂單流程中斷:", err);
+      // 把錯誤訊息直接顯示出來，這樣你測試時才知道發生什麼事
+      alert("訂單失敗: " + err.message); 
     }
   };
 
