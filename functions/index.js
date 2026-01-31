@@ -6,7 +6,7 @@ const cors = corsLib({
   origin: ["https://woodyfun.vercel.app"], 
 });
 
-// 1. 先定義最原始的金鑰
+// ⚠️ 請再次手動輸入，確保沒有前後空格
 const MERCHANT_ID = "MS1812982970";
 const HASH_KEY = "y4VruhR6gUmMkTskrjhKfQzwMXjFFekC";
 const HASH_IV = "Ps8veSSs1stEdf8C";
@@ -18,16 +18,17 @@ exports.createNewebPayOrder = onRequest(
       if (req.method === "OPTIONS") return res.status(204).send("");
       
       try {
-        const { orderId, amount, email } = req.body || {};
+        const { orderId, amount } = req.body || {};
         
-        // 2. 在這裡進行 Trim，確保後續使用的都是這組變數
         const M_ID = MERCHANT_ID.trim();
-        const CURRENT_H_KEY = HASH_KEY.trim();
-        const CURRENT_H_IV = HASH_IV.trim();
+        const H_KEY = HASH_KEY.trim();
+        const H_IV = HASH_IV.trim();
 
+        // 藍新要求：TimeStamp 為 10 位數
         const timeStamp = Math.floor(Date.now() / 1000);
 
-        // 3. 建立交易參數
+        // 1. 建立最精簡的交易參數 (只留必填)
+        // 注意：ItemDesc 絕對不能有空白或特殊符號
         const tradeParams = {
           MerchantID: M_ID,
           RespondType: "JSON",
@@ -36,19 +37,15 @@ exports.createNewebPayOrder = onRequest(
           MerchantOrderNo: String(orderId),
           Amt: Math.round(Number(amount)),
           ItemDesc: "WoodyFunOrder",
-          LoginType: 0,
-          EmailModify: 0, 
-          LoginType: 0,
-          Email: String(email || "test@example.com").trim(),
-          
+          LoginType: 0
         };
 
-        // 4. 拼接原始字串 (使用剛定義好的 M_ID)
-        const rawString = `MerchantID=${tradeParams.MerchantID}&RespondType=${tradeParams.RespondType}&TimeStamp=${tradeParams.TimeStamp}&Version=${tradeParams.Version}&MerchantOrderNo=${tradeParams.MerchantOrderNo}&Amt=${tradeParams.Amt}&ItemDesc=${tradeParams.ItemDesc}&LoginType=${tradeParams.LoginType}&Email=${tradeParams.Email}`;
+        // 2. 嚴格的手動拼接 (這串字只要錯一個字，SHA256 就會失敗)
+        const rawString = `MerchantID=${tradeParams.MerchantID}&RespondType=${tradeParams.RespondType}&TimeStamp=${tradeParams.TimeStamp}&Version=${tradeParams.Version}&MerchantOrderNo=${tradeParams.MerchantOrderNo}&Amt=${tradeParams.Amt}&ItemDesc=${tradeParams.ItemDesc}&LoginType=${tradeParams.LoginType}`;
 
-        // 5. AES 加密 (使用 CURRENT_H_KEY / CURRENT_H_IV)
-        const key = CryptoJS.enc.Utf8.parse(CURRENT_H_KEY);
-        const iv = CryptoJS.enc.Utf8.parse(CURRENT_H_IV);
+        // 3. AES 加密
+        const key = CryptoJS.enc.Utf8.parse(H_KEY);
+        const iv = CryptoJS.enc.Utf8.parse(H_IV);
         const encrypted = CryptoJS.AES.encrypt(rawString, key, {
           iv: iv,
           mode: CryptoJS.mode.CBC,
@@ -57,13 +54,13 @@ exports.createNewebPayOrder = onRequest(
         
         const TradeInfoHex = encrypted.ciphertext.toString(CryptoJS.enc.Hex).toUpperCase();
 
-        // 6. SHA256 加密
-        const shaRaw = `HashKey=${CURRENT_H_KEY}&TradeInfo=${TradeInfoHex}&HashIV=${CURRENT_H_IV}`;
+        // 4. SHA256 加密
+        const shaRaw = `HashKey=${H_KEY}&TradeInfo=${TradeInfoHex}&HashIV=${H_IV}`;
         const TradeSha = CryptoJS.SHA256(shaRaw).toString(CryptoJS.enc.Hex).toUpperCase();
 
         return res.json({
           ok: true,
-          v: "FIX_ORDER_V6", 
+          v: "PROD_FINAL_V7", 
           action: "https://core.newebpay.com/MPG/mpg_gateway",
           params: {
             MerchantID: M_ID,
@@ -73,7 +70,6 @@ exports.createNewebPayOrder = onRequest(
           },
         });
       } catch (err) {
-        console.error("Error Detail:", err.message);
         return res.status(500).json({ ok: false, error: err.message });
       }
     });
