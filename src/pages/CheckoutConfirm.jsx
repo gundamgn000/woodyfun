@@ -42,14 +42,16 @@ export default function CheckoutConfirm() {
       if (checkoutInfo.paymentMethod === "信用卡") {
         
         // 呼叫後端 API
-        const res = await fetch("https://us-central1-woodyfun-official.cloudfunctions.net/createNewebPayOrder", {
+        const response = await fetch("https://createnewebpayorder-l7op6fj4oq-uc.a.run.app", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+          },
           body: JSON.stringify({
-            orderId: orderId,
+            orderId: docRef.id,
             amount: totalAmount,
-            itemDesc: "WoodyFun Order", 
-            email: user.email
+            itemDesc: "WoodyFun 商品訂單", // 建議先寫簡單一點的字測試
+            email: user.email,
           }),
         });
 

@@ -60,7 +60,7 @@ exports.createNewebPayOrder = onRequest(
 
         return res.json({
           ok: true,
-          v: "REAL_TIME_TEST", // <--- 這是用來確認有沒有部署成功的標記
+          v: "DEBUG_VERSION_101", // <--- 這是用來確認有沒有部署成功的標記
           action: "https://core.newebpay.com/MPG/mpg_gateway",
           params: {
             MerchantID: MERCHANT_ID,
