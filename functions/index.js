@@ -6,7 +6,7 @@ const cors = corsLib({
   origin: ["https://woodyfun.vercel.app"], 
 });
 
-// ⚠️ 請再次手動確認這三組資料，不要有任何空格
+// 1. 先定義最原始的金鑰
 const MERCHANT_ID = "MS1812982970";
 const HASH_KEY = "y4VruhR6gUmMkTskrjhKfQzwMXjFFekC";
 const HASH_IV = "Ps8veSSs1stEdf8C";
@@ -20,14 +20,14 @@ exports.createNewebPayOrder = onRequest(
       try {
         const { orderId, amount, email } = req.body || {};
         
+        // 2. 在這裡進行 Trim，確保後續使用的都是這組變數
         const M_ID = MERCHANT_ID.trim();
-        const H_KEY = H_KEY.trim();
-        const H_IV = H_IV.trim();
+        const CURRENT_H_KEY = HASH_KEY.trim();
+        const CURRENT_H_IV = HASH_IV.trim();
 
-        // 藍新規範：TimeStamp 必須為 10 位數
         const timeStamp = Math.floor(Date.now() / 1000);
 
-        // 1. 建立物件，確保所有必填欄位都在
+        // 3. 建立交易參數
         const tradeParams = {
           MerchantID: M_ID,
           RespondType: "JSON",
@@ -35,19 +35,17 @@ exports.createNewebPayOrder = onRequest(
           Version: "2.0",
           MerchantOrderNo: String(orderId),
           Amt: Math.round(Number(amount)),
-          ItemDesc: "WoodyFunOrder", // 確保純英文，避免編碼爭議
+          ItemDesc: "WoodyFunOrder",
           LoginType: 0,
           Email: String(email || "test@example.com").trim()
         };
 
-        // 2. 關鍵：手動拼接字串 (順序與官網範例一致)
+        // 4. 拼接原始字串 (使用剛定義好的 M_ID)
         const rawString = `MerchantID=${tradeParams.MerchantID}&RespondType=${tradeParams.RespondType}&TimeStamp=${tradeParams.TimeStamp}&Version=${tradeParams.Version}&MerchantOrderNo=${tradeParams.MerchantOrderNo}&Amt=${tradeParams.Amt}&ItemDesc=${tradeParams.ItemDesc}&LoginType=${tradeParams.LoginType}&Email=${tradeParams.Email}`;
 
-        console.log("Check this string:", rawString);
-
-        // 3. AES 加密
-        const key = CryptoJS.enc.Utf8.parse(H_KEY);
-        const iv = CryptoJS.enc.Utf8.parse(H_IV);
+        // 5. AES 加密 (使用 CURRENT_H_KEY / CURRENT_H_IV)
+        const key = CryptoJS.enc.Utf8.parse(CURRENT_H_KEY);
+        const iv = CryptoJS.enc.Utf8.parse(CURRENT_H_IV);
         const encrypted = CryptoJS.AES.encrypt(rawString, key, {
           iv: iv,
           mode: CryptoJS.mode.CBC,
@@ -56,13 +54,13 @@ exports.createNewebPayOrder = onRequest(
         
         const TradeInfoHex = encrypted.ciphertext.toString(CryptoJS.enc.Hex).toUpperCase();
 
-        // 4. SHA256 加密 (順序：HashKey + TradeInfo + HashIV)
-        const shaRaw = `HashKey=${H_KEY}&TradeInfo=${TradeInfoHex}&HashIV=${H_IV}`;
+        // 6. SHA256 加密
+        const shaRaw = `HashKey=${CURRENT_H_KEY}&TradeInfo=${TradeInfoHex}&HashIV=${CURRENT_H_IV}`;
         const TradeSha = CryptoJS.SHA256(shaRaw).toString(CryptoJS.enc.Hex).toUpperCase();
 
         return res.json({
           ok: true,
-          v: "ULTIMATE_V5", 
+          v: "FIX_ORDER_V6", 
           action: "https://core.newebpay.com/MPG/mpg_gateway",
           params: {
             MerchantID: M_ID,
@@ -72,7 +70,7 @@ exports.createNewebPayOrder = onRequest(
           },
         });
       } catch (err) {
-        console.error("Error:", err.message);
+        console.error("Error Detail:", err.message);
         return res.status(500).json({ ok: false, error: err.message });
       }
     });
