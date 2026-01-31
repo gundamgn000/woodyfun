@@ -37,7 +37,10 @@ exports.createNewebPayOrder = onRequest(
           Amt: Math.round(Number(amount)),
           ItemDesc: "WoodyFunOrder",
           LoginType: 0,
-          Email: String(email || "test@example.com").trim()
+          EmailModify: 0, 
+          LoginType: 0,
+          Email: String(email || "test@example.com").trim(),
+          
         };
 
         // 4. 拼接原始字串 (使用剛定義好的 M_ID)
