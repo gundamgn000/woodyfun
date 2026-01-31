@@ -83,6 +83,7 @@ exports.createNewebPayOrder = onRequest(
         return res.json({
           ok: true,
           action,
+          version: "v1.0.1-testing", // <--- 加這一行
           params: {
             MerchantID: MERCHANT_ID,
             TradeInfo: TradeInfo,
@@ -90,6 +91,8 @@ exports.createNewebPayOrder = onRequest(
             Version: "2.0",
           },
         });
+
+        
       } catch (err) {
         console.error("❌ Error:", err);
         return res.status(500).json({ ok: false });
