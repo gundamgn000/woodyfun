@@ -17,8 +17,8 @@ const HASH_IV = "Ps8veSSs1stEdf8C";
    AES 加密函數 (使用 qs 確保編碼 100% 正確)
 ========================= */
 function createTradeInfo(data) {
-  // 使用 qs.stringify 自動處理特殊字元與空格，這是藍新最推薦的格式
-  const rawString = qs.stringify(data);
+  // 強制將空格轉為 %20，這是藍新最穩定的接收格式
+  const rawString = qs.stringify(data).replace(/\+/g, '%20');
 
   const encrypted = CryptoJS.AES.encrypt(
     rawString,
