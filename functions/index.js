@@ -35,7 +35,7 @@ exports.createNewebPayOrder = onRequest(
         if (!Number.isFinite(amt) || amt <= 0) {
           return res.status(400).json({ ok: false, error: "Invalid amount" });
         }
-        
+
         const tradeParams = {
           MerchantID: M_ID,
           RespondType: "JSON",
@@ -46,16 +46,16 @@ exports.createNewebPayOrder = onRequest(
           ItemDesc: "WoodyFunOrder",
           LoginType: 0,
         };
-       // 1️⃣ 組 querystring（順序交給系統）
-       // 1) querystring
+
+        // 1) querystring
         const rawString = qs.stringify(tradeParams);
 
-        // 2) encode（注意：一定要先有 encoded）
+        // 2) encode（一定要）
         const encoded = encodeURIComponent(rawString);
 
         // 3) AES
         const key = CryptoJS.enc.Utf8.parse(H_KEY);
-        const iv = CryptoJS.enc.Utf8.parse(H_IV);
+        const iv  = CryptoJS.enc.Utf8.parse(H_IV);
 
         const encrypted = CryptoJS.AES.encrypt(encoded, key, {
           iv,
@@ -63,24 +63,22 @@ exports.createNewebPayOrder = onRequest(
           padding: CryptoJS.pad.Pkcs7,
         });
 
-        const TradeInfoHex = encrypted.ciphertext
-          .toString(CryptoJS.enc.Hex)
-          .toUpperCase();
+        // ✅ TradeInfo：不要轉大寫
+        const TradeInfo = encrypted.ciphertext.toString(CryptoJS.enc.Hex);
 
-        // 4) SHA256（注意：這裡一定要宣告 shaRaw）
-        const shaRaw = `HashKey=${H_KEY}&TradeInfo=${TradeInfoHex}&HashIV=${H_IV}`;
-        const TradeSha = CryptoJS.SHA256(shaRaw)
-          .toString(CryptoJS.enc.Hex)
-          .toUpperCase();
+        // 4) SHA256（✅ 一定用 trim 後的 H_KEY / H_IV）
+        const shaRaw = `HashKey=${H_KEY}&TradeInfo=${TradeInfo}&HashIV=${H_IV}`;
 
-        // debug（這裡印 shaRaw 才不會噴 undefined）
-        console.log("--- 🕵️ 藍新偵錯開始 ---");
-        console.log("1. rawString:", rawString);
-        console.log("2. encoded:", encoded);
-        console.log("3. TradeInfoHex:", TradeInfoHex);
-        console.log("4. shaRaw:", shaRaw);
-        console.log("5. TradeSha:", TradeSha);
-        console.log("--- 🕵️ 藍新偵錯結束 ---");
+        // ✅ TradeSha 才轉大寫
+        const TradeSha = CryptoJS.SHA256(shaRaw).toString(CryptoJS.enc.Hex).toUpperCase();
+
+        // debug
+        console.log("rawString:", rawString);
+        console.log("encoded:", encoded);
+        console.log("TradeInfo:", TradeInfo);
+        console.log("shaRaw:", shaRaw);
+        console.log("TradeSha:", TradeSha);
+        console.log("keyLen/ivLen:", H_KEY.length, H_IV.length);
 
 
         return res.json({
@@ -89,10 +87,11 @@ exports.createNewebPayOrder = onRequest(
           action: "https://core.newebpay.com/MPG/mpg_gateway",
           params: {
             MerchantID: M_ID,
-            TradeInfo: TradeInfoHex,
+            TradeInfo: TradeInfo,
             TradeSha: TradeSha,
             Version: "2.0",
           },
+
         });
       } catch (err) {
         return res.status(500).json({ ok: false, error: err.message });
