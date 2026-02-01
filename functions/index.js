@@ -24,6 +24,7 @@ exports.createNewebPayOrder = onRequest(
         const M_ID = MERCHANT_ID.trim();
         const H_KEY = HASH_KEY.trim();
         const H_IV = HASH_IV.trim();
+        const FIXED_ORDER_NO = "WFTEST123456";
 
         // 藍新要求：TimeStamp 為 10 位數
         const timeStamp = Math.floor(Date.now() / 1000);
@@ -42,8 +43,8 @@ exports.createNewebPayOrder = onRequest(
           RespondType: "JSON",
           TimeStamp: timeStamp,
           Version: "2.0",
-          MerchantOrderNo: `WF${timeStamp}${Math.floor(Math.random() * 1000)}`,
-          Amt: Math.round(Number(amount)),
+          MerchantOrderNo: FIXED_ORDER_NO,
+          Amt: amt,
           ItemDesc: "WoodyFunOrder",
           LoginType: 0,
         };
@@ -77,9 +78,16 @@ exports.createNewebPayOrder = onRequest(
 
       // debug
       console.log("rawString:", rawString);
+      console.log("encoded:", encoded);
+      console.log("HashKey:", H_KEY);
+      console.log("HashIV:", H_IV);
       console.log("TradeInfo:", TradeInfo);
       console.log("shaRaw:", shaRaw);
       console.log("TradeSha:", TradeSha);
+      console.log("AES input (encoded):", encoded);
+      console.log("TimeStamp:", timeStamp);
+
+
 
 
         return res.json({
