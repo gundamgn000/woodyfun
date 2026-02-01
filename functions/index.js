@@ -8,8 +8,8 @@ const cors = corsLib({
 const qs = require("querystring");
 // ⚠️ 請再次手動輸入，確保沒有前後空格
 const MERCHANT_ID = "MS1812982970";
-const HASH_KEY = "y4VruhR6gUmMkTskrjhKfQzwMXjFFekC";
-const HASH_IV = "Ps8veSSs1stEdf8C";
+const HASH_KEY = "SthQEGQfua8lf4dnPcqJXJlKSHRuKV9F";
+const HASH_IV = "Pr5t8YU839OZRXaC";
 
 exports.createNewebPayOrder = onRequest(
   { region: "us-central1" },
