@@ -62,6 +62,15 @@ exports.createNewebPayOrder = onRequest(
         const shaRaw = `HashKey=${H_KEY}&TradeInfo=${TradeInfoHex}&HashIV=${H_IV}`;
         const TradeSha = CryptoJS.SHA256(shaRaw).toString(CryptoJS.enc.Hex).toUpperCase();
 
+        // 🚀 加入這幾行偵錯 (這會印在 Firebase 的後台)
+        console.log("--- 🕵️ 藍新偵錯開始 ---");
+        console.log("1. 原始拼接字串 (rawString):", rawString);
+        console.log("2. AES 加密結果 (TradeInfoHex):", TradeInfoHex);
+        console.log("3. SHA256 拼接前字串 (shaRaw):", shaRaw);
+        console.log("4. 最終 SHA256 (TradeSha):", TradeSha);
+        console.log("--- 🕵️ 藍新偵錯結束 ---");
+
+
         return res.json({
           ok: true,
           v: "PROD_FINAL_V7", 
