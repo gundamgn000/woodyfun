@@ -5,6 +5,7 @@ const corsLib = require("cors");
 const cors = corsLib({
   origin: ["https://woodyfun.vercel.app"], 
 });
+
 const qs = require("querystring");
 // ⚠️ 請再次手動輸入，確保沒有前後空格
 const MERCHANT_ID = "MS1812982970";
@@ -47,36 +48,38 @@ exports.createNewebPayOrder = onRequest(
           LoginType: 0,
         };
 
-        // 1) querystring（OK）
-        const rawString = qs.stringify(tradeParams);
+       // 1) querystring
+      const rawString = qs.stringify(tradeParams);
 
-        // ❌ 不要 encode
-        // const encoded = encodeURIComponent(rawString);
+      // 2) encode（建議保留）
+      const encoded = encodeURIComponent(rawString);
 
-        // 2) AES（直接用 rawString）
-        const key = CryptoJS.enc.Utf8.parse(H_KEY);
-        const iv  = CryptoJS.enc.Utf8.parse(H_IV);
+      // 3) AES（用 encoded）
+      const key = CryptoJS.enc.Utf8.parse(H_KEY);
+      const iv  = CryptoJS.enc.Utf8.parse(H_IV);
 
-        const encrypted = CryptoJS.AES.encrypt(rawString, key, {
-          iv,
-          mode: CryptoJS.mode.CBC,
-          padding: CryptoJS.pad.Pkcs7,
-        });
+      const encrypted = CryptoJS.AES.encrypt(encoded, key, {
+        iv,
+        mode: CryptoJS.mode.CBC,
+        padding: CryptoJS.pad.Pkcs7,
+      });
 
-        // TradeInfo（不要大寫）
-        const TradeInfo = encrypted.ciphertext.toString(CryptoJS.enc.Hex);
+      // 4) TradeInfo：轉大寫（關鍵）
+      const TradeInfo = encrypted.ciphertext
+        .toString(CryptoJS.enc.Hex)          .toUpperCase();
 
-        // 3) SHA256
-        const shaRaw = `HashKey=${H_KEY}&TradeInfo=${TradeInfo}&HashIV=${H_IV}`;
-        const TradeSha = CryptoJS.SHA256(shaRaw)
-          .toString(CryptoJS.enc.Hex)
-          .toUpperCase();
+      // 5) SHA256：用大寫的 TradeInfo
+      const shaRaw = `HashKey=${H_KEY}&TradeInfo=${TradeInfo}&HashIV=${H_IV}`;
+      const TradeSha = CryptoJS.SHA256(shaRaw)
+        .toString(CryptoJS.enc.Hex)
+        .toUpperCase();
 
-        // debug
-        console.log("rawString:", rawString);
-        console.log("TradeInfo:", TradeInfo);
-        console.log("shaRaw:", shaRaw);
-        console.log("TradeSha:", TradeSha);
+
+      // debug
+      console.log("rawString:", rawString);
+      console.log("TradeInfo:", TradeInfo);
+      console.log("shaRaw:", shaRaw);
+      console.log("TradeSha:", TradeSha);
 
 
         return res.json({
