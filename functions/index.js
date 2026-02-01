@@ -47,38 +47,36 @@ exports.createNewebPayOrder = onRequest(
           LoginType: 0,
         };
 
-        // 1) querystring
+        // 1) querystring（OK）
         const rawString = qs.stringify(tradeParams);
 
-        // 2) encode（一定要）
-        const encoded = encodeURIComponent(rawString);
+        // ❌ 不要 encode
+        // const encoded = encodeURIComponent(rawString);
 
-        // 3) AES
+        // 2) AES（直接用 rawString）
         const key = CryptoJS.enc.Utf8.parse(H_KEY);
         const iv  = CryptoJS.enc.Utf8.parse(H_IV);
 
-        const encrypted = CryptoJS.AES.encrypt(encoded, key, {
+        const encrypted = CryptoJS.AES.encrypt(rawString, key, {
           iv,
           mode: CryptoJS.mode.CBC,
           padding: CryptoJS.pad.Pkcs7,
         });
 
-        // ✅ TradeInfo：不要轉大寫
+        // TradeInfo（不要大寫）
         const TradeInfo = encrypted.ciphertext.toString(CryptoJS.enc.Hex);
 
-        // 4) SHA256（✅ 一定用 trim 後的 H_KEY / H_IV）
+        // 3) SHA256
         const shaRaw = `HashKey=${H_KEY}&TradeInfo=${TradeInfo}&HashIV=${H_IV}`;
-
-        // ✅ TradeSha 才轉大寫
-        const TradeSha = CryptoJS.SHA256(shaRaw).toString(CryptoJS.enc.Hex).toUpperCase();
+        const TradeSha = CryptoJS.SHA256(shaRaw)
+          .toString(CryptoJS.enc.Hex)
+          .toUpperCase();
 
         // debug
         console.log("rawString:", rawString);
-        console.log("encoded:", encoded);
         console.log("TradeInfo:", TradeInfo);
         console.log("shaRaw:", shaRaw);
         console.log("TradeSha:", TradeSha);
-        console.log("keyLen/ivLen:", H_KEY.length, H_IV.length);
 
 
         return res.json({
