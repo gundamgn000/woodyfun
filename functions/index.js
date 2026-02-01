@@ -31,6 +31,11 @@ exports.createNewebPayOrder = onRequest(
         // 注意：ItemDesc 絕對不能有空白或特殊符號
         // ... 前面引入保持不變 ...
 
+        const amt = Math.round(Number(amount));
+        if (!Number.isFinite(amt) || amt <= 0) {
+          return res.status(400).json({ ok: false, error: "Invalid amount" });
+        }
+        
         const tradeParams = {
           MerchantID: M_ID,
           RespondType: "JSON",
@@ -42,31 +47,39 @@ exports.createNewebPayOrder = onRequest(
           LoginType: 0,
         };
        // 1️⃣ 組 querystring（順序交給系統）
-       const rawString = qs.stringify(tradeParams);
+       // 1) querystring
+        const rawString = qs.stringify(tradeParams);
 
-       // 2️⃣ 一定要 encode（藍新 MPG 2.0 核心）
-       const encoded = encodeURIComponent(rawString);
+        // 2) encode（注意：一定要先有 encoded）
+        const encoded = encodeURIComponent(rawString);
 
-       // 3️⃣ AES 加密「encoded 後的字串」
-       const key = CryptoJS.enc.Utf8.parse(H_KEY);
-       const iv = CryptoJS.enc.Utf8.parse(H_IV);
+        // 3) AES
+        const key = CryptoJS.enc.Utf8.parse(H_KEY);
+        const iv = CryptoJS.enc.Utf8.parse(H_IV);
 
-       const encrypted = CryptoJS.AES.encrypt(encoded, key, {
-        iv,
-        mode: CryptoJS.mode.CBC,
-        padding: CryptoJS.pad.Pkcs7,
-       });
+        const encrypted = CryptoJS.AES.encrypt(encoded, key, {
+          iv,
+          mode: CryptoJS.mode.CBC,
+          padding: CryptoJS.pad.Pkcs7,
+        });
 
-      const TradeInfoHex = encrypted.ciphertext
-        .toString(CryptoJS.enc.Hex)
-        .toUpperCase();
+        const TradeInfoHex = encrypted.ciphertext
+          .toString(CryptoJS.enc.Hex)
+          .toUpperCase();
 
-        // 🚀 加入這幾行偵錯 (這會印在 Firebase 的後台)
+        // 4) SHA256（注意：這裡一定要宣告 shaRaw）
+        const shaRaw = `HashKey=${H_KEY}&TradeInfo=${TradeInfoHex}&HashIV=${H_IV}`;
+        const TradeSha = CryptoJS.SHA256(shaRaw)
+          .toString(CryptoJS.enc.Hex)
+          .toUpperCase();
+
+        // debug（這裡印 shaRaw 才不會噴 undefined）
         console.log("--- 🕵️ 藍新偵錯開始 ---");
-        console.log("1. 原始拼接字串 (rawString):", rawString);
-        console.log("2. AES 加密結果 (TradeInfoHex):", TradeInfoHex);
-        console.log("3. SHA256 拼接前字串 (shaRaw):", shaRaw);
-        console.log("4. 最終 SHA256 (TradeSha):", TradeSha);
+        console.log("1. rawString:", rawString);
+        console.log("2. encoded:", encoded);
+        console.log("3. TradeInfoHex:", TradeInfoHex);
+        console.log("4. shaRaw:", shaRaw);
+        console.log("5. TradeSha:", TradeSha);
         console.log("--- 🕵️ 藍新偵錯結束 ---");
 
 
