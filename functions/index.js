@@ -29,20 +29,24 @@ exports.createNewebPayOrder = onRequest(
 
         // 1. 建立最精簡的交易參數 (只留必填)
         // 注意：ItemDesc 絕對不能有空白或特殊符號
+        // ... 前面引入保持不變 ...
+
         const tradeParams = {
           MerchantID: M_ID,
           RespondType: "JSON",
           TimeStamp: timeStamp,
           Version: "2.0",
-          MerchantOrderNo: String(orderId),
+          // 加上隨機數，避免訂單編號重複造成的 03009 錯誤
+          MerchantOrderNo: "WF" + timeStamp, 
           Amt: Math.round(Number(amount)),
           ItemDesc: "WoodyFunOrder",
-          LoginType: 0
+          LoginType: 0,
+          // 嘗試增加這個欄位，告訴藍新我們要強行使用 JSON 回傳
+          RespondType: "JSON"
         };
 
-        // 2. 嚴格的手動拼接 (這串字只要錯一個字，SHA256 就會失敗)
+        // 拼接時務必確認順序與參數個數
         const rawString = `MerchantID=${tradeParams.MerchantID}&RespondType=${tradeParams.RespondType}&TimeStamp=${tradeParams.TimeStamp}&Version=${tradeParams.Version}&MerchantOrderNo=${tradeParams.MerchantOrderNo}&Amt=${tradeParams.Amt}&ItemDesc=${tradeParams.ItemDesc}&LoginType=${tradeParams.LoginType}`;
-
         // 3. AES 加密
         const key = CryptoJS.enc.Utf8.parse(H_KEY);
         const iv = CryptoJS.enc.Utf8.parse(H_IV);
