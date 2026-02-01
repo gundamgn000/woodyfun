@@ -59,15 +59,20 @@ exports.createNewebPayOrder = onRequest(
       const key = CryptoJS.enc.Utf8.parse(H_KEY);
       const iv  = CryptoJS.enc.Utf8.parse(H_IV);
 
-      const encrypted = CryptoJS.AES.encrypt(encoded, key, {
-        iv,
-        mode: CryptoJS.mode.CBC,
-        padding: CryptoJS.pad.Pkcs7,
-      });
+      const encrypted = CryptoJS.AES.encrypt(
+        CryptoJS.enc.Utf8.parse(encoded),
+        key,
+        {
+          iv,
+          mode: CryptoJS.mode.CBC,
+          padding: CryptoJS.pad.Pkcs7,
+        }
+      );
 
       // 4) TradeInfo：轉大寫（關鍵）
       const TradeInfo = encrypted.ciphertext
-        .toString(CryptoJS.enc.Hex)          .toUpperCase();
+        .toString(CryptoJS.enc.Hex)          
+        .toUpperCase();
 
       // 5) SHA256：用大寫的 TradeInfo
       const shaRaw = `HashKey=${H_KEY}&TradeInfo=${TradeInfo}&HashIV=${H_IV}`;
@@ -76,16 +81,16 @@ exports.createNewebPayOrder = onRequest(
         .toUpperCase();
 
 
-      // debug
-      console.log("rawString:", rawString);
-      console.log("encoded:", encoded);
-      console.log("HashKey:", H_KEY);
-      console.log("HashIV:", H_IV);
-      console.log("TradeInfo:", TradeInfo);
-      console.log("shaRaw:", shaRaw);
-      console.log("TradeSha:", TradeSha);
-      console.log("AES input (encoded):", encoded);
-      console.log("TimeStamp:", timeStamp);
+        // 🔍 完整驗證 log
+        console.log("TimeStamp:", timeStamp);
+        console.log("rawString:", rawString);
+        console.log("encoded:", encoded);
+        console.log("AES input (encoded):", encoded);
+        console.log("TradeInfo:", TradeInfo);
+        console.log("shaRaw:", shaRaw);
+        console.log("TradeSha:", TradeSha);
+        console.log("HashKey:", H_KEY);
+        console.log("HashIV:", H_IV);
 
 
 
