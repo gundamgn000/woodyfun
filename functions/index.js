@@ -41,23 +41,25 @@ exports.createNewebPayOrder = onRequest(
           ItemDesc: "WoodyFunOrder",
           LoginType: 0,
         };
-                // 拼接時務必確認順序與參數個數
-        const rawString = qs.stringify(tradeParams);
-        // 3. AES 加密
-        const key = CryptoJS.enc.Utf8.parse(H_KEY);
-        const iv = CryptoJS.enc.Utf8.parse(H_IV);
-        const encrypted = CryptoJS.AES.encrypt(encoded, key, {
-          iv,
-          mode: CryptoJS.mode.CBC,
-          padding: CryptoJS.pad.Pkcs7,
-        });
-        
-       const TradeInfoHex = encrypted.ciphertext.toString(CryptoJS.enc.Hex).toUpperCase();
-        // 2️⃣ 必須 encode
-        const encoded = encodeURIComponent(rawString);
-        // 4. SHA256 加密
-        const shaRaw = `HashKey=${H_KEY}&TradeInfo=${TradeInfoHex}&HashIV=${H_IV}`;
-        const TradeSha = CryptoJS.SHA256(shaRaw).toString(CryptoJS.enc.Hex).toUpperCase();
+       // 1️⃣ 組 querystring（順序交給系統）
+       const rawString = qs.stringify(tradeParams);
+
+       // 2️⃣ 一定要 encode（藍新 MPG 2.0 核心）
+       const encoded = encodeURIComponent(rawString);
+
+       // 3️⃣ AES 加密「encoded 後的字串」
+       const key = CryptoJS.enc.Utf8.parse(H_KEY);
+       const iv = CryptoJS.enc.Utf8.parse(H_IV);
+
+       const encrypted = CryptoJS.AES.encrypt(encoded, key, {
+        iv,
+        mode: CryptoJS.mode.CBC,
+        padding: CryptoJS.pad.Pkcs7,
+       });
+
+      const TradeInfoHex = encrypted.ciphertext
+        .toString(CryptoJS.enc.Hex)
+        .toUpperCase();
 
         // 🚀 加入這幾行偵錯 (這會印在 Firebase 的後台)
         console.log("--- 🕵️ 藍新偵錯開始 ---");
