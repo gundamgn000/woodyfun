@@ -5,7 +5,7 @@ const corsLib = require("cors");
 const cors = corsLib({
   origin: ["https://woodyfun.vercel.app"], 
 });
-
+const qs = require("querystring");
 // ⚠️ 請再次手動輸入，確保沒有前後空格
 const MERCHANT_ID = "MS1812982970";
 const HASH_KEY = "y4VruhR6gUmMkTskrjhKfQzwMXjFFekC";
@@ -36,28 +36,25 @@ exports.createNewebPayOrder = onRequest(
           RespondType: "JSON",
           TimeStamp: timeStamp,
           Version: "2.0",
-          // 加上隨機數，避免訂單編號重複造成的 03009 錯誤
-          MerchantOrderNo: "WF" + timeStamp, 
+          MerchantOrderNo: `WF${timeStamp}${Math.floor(Math.random() * 1000)}`,
           Amt: Math.round(Number(amount)),
           ItemDesc: "WoodyFunOrder",
           LoginType: 0,
-          // 嘗試增加這個欄位，告訴藍新我們要強行使用 JSON 回傳
-          RespondType: "JSON"
         };
-
-        // 拼接時務必確認順序與參數個數
-        const rawString = `MerchantID=${tradeParams.MerchantID}&RespondType=${tradeParams.RespondType}&TimeStamp=${tradeParams.TimeStamp}&Version=${tradeParams.Version}&MerchantOrderNo=${tradeParams.MerchantOrderNo}&Amt=${tradeParams.Amt}&ItemDesc=${tradeParams.ItemDesc}&LoginType=${tradeParams.LoginType}`;
+                // 拼接時務必確認順序與參數個數
+        const rawString = qs.stringify(tradeParams);
         // 3. AES 加密
         const key = CryptoJS.enc.Utf8.parse(H_KEY);
         const iv = CryptoJS.enc.Utf8.parse(H_IV);
-        const encrypted = CryptoJS.AES.encrypt(rawString, key, {
-          iv: iv,
+        const encrypted = CryptoJS.AES.encrypt(encoded, key, {
+          iv,
           mode: CryptoJS.mode.CBC,
           padding: CryptoJS.pad.Pkcs7,
         });
         
-        const TradeInfoHex = encrypted.ciphertext.toString(CryptoJS.enc.Hex).toUpperCase();
-
+       const TradeInfoHex = encrypted.ciphertext.toString(CryptoJS.enc.Hex).toUpperCase();
+        // 2️⃣ 必須 encode
+        const encoded = encodeURIComponent(rawString);
         // 4. SHA256 加密
         const shaRaw = `HashKey=${H_KEY}&TradeInfo=${TradeInfoHex}&HashIV=${H_IV}`;
         const TradeSha = CryptoJS.SHA256(shaRaw).toString(CryptoJS.enc.Hex).toUpperCase();
