@@ -42,25 +42,31 @@ const Home = () => {
   return (
     <div className="home-container">
       {/* 1. Hero Section - 品牌大圖 */}
-      <section className="hero-desktop">
+      <section className="hero">
         <div className="hero-overlay" />
         <div className="hero-content">
           <h1 className="text-brand-wood font-serif">
-            木趣小屋 Woodyfun <br />用自然的溫度 <br /> 
-            <span className="text-brand-orange text-5xl md:text-6xl">相伴孩子的每一天</span>
+            木趣小屋 Woodyfun <br />
+            用自然的溫度 <br />
+            <span className="text-brand-orange text-5xl md:text-6xl">
+              相伴孩子的每一天
+            </span>
           </h1>
+
           <p className="mt-6 text-gray-600 tracking-widest text-lg leading-relaxed">
             精選學齡前益智玩具，<br />
             陪伴孩子啟動探索與學習的第一步。
           </p>
-          <button 
+
+          <button
             onClick={() => navigate("/products")}
-            className="mt-10 bg-[#f39c42] text-white px-10 py-4 rounded-full shadow-lg hover:shadow-xl hover:bg-opacity-90 transition-all font-bold tracking-widest"
+            className="mt-10 bg-[#f39c42] text-white px-10 py-4 rounded-full shadow-lg hover:shadow-xl transition-all font-bold tracking-widest"
           >
             探索木育系列
           </button>
         </div>
       </section>
+
 
       {/* 2. Toy Categories - 玩具分類 */}
       <section className="week-look-section">
