@@ -46,8 +46,8 @@ const Home = () => {
         <div className="hero-overlay" />
         <div className="hero-content">
           <h1 className="text-brand-wood font-serif">
-            木趣小屋 Woodyfun <br />
-            用自然的溫度 相伴孩子的每一天
+            木趣小屋 Woodyfun <br />用自然的溫度 <br /> 
+            <span className="text-brand-orange text-5xl md:text-6xl">相伴孩子的每一天</span>
           </h1>
           <p className="mt-6 text-gray-600 tracking-widest text-lg leading-relaxed">
             精選學齡前益智玩具，<br />
