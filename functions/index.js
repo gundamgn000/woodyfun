@@ -72,9 +72,8 @@ exports.createNewebPayOrder = onRequest({ region: "us-central1" }, (req, res) =>
         }
       );
 
-      const TradeInfo = encrypted.ciphertext
-        .toString(CryptoJS.enc.Hex)
-        .toUpperCase();
+      const TradeInfo = encrypted.toString(); // ⚠️ 不轉 Hex，不轉大寫
+
 
       // ✅ 藍新規定的 SHA 算法
       const shaRaw = `HashKey=${HASH_KEY}&TradeInfo=${TradeInfo}&HashIV=${HASH_IV}`;
