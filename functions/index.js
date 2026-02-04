@@ -4,6 +4,15 @@ const corsLib = require("cors");
 const CryptoJS = require("crypto-js");
 const qs = require("querystring");
 
+// ✅【一定要有】藍新專用 urlencode（RFC3986 + 空白轉 +）
+function newebpayUrlEncode(str) {
+  return encodeURIComponent(str)
+    .replace(/%20/g, "+")
+    .replace(/[!'()*]/g, (c) =>
+      "%" + c.charCodeAt(0).toString(16).toUpperCase()
+    );
+}
+
 // === 藍新正式商店參數（確認與後台一致） ===
 const MERCHANT_ID = "MS1812982970";
 const HASH_KEY = "SthQEGQfua8lf4dnPcqJXJlKSHRuKV9F";
@@ -58,11 +67,11 @@ exports.createNewebPayOrder = onRequest(
           LoginType: 0,
         };
 
-        // 1️⃣ querystring（順序保持）
+        // 1️⃣ QueryString
         const rawString = qs.stringify(tradeParams);
 
-        // 2️⃣ URL encode（藍新規格）
-        const encoded = encodeURIComponent(rawString);
+        // 2️⃣ 藍新 urlencode
+        const encoded = newebpayUrlEncode(rawString);
 
         // 3️⃣ AES-256-CBC
         const key = CryptoJS.enc.Utf8.parse(HASH_KEY);
@@ -78,18 +87,16 @@ exports.createNewebPayOrder = onRequest(
           }
         );
 
-        // 4️⃣ TradeInfo（Hex + 大寫）
         const TradeInfo = encrypted.ciphertext
           .toString(CryptoJS.enc.Hex)
           .toUpperCase();
 
-        // 5️⃣ TradeSha（⚠️ 正確藍新格式）
-        // HashKey=xxx&{TradeInfo}&HashIV=xxx
-        const shaRaw = `HashKey=${HASH_KEY}&${TradeInfo}&HashIV=${HASH_IV}`;
-
+        // 4️⃣ 正確 TradeSha
+        const shaRaw = `HashKey=${HASH_KEY}&TradeInfo=${TradeInfo}&HashIV=${HASH_IV}`;
         const TradeSha = CryptoJS.SHA256(shaRaw)
           .toString(CryptoJS.enc.Hex)
           .toUpperCase();
+
 
         // Debug（現在可以留）
         console.log("rawString:", rawString);
