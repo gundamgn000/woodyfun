@@ -2,9 +2,8 @@
 const { onRequest } = require("firebase-functions/v2/https");
 const corsLib = require("cors");
 const CryptoJS = require("crypto-js");
-const qs = require("querystring");
 
-// ✅【一定要有】藍新專用 urlencode（RFC3986 + 空白轉 +）
+// 🔒 藍新金流專用 urlencode（與官方 PHP 行為一致）
 function newebpayUrlEncode(str) {
   return encodeURIComponent(str)
     .replace(/%20/g, "+")
@@ -13,7 +12,7 @@ function newebpayUrlEncode(str) {
     );
 }
 
-// === 藍新正式商店參數（確認與後台一致） ===
+// === 藍新正式商店參數 ===
 const MERCHANT_ID = "MS1812982970";
 const HASH_KEY = "SthQEGQfua8lf4dnPcqJXJlKSHRuKV9F";
 const HASH_IV  = "Pr5t8YU839OZRXaC";
@@ -30,99 +29,78 @@ const cors = corsLib({
   allowedHeaders: ["Content-Type"],
 });
 
-exports.createNewebPayOrder = onRequest(
-  { region: "us-central1" },
-  (req, res) => {
-    cors(req, res, async () => {
-      if (req.method === "OPTIONS") {
-        return res.status(204).send("");
+exports.createNewebPayOrder = onRequest({ region: "us-central1" }, (req, res) => {
+  cors(req, res, async () => {
+    if (req.method === "OPTIONS") return res.status(204).send("");
+
+    try {
+      const { amount } = req.body || {};
+      const Amt = Math.round(Number(amount));
+
+      if (!Number.isFinite(Amt) || Amt <= 0) {
+        return res.status(400).json({ ok: false, error: "Invalid amount" });
       }
 
-      try {
-        if (req.method !== "POST") {
-          return res.status(405).json({ ok: false, error: "Method Not Allowed" });
+      const TimeStamp = Math.floor(Date.now() / 1000);
+      const MerchantOrderNo = `WF${TimeStamp}`;
+
+      // 🔑 手動組 querystring（關鍵）
+      const rawString =
+        `MerchantID=${MERCHANT_ID}` +
+        `&RespondType=JSON` +
+        `&TimeStamp=${TimeStamp}` +
+        `&Version=2.0` +
+        `&MerchantOrderNo=${MerchantOrderNo}` +
+        `&Amt=${Amt}` +
+        `&ItemDesc=WoodyFunOrder` +
+        `&LoginType=0`;
+
+      // ✅ 只 encode 一次
+      const encoded = newebpayUrlEncode(rawString);
+
+      // AES 加密
+      const key = CryptoJS.enc.Utf8.parse(HASH_KEY);
+      const iv  = CryptoJS.enc.Utf8.parse(HASH_IV);
+
+      const encrypted = CryptoJS.AES.encrypt(
+        CryptoJS.enc.Utf8.parse(encoded),
+        key,
+        {
+          iv,
+          mode: CryptoJS.mode.CBC,
+          padding: CryptoJS.pad.Pkcs7,
         }
+      );
 
-        const { amount, orderId } = req.body || {};
-        const Amt = Math.round(Number(amount));
+      const TradeInfo = encrypted.ciphertext
+        .toString(CryptoJS.enc.Hex)
+        .toUpperCase();
 
-        if (!Number.isFinite(Amt) || Amt <= 0) {
-          return res.status(400).json({ ok: false, error: "Invalid amount" });
-        }
+      // ✅ 藍新規定的 SHA 算法
+      const shaRaw = `HashKey=${HASH_KEY}&TradeInfo=${TradeInfo}&HashIV=${HASH_IV}`;
+      const TradeSha = CryptoJS.SHA256(shaRaw)
+        .toString(CryptoJS.enc.Hex)
+        .toUpperCase();
 
-        const TimeStamp = Math.floor(Date.now() / 1000);
-        const MerchantOrderNo = orderId
-          ? String(orderId).replace(/[^a-zA-Z0-9]/g, "").slice(0, 20)
-          : `WF${TimeStamp}`;
+      // Debug（第一次成功前保留）
+      console.log("rawString:", rawString);
+      console.log("encoded:", encoded);
+      console.log("TradeInfo:", TradeInfo);
+      console.log("TradeSha:", TradeSha);
 
-        // ✅ 內層 TradeInfo 參數（MerchantID 一定要在裡面）
-        const tradeParams = {
+      return res.json({
+        ok: true,
+        action: "https://core.newebpay.com/MPG/mpg_gateway",
+        params: {
           MerchantID: MERCHANT_ID,
-          RespondType: "JSON",
-          TimeStamp,
+          TradeInfo,
+          TradeSha,
           Version: "2.0",
-          MerchantOrderNo,
-          Amt,
-          ItemDesc: "WoodyFunOrder",
-          LoginType: 0,
-        };
-
-        // 1️⃣ QueryString
-        const rawString = qs.stringify(tradeParams);
-
-        // 2️⃣ 藍新 urlencode
-        const encoded = newebpayUrlEncode(rawString);
-
-        // 3️⃣ AES-256-CBC
-        const key = CryptoJS.enc.Utf8.parse(HASH_KEY);
-        const iv  = CryptoJS.enc.Utf8.parse(HASH_IV);
-
-        const encrypted = CryptoJS.AES.encrypt(
-          CryptoJS.enc.Utf8.parse(encoded),
-          key,
-          {
-            iv,
-            mode: CryptoJS.mode.CBC,
-            padding: CryptoJS.pad.Pkcs7,
-          }
-        );
-
-        const TradeInfo = encrypted.ciphertext
-          .toString(CryptoJS.enc.Hex)
-          .toUpperCase();
-
-        // 4️⃣ 正確 TradeSha
-        const shaRaw = `HashKey=${HASH_KEY}&TradeInfo=${TradeInfo}&HashIV=${HASH_IV}`;
-        const TradeSha = CryptoJS.SHA256(shaRaw)
-          .toString(CryptoJS.enc.Hex)
-          .toUpperCase();
-
-
-        // Debug（現在可以留）
-        console.log("rawString:", rawString);
-        console.log("encoded:", encoded);
-        console.log("TradeInfo:", TradeInfo);
-        console.log("TradeSha:", TradeSha);
-        console.log("encoded(by newebpay):", encoded);
-        console.log("encodeURIComponent:", encodeURIComponent(rawString));
-        console.log("newebpayUrlEncode:", newebpayUrlEncode(rawString));
-
-
-
-        return res.json({
-          ok: true,
-          action: "https://core.newebpay.com/MPG/mpg_gateway",
-          params: {
-            MerchantID: MERCHANT_ID, // ⚠️ 外層一定要一樣
-            TradeInfo,
-            TradeSha,
-            Version: "2.0",
-          },
-        });
-      } catch (err) {
-        console.error("[NewebPay Error]", err);
-        return res.status(500).json({ ok: false, error: err.message });
-      }
-    });
-  }
-);
+        },
+      });
+    } catch (err) {
+      console.error("[NewebPay Error]", err);
+      return res.status(500).json({ ok: false, error: err.message });
+    }
+  });
+});
