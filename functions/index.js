@@ -103,6 +103,11 @@ exports.createNewebPayOrder = onRequest(
         console.log("encoded:", encoded);
         console.log("TradeInfo:", TradeInfo);
         console.log("TradeSha:", TradeSha);
+        console.log("encoded(by newebpay):", encoded);
+        console.log("encodeURIComponent:", encodeURIComponent(rawString));
+        console.log("newebpayUrlEncode:", newebpayUrlEncode(rawString));
+
+
 
         return res.json({
           ok: true,
