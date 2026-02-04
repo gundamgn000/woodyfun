@@ -8,9 +8,7 @@ const CartPage = () => {
   const { cart, removeFromCart, clearCart, increaseQty, decreaseQty} = useCart();
   const navigate = useNavigate();
 
-  const SHIPPING_FEE = 80;
-
-  // 取得數量（兼容不同命名）
+  const SHIPPING_FEE = 0; // 固定運費 未來可依需求調整
   const getQty = (item) => {
     if (typeof item.quantity === "number") return item.quantity;
     if (typeof item.qty === "number") return item.qty;
