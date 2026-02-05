@@ -5,29 +5,39 @@ import { db } from "../firebase/firebase";
 
 export default function CheckoutSuccess() {
   const { orderId } = useParams();
-  const [order, setOrder] = useState(null);
-  const [loading, setLoading] = useState(true);
 
-  // 情況 A：綠界 callback 未帶 orderId
+  const [order, setOrder] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  /**
+   * 情況 A：沒有 orderId
+   * 👉 藍新 ReturnURL 的「正常情況」
+   * 只顯示成功訊息，不查 Firestore
+   */
   if (!orderId) {
     return (
       <div className="max-w-2xl mx-auto px-6 py-24 text-center">
-        <h1 className="text-3xl font-light mb-6 text-green-600">付款成功！</h1>
+        <h1 className="text-3xl font-light mb-6 text-green-600">
+          付款成功 🎉
+        </h1>
         <p className="text-gray-600 mb-8">
-          系統尚未取得訂單編號，但付款流程已完成。
+          我們已收到您的付款，訂單正在確認中，
+          稍後可至訂單紀錄查看詳細資訊。
         </p>
 
         <Link
           to="/orders"
           className="inline-block px-6 py-3 rounded-full bg-orange-500 text-white hover:bg-orange-400 transition"
         >
-          查看訂單列表
+          查看訂單紀錄
         </Link>
       </div>
     );
   }
 
-  // orderId 為字串 "undefined" 的保護
+  /**
+   * 情況 B：orderId 為不合法字串（防呆）
+   */
   if (orderId === "undefined") {
     return (
       <div className="py-40 text-center text-red-600 text-xl">
@@ -36,10 +46,14 @@ export default function CheckoutSuccess() {
     );
   }
 
-  // 情況 B：正常 orderId → 讀取 Firestore
+  /**
+   * 情況 C：有合法 orderId
+   * 👉 才查 Firestore
+   */
   useEffect(() => {
     async function loadOrder() {
       try {
+        setLoading(true);
         const ref = doc(db, "orders", orderId);
         const snap = await getDoc(ref);
 

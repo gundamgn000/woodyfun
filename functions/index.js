@@ -38,7 +38,16 @@ exports.createNewebPayOrder = onRequest(
         // 1) 組合 TradeInfo 的原始字串（完全保留你原本格式）
         // 我建議的寫法（更直覺，不容易漏掉 &）
         // ✅ 請務必連成「完整的一行」，中間不要按 Enter 換行
-        const rawString = `MerchantID=${merchantId}&RespondType=JSON&TimeStamp=${TimeStamp}&Version=2.0&MerchantOrderNo=${MerchantOrderNo}&Amt=${Amt}&ItemDesc=WoodyFunOrder&LoginType=0`;
+        const BASE_URL = "https://www.woodyfun.tw"; 
+
+        // 這樣寫最保險，會導向 https://www.woodyfun.tw/CheckoutSuccess/WF12345
+        const ReturnURL = `${BASE_URL}/checkout/success/${MerchantOrderNo}`;
+
+        // NotifyURL 必須是 Firebase 的 API 網址，不能是 Vercel 網址
+        const NotifyURL = `https://us-central1-${process.env.GCLOUD_PROJECT}.cloudfunctions.net/paymentNotify`;
+
+        // ✅ 組合 rawString (確保 encodeURIComponent 處理特殊符號)
+        const rawString = `MerchantID=${merchantId}&RespondType=JSON&TimeStamp=${TimeStamp}&Version=2.0&MerchantOrderNo=${MerchantOrderNo}&Amt=${Amt}&ItemDesc=WoodyFunOrder&LoginType=0&ReturnURL=${encodeURIComponent(ReturnURL)}&NotifyURL=${encodeURIComponent(NotifyURL)}`;
 
         // 2) AES 加密 (產生 TradeInfo)（完全保留你原本模式/補位）
         const key = CryptoJS.enc.Utf8.parse(hashKey);
