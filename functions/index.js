@@ -41,7 +41,7 @@ exports.createNewebPayOrder = onRequest(
         const BASE_URL = "https://www.woodyfun.tw"; 
 
         // 這樣寫最保險，會導向 https://www.woodyfun.tw/CheckoutSuccess/WF12345
-        const ReturnURL = `https://www.woodyfun.tw/checkout/success/`;
+        const ReturnURL = `https://www.woodyfun.tw/checkout/success`;
 
         // NotifyURL 必須是 Firebase 的 API 網址，不能是 Vercel 網址
         const NotifyURL = "https://www.woodyfun.tw"; // 暫時先用首頁代替，等 API 寫好再換
