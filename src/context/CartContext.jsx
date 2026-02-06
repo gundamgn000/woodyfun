@@ -72,7 +72,7 @@ export function CartProvider({ children }) {
   }, [cart]);
 
   // 運費
-  const SHIPPING_FEE = 80;// 固定運費 未來可依需求調整
+  const SHIPPING_FEE = 0;// 固定運費 未來可依需求調整
   const shippingFee = useMemo(() => {
     return subtotal > 0 ? SHIPPING_FEE : 0;
   }, [subtotal]);
