@@ -41,14 +41,14 @@ exports.createNewebPayOrder = onRequest(
         const BASE_URL = "https://www.woodyfun.tw"; 
 
         // 這樣寫最保險，會導向 https://www.woodyfun.tw/CheckoutSuccess/WF12345
-        const ReturnURL = `https://www.woodyfun.tw/checkout/success`;
+        const ReturnURL = `https://www.woodyfun.tw/checkout/success/`;
 
         // NotifyURL 必須是 Firebase 的 API 網址，不能是 Vercel 網址
         const NotifyURL = "https://www.woodyfun.tw"; // 暫時先用首頁代替，等 API 寫好再換
 
         // 2. 組合 rawString (注意：最後面我幫你加了 &CVSCOM=3)
         // ✅ 請務必保持「整行連貫」，不要手動換行
-        const rawString = `MerchantID=${merchantId}&RespondType=JSON&TimeStamp=${TimeStamp}&Version=2.0&MerchantOrderNo=${MerchantOrderNo}&Amt=${Amt}&ItemDesc=WoodyFunOrder&LoginType=0&ReturnURL=${encodeURIComponent(ReturnURL)}&NotifyURL=${encodeURIComponent(NotifyURL)}`;
+        const rawString = `MerchantID=${merchantId}&RespondType=JSON&TimeStamp=${TimeStamp}&Version=2.0&MerchantOrderNo=${MerchantOrderNo}&Amt=${Amt}&ItemDesc=WoodyFunOrder&LoginType=0&ReturnURL=${encodeURIComponent(ReturnURL)}&NotifyURL=${encodeURIComponent(NotifyURL)}&ReturnMethod=1`;
 
         // 2) AES 加密 (產生 TradeInfo)（完全保留你原本模式/補位）
         const key = CryptoJS.enc.Utf8.parse(hashKey);
