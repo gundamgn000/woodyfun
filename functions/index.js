@@ -80,7 +80,7 @@ exports.createNewebPayOrder = onRequest(
         const ReturnURL = `${MY_FUNCTION_URL}?from=newebpay`; 
         
         // ClientBackURL 是使用者點擊「返回商店」時去的網址
-        const ClientBackURL = "https://www.woodyfun.tw/checkout/success";
+        const ClientBackURL = `https://www.woodyfun.tw/checkout/success/${MerchantOrderNo}`;
         const NotifyURL = ""; // 如果不需要幕後通知可留空，或填寫另外的 webhook url
 
         // 1. 強制確保 method 正確
