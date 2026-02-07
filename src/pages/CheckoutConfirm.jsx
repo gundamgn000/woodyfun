@@ -46,8 +46,7 @@ export default function CheckoutConfirm() {
       console.log("Step 2: 訂單已寫入，ID:", orderId);
 
       // 1. 判斷付款方式
-      if (checkoutInfo.paymentMethod === "信用卡") {
-        console.log("Step 3: 呼叫金流 API...");
+      if (checkoutInfo.paymentMethod === "信用卡" || checkoutInfo.paymentMethod === "超商取貨付款") {
 
         const response = await fetch("https://createnewebpayorder-l7op6fj4oq-uc.a.run.app", {
           method: "POST",
@@ -57,6 +56,7 @@ export default function CheckoutConfirm() {
             amount: totalAmount,
             itemDesc: "WoodyFunOrder", 
             email: user.email,
+            method: checkoutInfo.paymentMethod
           }),
         }).catch(fetchErr => {
           throw new Error("無法連線至金流伺服器，請檢查網路或 CORS 設定: " + fetchErr.message);
@@ -142,7 +142,8 @@ export default function CheckoutConfirm() {
         onClick={createOrder} 
         className="w-full bg-[#ef9d51] hover:bg-[#d68a44] text-white py-4 rounded-full font-bold text-lg transition-all shadow-lg active:scale-[0.98]"
       >
-        {checkoutInfo.paymentMethod === "信用卡" ? "前往刷卡付款" : "確認成立訂單"}
+        {checkoutInfo.paymentMethod === "信用卡" ? "前往刷卡付款" : 
+         checkoutInfo.paymentMethod === "超商取貨付款" ? "選擇取貨門市" : "確認成立訂單"}
       </button>
 
       <div className="text-center mt-6">

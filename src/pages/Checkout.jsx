@@ -116,6 +116,7 @@ export default function Checkout() {
             >
               <option value="">請選擇付款方式</option>
               <option value="貨到付款">貨到付款</option>
+              <option value="CVSCOM">超商取貨付款 (7-11/全家/萊爾富)</option>
               <option value="信用卡">信用卡</option>
               <option value="ATM">ATM 虛擬帳號</option>
             </select>

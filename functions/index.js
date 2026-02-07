@@ -45,19 +45,24 @@ exports.createNewebPayOrder = onRequest(
         const hashKey = HASH_KEY.value();
         const hashIv = HASH_IV.value();
 
-        const { amount, orderId } = req.body || {};
+        const { amount, orderId , method} = req.body || {};
         const Amt = Math.round(Number(amount));
         const TimeStamp = Math.floor(Date.now() / 1000);
         const MerchantOrderNo = orderId || `WF${TimeStamp}`;
+
+        
 
         // 💡 這裡最關鍵：ReturnURL 指向 Function 自己的網址，並帶上識別參數
         // 請確認你的 Function 網址是否正確 (如果不確定，可以從 Firebase Console 複製)
         const MY_FUNCTION_URL = "https://createnewebpayorder-l7op6fj4oq-uc.a.run.app";
         const ReturnURL = `${MY_FUNCTION_URL}?from=newebpay`;
         const ClientBackURL = "https://www.woodyfun.tw/checkout/success";
+        // ✅ 修正點 1：定義 NotifyURL (藍新幕後通知訂單成功的網址，若暫無可先與 ReturnURL 相同)
+        const NotifyURL = ReturnURL;
+        const creditParam = (method === "信用卡") ? 1 : 0;
+        const cvscomParam = (method === "超商取貨付款") ? 3 : 0;
 
-        const rawString = `MerchantID=${merchantId}&RespondType=JSON&TimeStamp=${TimeStamp}&Version=2.0&MerchantOrderNo=${MerchantOrderNo}&Amt=${Amt}&ItemDesc=WoodyFunOrder&LoginType=0&ReturnURL=${encodeURIComponent(ReturnURL)}&NotifyURL=${encodeURIComponent(NotifyURL)}&ReturnMethod=1&ClientBackURL=${encodeURIComponent(ClientBackURL)}&CREDIT=1&CVSCOM=3`;
-        // AES 加密
+        const rawString = `MerchantID=${merchantId}&RespondType=JSON&TimeStamp=${TimeStamp}&Version=2.0&MerchantOrderNo=${MerchantOrderNo}&Amt=${Amt}&ItemDesc=WoodyFunOrder&LoginType=0&ReturnURL=${encodeURIComponent(ReturnURL)}&NotifyURL=${encodeURIComponent(NotifyURL)}&ReturnMethod=1&ClientBackURL=${encodeURIComponent(ClientBackURL)}&CREDIT=${creditParam}&CVSCOM=${cvscomParam}`;
         const key = CryptoJS.enc.Utf8.parse(hashKey);
         const iv = CryptoJS.enc.Utf8.parse(hashIv);
         const encrypted = CryptoJS.AES.encrypt(rawString, key, {
