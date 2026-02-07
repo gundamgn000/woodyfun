@@ -169,6 +169,7 @@ const decreaseQty = (id, size) => {
   const clearCart = () => {
     setCart([]);
     setLastAddedItem(null);
+    localStorage.removeItem(cartKey);
   };
 
   const value = {
