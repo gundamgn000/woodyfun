@@ -65,14 +65,17 @@ exports.createNewebPayOrder = onRequest(
       if (req.method === "OPTIONS") return res.status(204).send("");
 
       try {
+        // 🔍 加這行 Log，去 Firebase 控制台看收到的 body 到底長怎樣
+        console.log("收到前端請求 Body:", JSON.stringify(req.body));
         const merchantId = MERCHANT_ID.value();
         const hashKey = HASH_KEY.value();
         const hashIv = HASH_IV.value();
 
         const { amount, orderId, method } = req.body || {};
-        const Amt = Math.round(Number(amount));
+        const Amt = amount ? Math.round(Number(amount)) : 999;
         const TimeStamp = Math.floor(Date.now() / 1000);
         const MerchantOrderNo = orderId || `WF${TimeStamp}`;
+        console.log(`最終計算金額 Amt: ${Amt}, 訂單編號: ${MerchantOrderNo}, 付款方式: ${method}`);
 
         const MY_FUNCTION_URL = "https://createnewebpayorder-l7op6fj4oq-uc.a.run.app";
         const ReturnURL = `${MY_FUNCTION_URL}?from=newebpay`;
