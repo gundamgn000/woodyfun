@@ -2,12 +2,21 @@ import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "../firebase/firebase";
+import { useCart } from "../context/CartContext";
 
 export default function CheckoutSuccess() {
   const { orderId } = useParams();
 
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(false);
+  const { clearCart } = useCart();
+
+  useEffect(() => {
+  if (orderId) {
+    clearCart();
+  }
+}, [orderId]);
+
 
   /**
    * 情況 A：沒有 orderId
