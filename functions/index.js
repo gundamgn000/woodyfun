@@ -78,14 +78,32 @@ exports.createNewebPayOrder = onRequest(
         const ReturnURL = `${MY_FUNCTION_URL}?from=newebpay`;
         const ClientBackURL = "https://www.woodyfun.tw/checkout/success";
         const NotifyURL = ReturnURL; // 幕後通知
+        // 1. 強制確保 method 正確
+
+        const currentMethod = (method || "").trim();
 
         // 動態判定：如果是超商，CREDIT 要關掉 (0)，CVSCOM 要開啟 (3)
-        const creditParam = (method === "信用卡") ? 1 : 0;
-        const cvscomParam = (method === "超商取貨付款") ? 3 : 0;
+        const creditParam = (currentMethod === "信用卡") ? 1 : 0;
+        let cvscomParam = (currentMethod === "超商取貨付款") ? 3 : 0;
 
         // 注意：Lanyin 規範中，若要觸發地圖，CVSCOM 需為 3 (取貨付款) 或 2 (純取貨)
-        const rawString = `MerchantID=${merchantId}&RespondType=JSON&TimeStamp=${TimeStamp}&Version=2.0&MerchantOrderNo=${MerchantOrderNo}&Amt=${Amt}&ItemDesc=WoodyFunOrder&LoginType=0&ReturnURL=${encodeURIComponent(ReturnURL)}&NotifyURL=${encodeURIComponent(NotifyURL)}&ReturnMethod=1&ClientBackURL=${encodeURIComponent(ClientBackURL)}&CREDIT=${creditParam}&CVSCOM=${cvscomParam}`;
-
+        const rawString = [
+          `MerchantID=${merchantId}`,
+          `RespondType=JSON`,
+          `TimeStamp=${TimeStamp}`,
+          `Version=2.0`,
+          `MerchantOrderNo=${MerchantOrderNo}`,
+          `Amt=${Amt}`,
+          `ItemDesc=WoodyFunOrder`,
+          `LoginType=0`,
+          `ReturnURL=${encodeURIComponent(ReturnURL)}`,
+          `NotifyURL=${encodeURIComponent(NotifyURL)}`,
+          `ReturnMethod=1`,
+          `ClientBackURL=${encodeURIComponent(ClientBackURL)}`,
+          `CREDIT=${creditParam}`,
+          `CVSCOM=${cvscomParam}`,
+          `LWA=0` // 關閉藍新錢包，減少干擾
+        ].join("&");
         const key = CryptoJS.enc.Utf8.parse(hashKey);
         const iv = CryptoJS.enc.Utf8.parse(hashIv);
         const encrypted = CryptoJS.AES.encrypt(rawString, key, {
