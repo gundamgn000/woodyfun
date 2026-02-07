@@ -15,7 +15,6 @@ export default function CheckoutConfirm() {
       alert("請先登入會員才能結帳");
       navigate("/login");
     }
-    // 如果沒有收件資訊也跑進來，退回上一步
     if (!loading && (!checkoutInfo || !checkoutInfo.name)) {
       navigate("/checkout");
     }
@@ -29,56 +28,63 @@ export default function CheckoutConfirm() {
         return;
       }
 
-      console.log("Step 1: 正在建立 Firestore 訂單...");
+      console.log("Step 1: 正在準備訂單資料...");
+      
+      // 強制確保金額是整數數字
+      const finalAmount = Math.round(Number(totalAmount));
+      console.log("確認要送出的金額:", finalAmount);
+
       const orderData = {
         userId: user.uid,
         email: user.email || "",
         createdAt: Timestamp.now(),
         shippingInfo: checkoutInfo,
         paymentMethod: checkoutInfo.paymentMethod,
-        total: totalAmount,
-        status: "pending", // 初始狀態為待付款
+        total: finalAmount,
+        status: "pending",
         items: cart,
       };
 
+      // 1. 先寫入 Firestore 取得正式的訂單編號 (orderId)
       const docRef = await addDoc(collection(db, "orders"), orderData);
       const orderId = docRef.id;
-      console.log("Step 2: 訂單已寫入，ID:", orderId);
+      console.log("Step 2: 訂單已寫入 Firestore, ID:", orderId);
 
-      // 1. 判斷付款方式
-      if (checkoutInfo.paymentMethod === "信用卡" || checkoutInfo.paymentMethod === "超商取貨付款") {
+      // 2. 判斷付款方式是否需要跳轉藍新
+      const needsPaymentGateway = 
+        checkoutInfo.paymentMethod === "信用卡" || 
+        checkoutInfo.paymentMethod === "超商取貨付款";
+
+      if (needsPaymentGateway) {
+        console.log(`Step 3: 呼叫金流後端... 方式: ${checkoutInfo.paymentMethod}`);
 
         const response = await fetch("https://createnewebpayorder-l7op6fj4oq-uc.a.run.app", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            orderId: orderId,
-            amount: totalAmount,
-            itemDesc: "WoodyFunOrder", 
+            orderId: orderId, // 現在 orderId 有值了
+            amount: finalAmount,
+            itemDesc: "WoodyFunOrder",
             email: user.email,
             method: checkoutInfo.paymentMethod
           }),
-        }).catch(fetchErr => {
-          throw new Error("無法連線至金流伺服器，請檢查網路或 CORS 設定: " + fetchErr.message);
         });
 
         if (!response.ok) {
           const errorText = await response.text();
-          throw new Error(`API 伺服器回報錯誤 (${response.status}): ${errorText}`);
+          throw new Error(`API 伺服器回報錯誤: ${errorText}`);
         }
 
         const data = await response.json();
         console.log("Step 4: API 回傳結果:", data);
 
         if (data.ok) {
-          console.log("Step 5: 執行自動跳轉藍新...");
+          console.log("Step 5: 執行表單跳轉藍新...");
           
-          // --- 🚀 自動跳轉表單開始 ---
           const form = document.createElement("form");
           form.method = "POST";
-          form.action = data.action; // 藍新網關網址
+          form.action = data.action;
 
-          // 遍歷所有 params (MerchantID, TradeInfo, TradeSha, Version)
           Object.entries(data.params).forEach(([key, value]) => {
             const input = document.createElement("input");
             input.type = "hidden";
@@ -88,17 +94,14 @@ export default function CheckoutConfirm() {
           });
 
           document.body.appendChild(form);
-          form.submit(); // 送出表單，頁面會跳轉到藍新
-          // --- 🚀 自動跳轉表單結束 ---
-
-          // 注意：跳轉後頁面會離開，不需執行 clearCart，通常在 ReturnURL 頁面才清空
+          form.submit();
         } else {
           throw new Error(data.error || "金流參數解析失敗");
         }
 
       } else {
-        // 2. 非信用卡支付（例如：貨到付款或現場付）
-        console.log("非信用卡支付，直接完成訂單");
+        // 非線上支付 (例如一般貨到付款)
+        console.log("非線上支付，直接完成");
         clearCart();
         navigate(`/checkout/success/${orderId}`);
       }
