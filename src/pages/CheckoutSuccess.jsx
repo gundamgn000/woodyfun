@@ -11,17 +11,43 @@ export default function CheckoutSuccess() {
   const [loading, setLoading] = useState(false);
   const { clearCart } = useCart();
 
+  /**
+   * 成功後清空購物車
+   */
   useEffect(() => {
-  if (orderId) {
-    clearCart();
-  }
-}, [orderId]);
+    if (orderId) {
+      clearCart();
+    }
+  }, [orderId]);
 
+  /**
+   * 載入訂單資料
+   */
+  useEffect(() => {
+    if (!orderId || orderId === "undefined") return;
+
+    async function loadOrder() {
+      try {
+        setLoading(true);
+        const ref = doc(db, "orders", orderId);
+        const snap = await getDoc(ref);
+
+        if (snap.exists()) {
+          setOrder(snap.data());
+        }
+      } catch (err) {
+        console.error("讀取訂單錯誤：", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadOrder();
+  }, [orderId]);
 
   /**
    * 情況 A：沒有 orderId
-   * 👉 藍新 ReturnURL 的「正常情況」
-   * 只顯示成功訊息，不查 Firestore
+   * 👉 藍新 ReturnURL 的正常情況
    */
   if (!orderId) {
     return (
@@ -45,7 +71,7 @@ export default function CheckoutSuccess() {
   }
 
   /**
-   * 情況 B：orderId 為不合法字串（防呆）
+   * 情況 B：orderId 為不合法字串
    */
   if (orderId === "undefined") {
     return (
@@ -54,30 +80,6 @@ export default function CheckoutSuccess() {
       </div>
     );
   }
-
-  /**
-   * 情況 C：有合法 orderId
-   * 👉 才查 Firestore
-   */
-  useEffect(() => {
-    async function loadOrder() {
-      try {
-        setLoading(true);
-        const ref = doc(db, "orders", orderId);
-        const snap = await getDoc(ref);
-
-        if (snap.exists()) {
-          setOrder(snap.data());
-        }
-      } catch (err) {
-        console.error("讀取訂單錯誤：", err);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    loadOrder();
-  }, [orderId]);
 
   if (loading) {
     return <div className="py-40 text-center">讀取訂單中…</div>;
