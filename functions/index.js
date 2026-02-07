@@ -32,7 +32,7 @@ exports.createNewebPayOrder = onRequest(
   },
   (req, res) => {
     // -----------------------------------------------------------
-    // 🚀 【核心優化】中繼站邏輯：解密資料並轉導
+    // 🚀 【核心優化】中繼站邏輯：解密資料並轉導 (保持不變)
     // -----------------------------------------------------------
     if (req.method === "POST" && req.query.from === "newebpay") {
       try {
@@ -42,13 +42,11 @@ exports.createNewebPayOrder = onRequest(
 
         // 解密資料，這裏面會包含用戶選的：門市名稱、門市編號
         const result = decryptNewebPay(TradeInfo, hashKey, hashIv);
-        console.log("藍新回傳結果:", result);
+        console.log("藍新回傳結果 (ReturnURL):", result);
 
-        // 如果是超商取貨付款，result.Result 裡面會有：
-        // CVSStoreName (門市名), CVSAddress (門市地址), CVSStoreID (店號)
-        
-        // TODO: 這裡你可以使用 Firebase Admin SDK 更新資料庫，把門市存入訂單
-        // const orderId = result.Result.MerchantOrderNo;
+        // TODO: 若需要將門市資訊寫回 Firestore，請在此處初始化 Admin SDK 並寫入
+        // const storeName = result.Result.CVSStoreName;
+        // const storeID = result.Result.CVSStoreID;
         
         const successUrl = "https://www.woodyfun.tw/checkout/success";
         return res.redirect(302, successUrl);
@@ -59,13 +57,12 @@ exports.createNewebPayOrder = onRequest(
     }
 
     // -----------------------------------------------------------
-    // 原本的建立訂單邏輯 (保持你修改後的版本)
+    // 建立訂單邏輯 (修正 MPG05007 錯誤)
     // -----------------------------------------------------------
     cors(req, res, async () => {
       if (req.method === "OPTIONS") return res.status(204).send("");
 
       try {
-        // 🔍 加這行 Log，去 Firebase 控制台看收到的 body 到底長怎樣
         console.log("收到前端請求 Body:", JSON.stringify(req.body));
         const merchantId = MERCHANT_ID.value();
         const hashKey = HASH_KEY.value();
@@ -74,22 +71,34 @@ exports.createNewebPayOrder = onRequest(
         const { amount, orderId, method } = req.body || {};
         const Amt = amount ? Math.round(Number(amount)) : 999;
         const TimeStamp = Math.floor(Date.now() / 1000);
-        const MerchantOrderNo = orderId || `WF${TimeStamp}`;
+        // 如果沒有 orderId，產生一個測試用的
+        const MerchantOrderNo = orderId || `WF${TimeStamp}`; 
         console.log(`最終計算金額 Amt: ${Amt}, 訂單編號: ${MerchantOrderNo}, 付款方式: ${method}`);
 
         const MY_FUNCTION_URL = "https://createnewebpayorder-l7op6fj4oq-uc.a.run.app";
-        const ReturnURL = `${MY_FUNCTION_URL}?from=newebpay`;
+        // 這裡加上 ?from=newebpay 是為了讓上面的中繼站邏輯能抓到
+        const ReturnURL = `${MY_FUNCTION_URL}?from=newebpay`; 
+        
+        // ClientBackURL 是使用者點擊「返回商店」時去的網址
         const ClientBackURL = "https://www.woodyfun.tw/checkout/success";
-        const NotifyURL = ReturnURL; // 幕後通知
-        // 1. 強制確保 method 正確
+        const NotifyURL = ""; // 如果不需要幕後通知可留空，或填寫另外的 webhook url
 
+        // 1. 強制確保 method 正確
         const currentMethod = (method || "").trim();
 
-        // 動態判定：如果是超商，CREDIT 要關掉 (0)，CVSCOM 要開啟 (3)
-        const creditParam = (currentMethod === "信用卡") ? 1 : 0;
-        let cvscomParam = (currentMethod === "超商取貨付款") ? 3 : 0;
+        // 2. 設定參數 (🔴 修正重點：MPG05007 解決方案)
+        let creditParam = 0;
+        let cvscomParam = 0;
 
-        // 注意：Lanyin 規範中，若要觸發地圖，CVSCOM 需為 3 (取貨付款) 或 2 (純取貨)
+        if (currentMethod === "超商取貨付款") {
+           cvscomParam = 3; // 開啟超商取貨付款
+           creditParam = 1; // 💡 關鍵：必須同時開啟信用卡，藍新才允許使用 CVSCOM
+        } else {
+           // 預設或信用卡都開啟信用卡支付
+           creditParam = 1;
+           cvscomParam = 0;
+        }
+
         const rawString = [
           `MerchantID=${merchantId}`,
           `RespondType=JSON`,
@@ -103,10 +112,11 @@ exports.createNewebPayOrder = onRequest(
           `NotifyURL=${encodeURIComponent(NotifyURL)}`,
           `ReturnMethod=1`,
           `ClientBackURL=${encodeURIComponent(ClientBackURL)}`,
-          `CREDIT=${creditParam}`,
-          `CVSCOM=${cvscomParam}`,
-          `LWA=0` // 關閉藍新錢包，減少干擾
+          `CREDIT=${creditParam}`,   // 帶入修正後的參數
+          `CVSCOM=${cvscomParam}`,   // 帶入修正後的參數
+          `LWA=0`
         ].join("&");
+
         const key = CryptoJS.enc.Utf8.parse(hashKey);
         const iv = CryptoJS.enc.Utf8.parse(hashIv);
         const encrypted = CryptoJS.AES.encrypt(rawString, key, {
@@ -131,6 +141,7 @@ exports.createNewebPayOrder = onRequest(
           },
         });
       } catch (err) {
+        console.error("產生訂單失敗:", err);
         return res.status(500).json({ ok: false, error: err.message });
       }
     });
