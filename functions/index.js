@@ -56,8 +56,7 @@ exports.createNewebPayOrder = onRequest(
         const ReturnURL = `${MY_FUNCTION_URL}?from=newebpay`;
         const ClientBackURL = "https://www.woodyfun.tw/checkout/success";
 
-        const rawString = `MerchantID=${merchantId}&RespondType=JSON&TimeStamp=${TimeStamp}&Version=2.0&MerchantOrderNo=${MerchantOrderNo}&Amt=${Amt}&ItemDesc=WoodyFunOrder&LoginType=0&ReturnURL=${encodeURIComponent(ReturnURL)}&NotifyURL=&ReturnMethod=1&ClientBackURL=${encodeURIComponent(ClientBackURL)}`;
-
+        const rawString = `MerchantID=${merchantId}&RespondType=JSON&TimeStamp=${TimeStamp}&Version=2.0&MerchantOrderNo=${MerchantOrderNo}&Amt=${Amt}&ItemDesc=WoodyFunOrder&LoginType=0&ReturnURL=${encodeURIComponent(ReturnURL)}&NotifyURL=${encodeURIComponent(NotifyURL)}&ReturnMethod=1&ClientBackURL=${encodeURIComponent(ClientBackURL)}&CREDIT=1&CVSCOM=3`;
         // AES 加密
         const key = CryptoJS.enc.Utf8.parse(hashKey);
         const iv = CryptoJS.enc.Utf8.parse(hashIv);
