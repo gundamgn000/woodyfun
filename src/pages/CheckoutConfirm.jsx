@@ -4,6 +4,7 @@ import { collection, addDoc, Timestamp } from "firebase/firestore";
 import { db } from "../firebase/firebase";
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
+import emailjs from "@emailjs/browser";
 
 export default function CheckoutConfirm() {
   const { cart, clearCart, checkoutInfo, totalAmount } = useCart();
@@ -29,8 +30,8 @@ export default function CheckoutConfirm() {
       }
 
       console.log("Step 1: 正在準備訂單資料...");
-      
-      // 強制確保金額是整數數字
+
+      // 強制確保金額是整數
       const finalAmount = Math.round(Number(totalAmount));
       console.log("確認要送出的金額:", finalAmount);
 
@@ -45,30 +46,99 @@ export default function CheckoutConfirm() {
         items: cart,
       };
 
-      // 1. 先寫入 Firestore 取得正式的訂單編號 (orderId)
+      // 1️⃣ 建立訂單
       const docRef = await addDoc(collection(db, "orders"), orderData);
       const orderId = docRef.id;
       console.log("Step 2: 訂單已寫入 Firestore, ID:", orderId);
 
-      // 2. 判斷付款方式是否需要跳轉藍新
-      const needsPaymentGateway = 
-        checkoutInfo.paymentMethod === "信用卡" || 
+      // ===============================
+      // 準備寄信用資料
+      // ===============================
+      const itemsText = cart
+        .map((item) => `${item.name} × ${item.quantity}`)
+        .join("\n");
+
+      const subtotal = finalAmount;
+      const shippingFee = 0;
+
+      // ===============================
+      // EmailJS：客戶訂單成立通知
+      // ===============================
+      try {
+        await emailjs.send(
+          "service_4i7f37e",
+          "template_ig9xw2j",
+          {
+            customer_name: checkoutInfo.name,
+            customer_email: user.email,
+            order_id: orderId,
+            created_at: new Date().toLocaleString("zh-TW"),
+            items: itemsText,
+            subtotal: subtotal,
+            shipping: shippingFee,
+            payment_method: checkoutInfo.paymentMethod,
+            total: finalAmount,
+            address: `${checkoutInfo.city}${checkoutInfo.district}${checkoutInfo.address}`,
+          },
+          "jF4MDMUjdZNpY-Wi8"
+        );
+
+        console.log("📧 客戶訂單信已送出");
+      } catch (e) {
+        console.error("❌ 客戶信寄送失敗", e);
+      }
+
+      // ===============================
+      // EmailJS：賣家通知
+      // ===============================
+      try {
+        await emailjs.send(
+          "service_4i7f37e",
+          "template_qrt9ay5",
+          {
+            customer_name: checkoutInfo.name,
+            customer_email: user.email,
+            order_id: orderId,
+            created_at: new Date().toLocaleString("zh-TW"),
+            items: itemsText,
+            payment_method: checkoutInfo.paymentMethod,
+            subtotal: subtotal,
+            shipping: shippingFee,
+            total: finalAmount,
+            address: `${checkoutInfo.city}${checkoutInfo.district}${checkoutInfo.address}`,
+          },
+          "jF4MDMUjdZNpY-Wi8"
+        );
+
+        console.log("📧 管理員訂單通知已送出");
+      } catch (error) {
+        console.error("❌ 管理員信寄送失敗", error);
+      }
+
+      // ===============================
+      // 判斷是否需跳轉金流
+      // ===============================
+      const needsPaymentGateway =
+        checkoutInfo.paymentMethod === "信用卡" ||
         checkoutInfo.paymentMethod === "超商取貨付款";
 
       if (needsPaymentGateway) {
         console.log(`Step 3: 呼叫金流後端... 方式: ${checkoutInfo.paymentMethod}`);
 
-        const response = await fetch("https://createnewebpayorder-l7op6fj4oq-uc.a.run.app", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            orderId: orderId, // 現在 orderId 有值了
-            amount: finalAmount,
-            itemDesc: "WoodyFunOrder",
-            email: user.email,
-            method: checkoutInfo.paymentMethod
-          }),
-        });
+        const response = await fetch(
+          "https://createnewebpayorder-l7op6fj4oq-uc.a.run.app",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              orderId: orderId,
+              amount: finalAmount,
+              itemDesc: "WoodyFunOrder",
+              email: user.email,
+              method: checkoutInfo.paymentMethod,
+            }),
+          }
+        );
 
         if (!response.ok) {
           const errorText = await response.text();
@@ -80,7 +150,7 @@ export default function CheckoutConfirm() {
 
         if (data.ok) {
           console.log("Step 5: 執行表單跳轉藍新...");
-          
+
           const form = document.createElement("form");
           form.method = "POST";
           form.action = data.action;
@@ -98,26 +168,25 @@ export default function CheckoutConfirm() {
         } else {
           throw new Error(data.error || "金流參數解析失敗");
         }
-
       } else {
-        // 非線上支付 (例如一般貨到付款)
+        // 非線上支付
         console.log("非線上支付，直接完成");
         clearCart();
         navigate(`/checkout/success/${orderId}`);
       }
-
     } catch (err) {
       console.error("❌ 訂單流程中斷:", err);
       alert("訂單失敗: " + err.message);
     }
   };
 
-  if (loading || !user) return <div className="py-40 text-center">驗證中...</div>;
+  if (loading || !user)
+    return <div className="py-40 text-center">驗證中...</div>;
 
   return (
     <div className="max-w-xl mx-auto py-20 px-6">
       <h1 className="text-2xl font-bold mb-6 text-center">確認訂單資訊</h1>
-      
+
       <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 mb-8">
         <div className="space-y-4">
           <div className="flex justify-between items-center pb-4 border-b border-gray-100">
@@ -130,7 +199,9 @@ export default function CheckoutConfirm() {
           </div>
           <div className="flex justify-between items-center pb-4 border-b border-gray-100">
             <span className="text-gray-600">付款方式</span>
-            <span className="font-medium text-blue-600">{checkoutInfo?.paymentMethod}</span>
+            <span className="font-medium text-blue-600">
+              {checkoutInfo?.paymentMethod}
+            </span>
           </div>
           <div className="flex justify-between items-center pt-2">
             <span className="text-lg font-bold text-gray-800">應付金額</span>
@@ -141,17 +212,20 @@ export default function CheckoutConfirm() {
         </div>
       </div>
 
-      <button 
-        onClick={createOrder} 
+      <button
+        onClick={createOrder}
         className="w-full bg-[#ef9d51] hover:bg-[#d68a44] text-white py-4 rounded-full font-bold text-lg transition-all shadow-lg active:scale-[0.98]"
       >
-        {checkoutInfo.paymentMethod === "信用卡" ? "前往刷卡付款" : 
-         checkoutInfo.paymentMethod === "超商取貨付款" ? "選擇取貨門市" : "確認成立訂單"}
+        {checkoutInfo.paymentMethod === "信用卡"
+          ? "前往刷卡付款"
+          : checkoutInfo.paymentMethod === "超商取貨付款"
+          ? "選擇取貨門市"
+          : "確認成立訂單"}
       </button>
 
       <div className="text-center mt-6">
-        <button 
-          onClick={() => navigate(-1)} 
+        <button
+          onClick={() => navigate(-1)}
           className="text-sm text-gray-400 hover:text-gray-600 hover:underline transition-colors"
         >
           返回修改資訊
