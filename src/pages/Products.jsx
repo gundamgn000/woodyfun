@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useSearchParams, useLocation  } from "react-router-dom";
 import { db } from "../firebase/firebase";
 import { collection, getDocs } from "firebase/firestore";
 
@@ -13,14 +13,38 @@ import { useAuth } from "../context/AuthContext";
 
 export default function Products() {
   const { toggleWishlist, isWishlisted } = useWishlist();
+  const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
-  const categoryParam = searchParams.get("category");
+
+  // URL 讀取
+  const categoryParam = searchParams.get("category") || "全部";
+  const qParam = searchParams.get("q") || "";
+  const sortParam = searchParams.get("sort") || "default";
+  const pageParam = Math.max(1, Number(searchParams.get("page") || 1));
+
+  // state（用來控制輸入框 UI）
+  const [filteredCategory, setFilteredCategory] = useState(categoryParam);
+  const [searchTerm, setSearchTerm] = useState(qParam);
+  const [sortMethod, setSortMethod] = useState(sortParam);
+  const [currentPage, setCurrentPage] = useState(pageParam);
   const [products, setProducts] = useState([]);
-  const [filteredCategory, setFilteredCategory] = useState("全部");
-  const [searchTerm, setSearchTerm] = useState("");
-  const [sortMethod, setSortMethod] = useState("default");
   const [justAddedId, setJustAddedId] = useState(null);
-  const [currentPage, setCurrentPage] = useState(1);
+
+  // 讓「使用者按上一頁/下一頁」時，state 會跟著 URL 更新
+  useEffect(() => setFilteredCategory(categoryParam), [categoryParam]);
+  useEffect(() => setSearchTerm(qParam), [qParam]);
+  useEffect(() => setSortMethod(sortParam), [sortParam]);
+  useEffect(() => setCurrentPage(pageParam), [pageParam]);
+
+  // 小工具：合併更新 query（不會把其他參數洗掉）
+  const updateParams = (patch) => {
+    const p = new URLSearchParams(searchParams);
+    Object.entries(patch).forEach(([k, v]) => {
+      if (v === null || v === undefined || v === "" || v === "全部") p.delete(k);
+      else p.set(k, String(v));
+    });
+    setSearchParams(p, { replace: true });
+  };
   const { user } = useAuth();
   const itemsPerPage = 6;
   const handleWishlistClick = (e, productId) => {
@@ -85,22 +109,13 @@ export default function Products() {
     fetchProducts();
   }, []);
 
-  useEffect(() => {
-    if (categoryParam) {
-      setFilteredCategory(categoryParam);
-    } else {
-      setFilteredCategory("全部");
-    }
-  }, [categoryParam]);
-
   // 排序與過濾邏輯
   let displayItems = products
-    .filter((p) => (filteredCategory === "全部" ? true : p.category === filteredCategory))
-    .filter((p) => p.name.toLowerCase().includes(searchTerm.toLowerCase()));
+  .filter((p) => (filteredCategory === "全部" ? true : p.category === filteredCategory))
+  .filter((p) => p.name.toLowerCase().includes(searchTerm.toLowerCase()));
 
-  if (sortMethod === "priceLow") displayItems.sort((a, b) => a.price - b.price);
-  if (sortMethod === "priceHigh") displayItems.sort((a, b) => b.price - a.price);
-
+  if (sortMethod === "priceLow") displayItems = [...displayItems].sort((a, b) => a.price - b.price);
+  if (sortMethod === "priceHigh") displayItems = [...displayItems].sort((a, b) => b.price - a.price);
   const totalPages = Math.ceil(displayItems.length / itemsPerPage);
   const currentItems = displayItems.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
   
@@ -121,12 +136,22 @@ export default function Products() {
             className="search-input"
             placeholder="搜尋玩具名稱..."
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) => {
+              const val = e.target.value;
+              setSearchTerm(val);
+              setCurrentPage(1);
+              updateParams({ q: val, page: 1 });
+            }}
           />
-          <select 
+          <select
             className="sort-select"
-            value={sortMethod} 
-            onChange={(e) => setSortMethod(e.target.value)}
+            value={sortMethod}
+            onChange={(e) => {
+              const val = e.target.value;
+              setSortMethod(val);
+              setCurrentPage(1);
+              updateParams({ sort: val, page: 1 });
+            }}
           >
             <option value="default">預設排序</option>
             <option value="priceLow">價格：由低到高</option>
@@ -140,8 +165,8 @@ export default function Products() {
               key={cat}
               onClick={() => {
                 setFilteredCategory(cat);
-                setSearchParams(cat === "全部" ? {} : { category: cat });
                 setCurrentPage(1);
+                updateParams({ category: cat === "全部" ? null : cat, page: 1 });
               }}
               className={`filter-pill ${filteredCategory === cat ? "active" : ""}`}
             >
@@ -164,7 +189,11 @@ export default function Products() {
 
           return (
             <div key={item.id} className="product-card-wrapper">
-              <Link to={`/product/${item.id}`} className="product-card-link">
+              <Link
+                to={`/product/${item.id}`}
+                state={{ from: location.pathname + location.search }}
+                className="product-card-link"
+              >
                 <div className="product-image-wrapper">
                   <img
                     src={safeImg(item.mainImageUrl || item.imageUrl)}
@@ -206,7 +235,10 @@ export default function Products() {
           {Array.from({ length: totalPages }, (_, i) => i + 1).map((num) => (
             <button
               key={num}
-              onClick={() => setCurrentPage(num)}
+              onClick={() => {
+              setCurrentPage(num);
+              updateParams({ page: num });
+            }}
               className={`page-num ${currentPage === num ? "active" : ""}`}
             >
               {num}
