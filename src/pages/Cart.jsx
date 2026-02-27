@@ -3,12 +3,15 @@
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useCart } from "../context/CartContext";
+import { calculateShipping, getNow } from "../utils/shipping";
 
 const CartPage = () => {
   const { cart, removeFromCart, clearCart, increaseQty, decreaseQty} = useCart();
   const navigate = useNavigate();
 
-  const SHIPPING_FEE = 0; // 固定運費 未來可依需求調整
+  // Cart 頁尚未選付款方式：活動內=0；活動後用「超商取貨付款」80 當預估運費（避免跟後面頁面不同步）
+  const now = getNow();
+  const SHIPPING_FEE = calculateShipping("超商取貨付款", now);
   const getQty = (item) => {
     if (typeof item.quantity === "number") return item.quantity;
     if (typeof item.qty === "number") return item.qty;
@@ -32,7 +35,7 @@ const CartPage = () => {
     0
   );
 
-  const finalTotal = computedTotal + SHIPPING_FEE;
+  const finalTotal = Math.round(computedTotal + SHIPPING_FEE);
 
   const handleRemove = (item) => {
     if (window.confirm(`確定要將「${item.name}」移出購物籃嗎？`)) {
@@ -177,7 +180,9 @@ const CartPage = () => {
 
                 <div className="flex justify-between items-center text-sm">
                   <span className="font-light">預估運費 Shipping</span>
-                  <span className="font-medium text-gray-800">NT$ {SHIPPING_FEE}</span>
+                  <span className="font-medium text-gray-800">
+                    NT$ {SHIPPING_FEE.toLocaleString("zh-TW")}
+                  </span>
                 </div>
               </div>
 

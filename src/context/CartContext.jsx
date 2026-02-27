@@ -12,9 +12,9 @@ export function useCart() {
   return ctx;
 }
 
-// 依使用者狀態決定 localStorage key
+// 依使用者狀態決定 localStorage key（✅ WoodyFun 專用，避免跟其他站互相污染）
 function getCartKey(user) {
-  return user ? `adiaforos_cart_${user.uid}` : "adiaforos_cart_guest";
+  return user ? `woodyfun_cart_${user.uid}` : "woodyfun_cart_guest";
 }
 
 export function CartProvider({ children }) {
@@ -53,7 +53,8 @@ export function CartProvider({ children }) {
   const [lastAddedItem, setLastAddedItem] = useState(null);
 
   // ─────────────────────────────
-  // 🧮 金額計算（唯一真實來源）
+  // 🧮 金額計算（唯一真實來源：subtotal）
+  // 產品級原則：運費與總額請各頁面依 utils/shipping.js 計算，避免不同步
   // ─────────────────────────────
 
   const getSafePrice = (price) => {
@@ -62,55 +63,29 @@ export function CartProvider({ children }) {
     return Number.isNaN(num) ? 0 : num;
   };
 
+  const getSafeQty = (item) => {
+    // 兼容 quantity / qty，避免資料不一致
+    if (typeof item.quantity === "number") return item.quantity;
+    if (typeof item.qty === "number") return item.qty;
+    const n = Number(item.quantity);
+    return Number.isNaN(n) ? 0 : n;
+  };
+
   // 商品小計
   const subtotal = useMemo(() => {
-    return cart.reduce((sum, item) => {
-      const price = getSafePrice(item.price);
-      const qty = Number(item.quantity) || 0;
-      return sum + price * qty;
-    }, 0);
+    return Math.round(
+      cart.reduce((sum, item) => {
+        const price = getSafePrice(item.price);
+        const qty = getSafeQty(item);
+        return sum + price * qty;
+      }, 0)
+    );
   }, [cart]);
-
-  // 運費
-  const SHIPPING_FEE = 0;// 固定運費 未來可依需求調整
-  const shippingFee = useMemo(() => {
-    return subtotal > 0 ? SHIPPING_FEE : 0;
-  }, [subtotal]);
-
-  // 總金額
-  const totalAmount = useMemo(() => {
-    return subtotal + shippingFee;
-  }, [subtotal, shippingFee]);
 
   // 商品總數量
   const totalItems = useMemo(() => {
-    return cart.reduce((sum, item) => {
-      return sum + (Number(item.quantity) || 0);
-    }, 0);
+    return cart.reduce((sum, item) => sum + getSafeQty(item), 0);
   }, [cart]);
-
-  const increaseQty = (id, size) => {
-  setCart((prev) =>
-    prev.map((item) =>
-      item.id === id && item.size === size
-        ? { ...item, quantity: item.quantity + 1 }
-        : item
-    )
-  );
-};
-
-const decreaseQty = (id, size) => {
-  setCart((prev) =>
-    prev
-      .map((item) =>
-        item.id === id && item.size === size
-          ? { ...item, quantity: item.quantity - 1 }
-          : item
-      )
-      .filter((item) => item.quantity > 0) // 0 就自動移除（像蝦皮）
-  );
-};
-
 
   // ─────────────────────────────
   // 🧩 購物車操作
@@ -166,6 +141,28 @@ const decreaseQty = (id, size) => {
     );
   };
 
+  const increaseQty = (id, size) => {
+    setCart((prev) =>
+      prev.map((item) =>
+        item.id === id && item.size === size
+          ? { ...item, quantity: (Number(item.quantity) || 0) + 1 }
+          : item
+      )
+    );
+  };
+
+  const decreaseQty = (id, size) => {
+    setCart((prev) =>
+      prev
+        .map((item) =>
+          item.id === id && item.size === size
+            ? { ...item, quantity: (Number(item.quantity) || 0) - 1 }
+            : item
+        )
+        .filter((item) => (Number(item.quantity) || 0) > 0)
+    );
+  };
+
   const clearCart = () => {
     setCart([]);
     setLastAddedItem(null);
@@ -173,26 +170,24 @@ const decreaseQty = (id, size) => {
   };
 
   const value = {
-  cart,
-  addToCart,
-  removeFromCart,
-  clearCart,
+    cart,
+    addToCart,
+    removeFromCart,
+    clearCart,
 
-  increaseQty,
-  decreaseQty,
+    increaseQty,
+    decreaseQty,
+    updateQuantity,
 
-  totalItems,
-  subtotal,
-  shippingFee,
-  totalAmount,
+    totalItems,
+    subtotal,
 
-  checkoutInfo,
-  setCheckoutInfo,
+    checkoutInfo,
+    setCheckoutInfo,
 
-  lastAddedItem,
-  setLastAddedItem,
-};
-
+    lastAddedItem,
+    setLastAddedItem,
+  };
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }

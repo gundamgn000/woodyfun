@@ -18,6 +18,7 @@ export default function CheckoutSuccess() {
     if (orderId) {
       clearCart();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [orderId]);
 
   /**
@@ -96,6 +97,29 @@ export default function CheckoutSuccess() {
   const shippingInfo = order.shippingInfo || order.checkoutInfo || {};
   const items = order.items || order.cart || [];
 
+  // 兼容 quantity/qty，避免顯示 0 或 undefined
+  const getQty = (item) => {
+    if (typeof item.quantity === "number") return item.quantity;
+    if (typeof item.qty === "number") return item.qty;
+    return 1;
+  };
+
+  // 兼容 price 為字串
+  const getPrice = (item) => {
+    if (typeof item.price === "number") return item.price;
+    if (typeof item.price === "string") {
+      const num = Number(item.price.replace(/[^\d.]/g, ""));
+      return isNaN(num) ? 0 : num;
+    }
+    return 0;
+  };
+
+  // ✅ 成功頁金額以「訂單存檔」為準（產品級：避免規則改動後舊單被重算）
+  const subtotal = typeof order.subtotal === "number" ? order.subtotal : null;
+  const shippingFee =
+    typeof order.shippingFee === "number" ? order.shippingFee : null;
+  const total = typeof order.total === "number" ? order.total : null;
+
   return (
     <div className="max-w-3xl mx-auto px-6 py-20">
       <h1 className="text-3xl font-light mb-10 text-green-600">
@@ -140,6 +164,9 @@ export default function CheckoutSuccess() {
             item.imageUrl ||
             "https://placehold.co/200x200?text=WoodyFun";
 
+          const qty = getQty(item);
+          const price = getPrice(item);
+
           return (
             <div
               key={i}
@@ -161,13 +188,13 @@ export default function CheckoutSuccess() {
                 <div>
                   <p className="font-medium text-gray-900">{item.name}</p>
                   <p className="text-sm text-gray-500">
-                    適合年齡: {item.ageRange || "全齡適用"}／數量：{item.quantity}
+                    適合年齡: {item.ageRange || "全齡適用"}／數量：{qty}
                   </p>
                 </div>
               </div>
 
               <p className="font-medium text-gray-800">
-                NT$ {(item.price * item.quantity).toLocaleString()}
+                NT$ {(price * qty).toLocaleString()}
               </p>
             </div>
           );
@@ -180,17 +207,26 @@ export default function CheckoutSuccess() {
 
         <div className="flex justify-between py-2 text-sm text-gray-600">
           <span>商品總額</span>
-          <span>NT$ {order.subtotal?.toLocaleString()}</span>
+          <span>
+            NT$ {typeof subtotal === "number" ? subtotal.toLocaleString() : "—"}
+          </span>
         </div>
 
         <div className="flex justify-between py-2 text-sm text-gray-600">
           <span>運費</span>
-          <span>NT$ 80</span>
+          <span>
+            NT${" "}
+            {typeof shippingFee === "number"
+              ? shippingFee.toLocaleString()
+              : "—"}
+          </span>
         </div>
 
         <div className="flex justify-between pt-4 text-xl font-semibold text-gray-900">
           <span>總計</span>
-          <span>NT$ {order.total?.toLocaleString()}</span>
+          <span>
+            NT$ {typeof total === "number" ? total.toLocaleString() : "—"}
+          </span>
         </div>
       </div>
 

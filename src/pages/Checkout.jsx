@@ -1,16 +1,12 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useCart } from "../context/CartContext";
 import { useNavigate } from "react-router-dom";
+import { calculateShipping, getNow } from "../utils/shipping";
 
 export default function Checkout() {
   const navigate = useNavigate();
 
-  const {
-    setCheckoutInfo,
-    subtotal,
-    shippingFee,
-    totalAmount,
-  } = useCart();
+  const { cart, setCheckoutInfo } = useCart();
 
   const [form, setForm] = useState({
     name: "",
@@ -25,6 +21,46 @@ export default function Checkout() {
     setForm((prev) => ({ ...prev, [field]: value }));
   };
 
+  // ===============================
+  // 金額計算：以 cart 為準，避免不同頁不同步
+  // ===============================
+  const getQty = (item) => {
+    if (typeof item.quantity === "number") return item.quantity;
+    if (typeof item.qty === "number") return item.qty;
+    return 1;
+  };
+
+  const getPrice = (item) => {
+    if (typeof item.price === "number") return item.price;
+    if (typeof item.price === "string") {
+      const num = Number(item.price.replace(/[^\d.]/g, ""));
+      return isNaN(num) ? 0 : num;
+    }
+    return 0;
+  };
+
+  const subtotal = useMemo(() => {
+    return Math.round(
+      (cart || []).reduce((sum, item) => sum + getQty(item) * getPrice(item), 0)
+    );
+  }, [cart]);
+
+  // 允許用 localStorage mock 時間（跟 Confirm 同步）
+  const now = useMemo(() => getNow(), []);
+
+  // 未選付款方式前：先顯示 0（避免購物車 → 結帳頁突然跳價）
+  const shippingFee = useMemo(() => {
+    if (!form.paymentMethod) return 0;
+    return calculateShipping(form.paymentMethod, now);
+  }, [form.paymentMethod, now]);
+
+  const totalAmount = useMemo(() => {
+    return Math.round(subtotal + shippingFee);
+  }, [subtotal, shippingFee]);
+
+  // ===============================
+  // 送出
+  // ===============================
   const handleSubmit = (e) => {
     e.preventDefault();
 
@@ -38,7 +74,8 @@ export default function Checkout() {
   };
 
   // 統一的輸入框樣式
-  const inputStyle = "w-full border border-gray-200 p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#ef9d51] focus:border-transparent transition-all bg-gray-50/50";
+  const inputStyle =
+    "w-full border border-gray-200 p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#ef9d51] focus:border-transparent transition-all bg-gray-50/50";
 
   return (
     // 加入 lg:pl-[260px] 避開左側 Navbar
@@ -52,7 +89,9 @@ export default function Checkout() {
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700 ml-1">收件人姓名</label>
+              <label className="text-sm font-medium text-gray-700 ml-1">
+                收件人姓名
+              </label>
               <input
                 type="text"
                 className={inputStyle}
@@ -62,7 +101,9 @@ export default function Checkout() {
               />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700 ml-1">聯絡電話</label>
+              <label className="text-sm font-medium text-gray-700 ml-1">
+                聯絡電話
+              </label>
               <input
                 type="text"
                 className={inputStyle}
@@ -75,7 +116,9 @@ export default function Checkout() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700 ml-1">縣市</label>
+              <label className="text-sm font-medium text-gray-700 ml-1">
+                縣市
+              </label>
               <input
                 type="text"
                 className={inputStyle}
@@ -85,7 +128,9 @@ export default function Checkout() {
               />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700 ml-1">鄉鎮市區</label>
+              <label className="text-sm font-medium text-gray-700 ml-1">
+                鄉鎮市區
+              </label>
               <input
                 type="text"
                 className={inputStyle}
@@ -97,7 +142,9 @@ export default function Checkout() {
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700 ml-1">詳細地址</label>
+            <label className="text-sm font-medium text-gray-700 ml-1">
+              詳細地址
+            </label>
             <input
               type="text"
               className={inputStyle}
@@ -108,17 +155,20 @@ export default function Checkout() {
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700 ml-1">付款方式</label>
+            <label className="text-sm font-medium text-gray-700 ml-1">
+              付款方式
+            </label>
             <select
               className={inputStyle}
               value={form.paymentMethod}
               onChange={(e) => updateForm("paymentMethod", e.target.value)}
             >
               <option value="">請選擇付款方式</option>
-              
-              <option value="超商取貨付款">超商取貨付款 (7-11/全家/萊爾富)</option>
+
+              <option value="超商取貨付款">
+                超商取貨付款 (7-11/全家/萊爾富)
+              </option>
               <option value="信用卡">信用卡</option>
-              
             </select>
           </div>
 
@@ -134,7 +184,9 @@ export default function Checkout() {
             </div>
             <div className="flex justify-between font-bold text-xl text-gray-800 pt-1">
               <span>總金額</span>
-              <span className="text-[#ef9d51]">NT$ {totalAmount?.toLocaleString()}</span>
+              <span className="text-[#ef9d51]">
+                NT$ {totalAmount?.toLocaleString()}
+              </span>
             </div>
           </div>
 
