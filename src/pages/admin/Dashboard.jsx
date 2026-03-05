@@ -9,6 +9,7 @@ import {
   getDoc,
   where,
   documentId,
+  Timestamp,
 } from "firebase/firestore";
 
 // ========== ChartJS ==========
@@ -166,17 +167,11 @@ export default function Dashboard() {
         if (mounted) setMonthVisitors(monthSum);
 
         // 7. 目前在線（60 秒內）
-        const onlineSnap = await getDocs(collection(db, "online_users"));
-        let activeCount = 0;
-        const currentTime = Date.now();
-        onlineSnap.forEach((docu) => {
-          const data = docu.data();
-          if (data.lastActive?.toDate) {
-            const diff = currentTime - data.lastActive.toDate().getTime();
-            if (diff < 60000) activeCount++;
-          }
-        });
-        if (mounted) setOnlineUsers(activeCount);
+        const cutoff = Timestamp.fromMillis(Date.now() - 60000);
+        const onlineSnap = await getDocs(
+          query(collection(db, "online_users"), where("lastActive", ">=", cutoff))
+        );
+        if (mounted) setOnlineUsers(onlineSnap.size);
       } catch (e) {
         console.error("Dashboard error:", e);
       } finally {
