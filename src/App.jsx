@@ -10,6 +10,9 @@ import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import PageTransition from "./components/PageTransition";
 import ConsumerPolicy from "./pages/ConsumerPolicy";
+import { useEffect } from "react";
+import { recordVisitor } from "./utils/visitorCounter";
+
 // 1. 將所有頁面改為 lazy import
 const Home = lazy(() => import("./pages/Home"));
 const Products = lazy(() => import("./pages/Products"));
@@ -44,8 +47,12 @@ const AdminAddProduct = lazy(() => import("./pages/admin/AdminAddProduct"));
 const AdminEditProduct = lazy(() => import("./pages/admin/AdminEditProduct"));
 const AdminOrders = lazy(() => import("./pages/admin/AdminOrders"));
 const AdminOrderDetail = lazy(() => import("./pages/admin/AdminOrderDetail"));
-
+import { startOnlineTracking } from "./utils/onlineTracker";
 function App() {
+   useEffect(() => {
+    recordVisitor();
+    startOnlineTracking();
+  }, []);
   return (
     <ToastProvider>
       <AuthProvider>
@@ -100,6 +107,7 @@ function App() {
                       <Route path="/consumer-policy" element={<ConsumerPolicy />} />
                       
 
+                      {/* Admin */}
                       {/* Admin */}
                       <Route
                         path="/admin/*"
