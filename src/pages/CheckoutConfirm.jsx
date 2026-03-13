@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react"; // ✅ 新增 useState
 import { useNavigate } from "react-router-dom";
 import { collection, addDoc, Timestamp } from "firebase/firestore";
 import { db } from "../firebase/firebase";
@@ -13,6 +13,9 @@ export default function CheckoutConfirm() {
   const { cart, clearCart, checkoutInfo } = useCart();
   const { user, loading } = useAuth();
   const navigate = useNavigate();
+
+  // ✅ 新增：處理中狀態，防止重複點擊並提供視覺反饋
+  const [isProcessing, setIsProcessing] = useState(false);
 
   // ✅ Debug 開關：本地測試改 true，上線務必 false
   const SHOW_DEBUG = false;
@@ -52,20 +55,19 @@ export default function CheckoutConfirm() {
     (cart || []).reduce((sum, item) => sum + getQty(item) * getPrice(item), 0)
   );
 
-  // ✅ 共用 mock now（跟 Cart / Checkout 同步）
   const now = getNow();
-
-  // ✅ 共用運費規則（活動內=0 / 活動後：信用卡150，其它80）
   const shippingFee = calculateShipping(checkoutInfo?.paymentMethod, now);
-
   const finalAmount = Math.round(subtotal + shippingFee);
 
   // ===============================
   // 建立訂單
   // ===============================
   const createOrder = async () => {
+    // 防止重複執行
+    if (isProcessing) return;
+    
     try {
-      // 0) 防呆：付款方式一定要有（產品級必要）
+      // 0) 防呆
       if (!checkoutInfo?.paymentMethod) {
         alert("請先選擇付款方式");
         navigate("/checkout");
@@ -77,9 +79,10 @@ export default function CheckoutConfirm() {
         return;
       }
 
-      console.log("subtotal:", subtotal);
-      console.log("shippingFee:", shippingFee);
-      console.log("finalAmount:", finalAmount);
+      // 開始處理
+      setIsProcessing(true);
+
+      console.log("正在建立訂單...", { subtotal, shippingFee, finalAmount });
 
       const orderData = {
         userId: user.uid,
@@ -94,58 +97,36 @@ export default function CheckoutConfirm() {
         items: cart,
       };
 
+      // 1) 優先寫入 Firebase (這是最重要的資料，必須 await)
       const docRef = await addDoc(collection(db, "orders"), orderData);
       const orderId = docRef.id;
 
+      // 2) 準備 Email 內容
       const itemsText = cart
         .map((item) => `${item.name} × ${getQty(item)}`)
         .join("\n");
 
-      // ===============================
-      // 客戶信
-      // ===============================
-      await emailjs.send(
-        "service_4i7f37e",
-        "template_ig9xw2j",
-        {
-          customer_name: checkoutInfo.name,
-          customer_email: user.email,
-          order_id: orderId,
-          created_at: new Date().toLocaleString("zh-TW"),
-          items: itemsText,
-          subtotal,
-          shipping: shippingFee,
-          payment_method: checkoutInfo.paymentMethod,
-          total: finalAmount,
-          address: `${checkoutInfo.city}${checkoutInfo.district}${checkoutInfo.address}`,
-        },
-        "jF4MDMUjdZNpY-Wi8"
-      );
+      const emailParams = {
+        customer_name: checkoutInfo.name,
+        customer_email: user.email,
+        order_id: orderId,
+        created_at: new Date().toLocaleString("zh-TW"),
+        items: itemsText,
+        subtotal,
+        shipping: shippingFee,
+        payment_method: checkoutInfo.paymentMethod,
+        total: finalAmount,
+        address: `${checkoutInfo.city}${checkoutInfo.district}${checkoutInfo.address}`,
+      };
 
-      // ===============================
-      // 管理員信
-      // ===============================
-      await emailjs.send(
-        "service_4i7f37e",
-        "template_qrt9ay5",
-        {
-          customer_name: checkoutInfo.name,
-          customer_email: user.email,
-          order_id: orderId,
-          created_at: new Date().toLocaleString("zh-TW"),
-          items: itemsText,
-          payment_method: checkoutInfo.paymentMethod,
-          subtotal,
-          shipping: shippingFee,
-          total: finalAmount,
-          address: `${checkoutInfo.city}${checkoutInfo.district}${checkoutInfo.address}`,
-        },
-        "jF4MDMUjdZNpY-Wi8"
-      );
+      // 3) 🚀 非同步發送信件 (不再 await，讓它在背景跑)
+      // 這樣程式會立刻跳到下方的金流邏輯，不用等 Email 伺服器回應
+      Promise.all([
+        emailjs.send("service_4i7f37e", "template_ig9xw2j", emailParams, "jF4MDMUjdZNpY-Wi8"), // 客戶信
+        emailjs.send("service_4i7f37e", "template_qrt9ay5", emailParams, "jF4MDMUjdZNpY-Wi8")  // 管理員信
+      ]).catch(err => console.error("信件背景發送失敗:", err));
 
-      // ===============================
-      // 金流
-      // ===============================
+      // 4) 金流與跳轉邏輯
       const needsPaymentGateway =
         checkoutInfo.paymentMethod === "信用卡" ||
         checkoutInfo.paymentMethod === "超商取貨付款";
@@ -158,7 +139,7 @@ export default function CheckoutConfirm() {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               orderId,
-              amount: finalAmount, // ✅ 含運費總額
+              amount: finalAmount,
               itemDesc: "WoodyFunOrder",
               email: user.email,
               method: checkoutInfo.paymentMethod,
@@ -192,12 +173,14 @@ export default function CheckoutConfirm() {
           throw new Error(data.error || "金流參數解析失敗");
         }
       } else {
+        // 非金流支付（如貨到付款/轉帳）直接成功
         clearCart();
         navigate(`/checkout/success/${orderId}`);
       }
     } catch (err) {
       console.error("❌ 訂單失敗:", err);
       alert("訂單失敗: " + err.message);
+      setIsProcessing(false); // 失敗時務必恢復按鈕，讓客戶可以重試
     }
   };
 
@@ -246,23 +229,39 @@ export default function CheckoutConfirm() {
         </div>
       </div>
 
-      {/* ✅ Debug 區塊：測試用（SHOW_DEBUG=true 才會顯示） */}
+      {/* ✅ Debug 區塊 */}
       {SHOW_DEBUG && (
-        <div className="text-xs text-gray-400 pt-2">
+        <div className="text-xs text-gray-400 pt-2 mb-4">
           <div>now: {now.toString()}</div>
-          <div>end: {OPENING_END.toString()}</div>
-          <div>nowMs: {now.getTime()}</div>
-          <div>endMs: {OPENING_END.getTime()}</div>
           <div>payment: {checkoutInfo?.paymentMethod || "(none)"}</div>
         </div>
       )}
 
+      {/* ✅ 優化後的按鈕：根據狀態變換顏色與文字 */}
       <button
         onClick={createOrder}
-        className="w-full bg-[#ef9d51] text-white py-4 rounded-full text-lg font-medium"
+        disabled={isProcessing}
+        className={`w-full py-4 rounded-full text-lg font-medium transition-colors ${
+          isProcessing 
+            ? "bg-gray-400 cursor-not-allowed" 
+            : "bg-[#ef9d51] hover:bg-[#d68a44] text-white"
+        }`}
       >
-        確認送出並付款
+        {isProcessing ? (
+          <span className="flex items-center justify-center">
+            {/* 這裡可以放個簡單的 loading spinner 轉圈圈 */}
+            正在處理訂單，請稍候...
+          </span>
+        ) : (
+          "確認送出並付款"
+        )}
       </button>
+      
+      {isProcessing && (
+        <p className="text-center text-sm text-gray-500 mt-4 animate-pulse">
+          正在為您跳轉至安全支付頁面，請勿關閉視窗...
+        </p>
+      )}
     </div>
   );
 }
