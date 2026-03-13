@@ -11,6 +11,7 @@ export default function Checkout() {
   const [form, setForm] = useState({
     name: "",
     phone: "",
+    lineId: "", // 新增這一行
     city: "",
     district: "",
     address: "",
@@ -87,31 +88,30 @@ export default function Checkout() {
         </header>
 
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* 第一組：姓名與電話 */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700 ml-1">
-                收件人姓名
-              </label>
-              <input
-                type="text"
-                className={inputStyle}
-                placeholder="請輸入姓名"
-                value={form.name}
-                onChange={(e) => updateForm("name", e.target.value)}
-              />
+              <label className="text-sm font-medium text-gray-700 ml-1">收件人姓名</label>
+              <input type="text" className={inputStyle} placeholder="請輸入姓名" value={form.name} onChange={(e) => updateForm("name", e.target.value)} />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700 ml-1">
-                聯絡電話
-              </label>
-              <input
-                type="text"
-                className={inputStyle}
-                placeholder="0912-345-678"
-                value={form.phone}
-                onChange={(e) => updateForm("phone", e.target.value)}
-              />
+              <label className="text-sm font-medium text-gray-700 ml-1">聯絡電話</label>
+              <input type="text" className={inputStyle} placeholder="0912-345-678" value={form.phone} onChange={(e) => updateForm("phone", e.target.value)} />
             </div>
+          </div>
+
+          {/* 新增的一組：Line ID (選填) */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700 ml-1">
+              Line ID <span className="text-gray-400 text-xs">(選填，方便客服聯繫)</span>
+            </label>
+            <input
+              type="text"
+              className={inputStyle}
+              placeholder="請輸入 Line ID"
+              value={form.lineId}
+              onChange={(e) => updateForm("lineId", e.target.value)}
+            />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

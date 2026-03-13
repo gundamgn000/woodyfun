@@ -219,6 +219,13 @@ export default function CheckoutConfirm() {
             <span>{checkoutInfo?.phone}</span>
           </div>
 
+          <div className="flex justify-between pb-4 border-b">
+            <span>Line ID</span>
+            <span className={checkoutInfo?.lineId ? "text-gray-800" : "text-gray-400"}>
+              {checkoutInfo?.lineId || "未填寫"}
+            </span>
+          </div>
+
           {/* 金額區塊 */}
           <div className="pt-4 border-t space-y-3">
             <div className="flex justify-between">

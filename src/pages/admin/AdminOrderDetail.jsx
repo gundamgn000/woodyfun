@@ -511,6 +511,10 @@ export default function AdminOrderDetail() {
               {shipping.phone || "無資料"}
             </p>
             <p>
+              <span className="font-medium">Line ID：</span>
+              {shipping.lineId || "未填寫"}
+            </p>
+            <p>
               <span className="font-medium">Email：</span>
               {shipping.email || order.email || "無資料"}
             </p>
