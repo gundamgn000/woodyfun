@@ -47,7 +47,9 @@ const AdminAddProduct = lazy(() => import("./pages/admin/AdminAddProduct"));
 const AdminEditProduct = lazy(() => import("./pages/admin/AdminEditProduct"));
 const AdminOrders = lazy(() => import("./pages/admin/AdminOrders"));
 const AdminOrderDetail = lazy(() => import("./pages/admin/AdminOrderDetail"));
+
 import { startOnlineTracking } from "./utils/onlineTracker";
+
 function App() {
    useEffect(() => {
     recordVisitor();

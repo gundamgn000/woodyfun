@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"; // ✅ 新增 useState
+import { useEffect, useState, useMemo } from "react"; // ✅ 補上 useMemo
 import { useNavigate } from "react-router-dom";
 import { collection, addDoc, Timestamp } from "firebase/firestore";
 import { db } from "../firebase/firebase";
@@ -56,7 +56,16 @@ export default function CheckoutConfirm() {
   );
 
   const now = getNow();
-  const shippingFee = calculateShipping(checkoutInfo?.paymentMethod, now);
+
+  // ===============================
+  // ✅ 修改：運費計算（對接 Checkout 傳來的免運標記）
+  // ===============================
+  const shippingFee = useMemo(() => {
+    // 如果前一頁 Checkout 已驗證免運成功，這裡直接回傳 0
+    if (checkoutInfo?.appliedFreeShipping) return 0;
+    return calculateShipping(checkoutInfo?.paymentMethod, now);
+  }, [checkoutInfo, now]);
+
   const finalAmount = Math.round(subtotal + shippingFee);
 
   // ===============================
@@ -84,12 +93,16 @@ export default function CheckoutConfirm() {
 
       console.log("正在建立訂單...", { subtotal, shippingFee, finalAmount });
 
+      // ===============================
+      // ✅ 修改：將折扣碼資訊存入 Firebase
+      // ===============================
       const orderData = {
         userId: user.uid,
         email: user.email || "",
         createdAt: Timestamp.now(),
         shippingInfo: checkoutInfo,
         paymentMethod: checkoutInfo.paymentMethod,
+        couponCode: checkoutInfo.couponCode || "", // 紀錄使用的折扣碼
         subtotal,
         shippingFee,
         total: finalAmount,
@@ -106,6 +119,9 @@ export default function CheckoutConfirm() {
         .map((item) => `${item.name} × ${getQty(item)}`)
         .join("\n");
 
+      // ===============================
+      // ✅ 修改：Email 參數加入免運標註
+      // ===============================
       const emailParams = {
         customer_name: checkoutInfo.name,
         customer_email: user.email,
@@ -113,7 +129,7 @@ export default function CheckoutConfirm() {
         created_at: new Date().toLocaleString("zh-TW"),
         items: itemsText,
         subtotal,
-        shipping: shippingFee,
+        shipping: shippingFee === 0 ? "0 (免運優惠)" : shippingFee, 
         payment_method: checkoutInfo.paymentMethod,
         total: finalAmount,
         address: `${checkoutInfo.city}${checkoutInfo.district}${checkoutInfo.address}`,
@@ -218,12 +234,23 @@ export default function CheckoutConfirm() {
 
             <div className="flex justify-between">
               <span>運費</span>
-              <span>NT$ {shippingFee.toLocaleString("zh-TW")}</span>
+              {/* ✅ 修改：UI 顯示免運狀態 */}
+              <span className={shippingFee === 0 ? "text-green-600 font-bold" : ""}>
+                {shippingFee === 0 ? "NT$ 0 (免運)" : `NT$ ${shippingFee.toLocaleString("zh-TW")}`}
+              </span>
             </div>
+
+            {/* ✅ 新增：如果有折扣碼則顯示 */}
+            {checkoutInfo?.couponCode && (
+              <div className="flex justify-between text-xs text-orange-500">
+                <span>套用代碼</span>
+                <span>{checkoutInfo.couponCode}</span>
+              </div>
+            )}
 
             <div className="flex justify-between font-semibold pt-2 border-t">
               <span>總金額</span>
-              <span>NT$ {finalAmount.toLocaleString("zh-TW")}</span>
+              <span className="text-[#ef9d51]">NT$ {finalAmount.toLocaleString("zh-TW")}</span>
             </div>
           </div>
         </div>
@@ -249,7 +276,6 @@ export default function CheckoutConfirm() {
       >
         {isProcessing ? (
           <span className="flex items-center justify-center">
-            {/* 這裡可以放個簡單的 loading spinner 轉圈圈 */}
             正在處理訂單，請稍候...
           </span>
         ) : (

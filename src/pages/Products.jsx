@@ -21,6 +21,7 @@ export default function Products() {
   const qParam = searchParams.get("q") || "";
   const sortParam = searchParams.get("sort") || "default";
   const pageParam = Math.max(1, Number(searchParams.get("page") || 1));
+  const filterParam = searchParams.get("filter") || ""; // ✅ 新增這行
 
   // state（用來控制輸入框 UI）
   const [filteredCategory, setFilteredCategory] = useState(categoryParam);
@@ -111,11 +112,24 @@ export default function Products() {
 
   // 排序與過濾邏輯
   let displayItems = products
-  .filter((p) => (filteredCategory === "全部" ? true : p.category === filteredCategory))
-  .filter((p) => p.name.toLowerCase().includes(searchTerm.toLowerCase()));
+    // 🔥 關鍵新增：處理熱門商品過濾
+    // 如果網址有 ?filter=popular，就只顯示 isPopular 為 true 的商品
+    .filter((p) => (filterParam === "popular" ? p.isPopular === true : true))
 
-  if (sortMethod === "priceLow") displayItems = [...displayItems].sort((a, b) => a.price - b.price);
-  if (sortMethod === "priceHigh") displayItems = [...displayItems].sort((a, b) => b.price - a.price);
+    // 2. 原有的分類過濾
+    .filter((p) => (filteredCategory === "全部" ? true : p.category === filteredCategory))
+
+    // 3. 原有的搜尋過濾
+    .filter((p) => p.name.toLowerCase().includes(searchTerm.toLowerCase()));
+
+  if (sortMethod === "priceLow") {
+  displayItems = [...displayItems].sort((a, b) => a.price - b.price);
+  } else if (sortMethod === "priceHigh") {
+    displayItems = [...displayItems].sort((a, b) => b.price - a.price);
+  } else if (sortMethod === "newest") {
+  // 如果你有「最新上架」排序也可以保留
+    displayItems = [...displayItems].sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+  }
   const totalPages = Math.ceil(displayItems.length / itemsPerPage);
   const currentItems = displayItems.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
   
@@ -124,8 +138,13 @@ export default function Products() {
   return (
     <div className="products-page-container">
       <div className="products-header">
-        <h1 className="products-title">探索木育玩具</h1>
-        <p className="products-subtitle">精選優質原木，開啟孩子純粹的探索時光</p>
+        <div className="products-header-left">
+          {/* 🔥 根據 filterParam 顯示標題 */}
+          <h2>
+            {filterParam === "popular" ? "🔥 熱門推薦商品" : filteredCategory}
+          </h2>
+          <p className="products-count">共 {displayItems.length} 件商品</p>
+        </div>
       </div>
 
       {/* 控制列：搜尋與分類 */}

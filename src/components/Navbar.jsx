@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Link, NavLink, useNavigate } from "react-router-dom";
+import { Link, NavLink, useNavigate , useLocation} from "react-router-dom";
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
 import { db } from "../firebase/firebase";
@@ -17,6 +17,7 @@ export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
 
   const displayName = userProfile?.name || user?.email || "會員";
+  const location = useLocation(); // 🔍 補上這一行
 
   const handleLogout = async () => {
     await logout();
@@ -101,14 +102,33 @@ export default function Navbar() {
             首頁
           </NavLink>
 
+          {/* ✅ 修改後的所有商品 (排除熱門商品狀態) */}
           <NavLink
             to="/products"
             className={({ isActive }) =>
-              `nav-side-link ${isActive ? "active" : ""}`
+              `nav-side-link ${
+                isActive && !location.search.includes("filter=popular") 
+                  ? "active" 
+                  : ""
+              }`
             }
             onClick={() => setMenuOpen(false)}
           >
             所有商品
+          </NavLink>
+
+          <NavLink
+            to="/products?filter=popular"
+            className={() =>
+              `nav-side-link ${
+                location.search.includes("filter=popular") 
+                  ? "active text-[#ef9d51] font-bold" 
+                  : "text-[#f39c42]"
+              }`
+            }
+            onClick={() => setMenuOpen(false)}
+          >
+            🔥 熱門商品
           </NavLink>
 
           {/* 分類 */}

@@ -24,7 +24,7 @@ const Home = () => {
         const q = query(
           collection(db, "products"),
           orderBy("createdAt", "desc"),
-          limit(4)
+          limit(8)
         );
         const snapshot = await getDocs(q);
         const items = snapshot.docs.map(doc => ({
