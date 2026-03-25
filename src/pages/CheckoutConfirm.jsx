@@ -58,25 +58,27 @@ export default function CheckoutConfirm() {
   const now = getNow();
 
   // ===============================
-  // ✅ 修改：運費計算（對接 Checkout 傳來的免運標記）
+  // ✅ 修改：運費計算（新增信用卡 150 邏輯）
   // ===============================
   const shippingFee = useMemo(() => {
-    // 如果前一頁 Checkout 已驗證免運成功，這裡直接回傳 0
     if (checkoutInfo?.appliedFreeShipping) return 0;
-    return calculateShipping(checkoutInfo?.paymentMethod, now);
-  }, [checkoutInfo, now]);
+    // 如果是信用卡(宅配)則 150，否則 80 (或者維持 calculateShipping 的動態判斷)
+    return checkoutInfo?.paymentMethod === "信用卡" ? 150 : 80;
+  }, [checkoutInfo]);
 
-  const finalAmount = Math.round(subtotal + shippingFee);
+  // ===============================
+  // ✅ 修改：折扣邏輯 (若有代碼則 -100)
+  // ===============================
+  const discountAmount = checkoutInfo?.couponCode ? 100 : 0;
+  const finalAmount = Math.round(subtotal + shippingFee - discountAmount);
 
   // ===============================
   // 建立訂單
   // ===============================
   const createOrder = async () => {
-    // 防止重複執行
     if (isProcessing) return;
     
     try {
-      // 0) 防呆
       if (!checkoutInfo?.paymentMethod) {
         alert("請先選擇付款方式");
         navigate("/checkout");
@@ -88,13 +90,12 @@ export default function CheckoutConfirm() {
         return;
       }
 
-      // 開始處理
       setIsProcessing(true);
 
-      console.log("正在建立訂單...", { subtotal, shippingFee, finalAmount });
+      console.log("正在建立訂單...", { subtotal, shippingFee, discountAmount, finalAmount });
 
       // ===============================
-      // ✅ 修改：將折扣碼資訊存入 Firebase
+      // ✅ 修改：將折扣資訊存入 Firebase
       // ===============================
       const orderData = {
         userId: user.uid,
@@ -102,7 +103,8 @@ export default function CheckoutConfirm() {
         createdAt: Timestamp.now(),
         shippingInfo: checkoutInfo,
         paymentMethod: checkoutInfo.paymentMethod,
-        couponCode: checkoutInfo.couponCode || "", // 紀錄使用的折扣碼
+        couponCode: checkoutInfo.couponCode || "", 
+        discountAmount: discountAmount,
         subtotal,
         shippingFee,
         total: finalAmount,
@@ -110,17 +112,15 @@ export default function CheckoutConfirm() {
         items: cart,
       };
 
-      // 1) 優先寫入 Firebase (這是最重要的資料，必須 await)
       const docRef = await addDoc(collection(db, "orders"), orderData);
       const orderId = docRef.id;
 
-      // 2) 準備 Email 內容
       const itemsText = cart
         .map((item) => `${item.name} × ${getQty(item)}`)
         .join("\n");
 
       // ===============================
-      // ✅ 修改：Email 參數加入免運標註
+      // ✅ 修改：Email 參數加入折扣
       // ===============================
       const emailParams = {
         customer_name: checkoutInfo.name,
@@ -129,20 +129,18 @@ export default function CheckoutConfirm() {
         created_at: new Date().toLocaleString("zh-TW"),
         items: itemsText,
         subtotal,
+        discount: discountAmount > 0 ? `-${discountAmount}` : "0",
         shipping: shippingFee === 0 ? "0 (免運優惠)" : shippingFee, 
         payment_method: checkoutInfo.paymentMethod,
         total: finalAmount,
         address: `${checkoutInfo.city}${checkoutInfo.district}${checkoutInfo.address}`,
       };
 
-      // 3) 🚀 非同步發送信件 (不再 await，讓它在背景跑)
-      // 這樣程式會立刻跳到下方的金流邏輯，不用等 Email 伺服器回應
       Promise.all([
-        emailjs.send("service_4i7f37e", "template_ig9xw2j", emailParams, "jF4MDMUjdZNpY-Wi8"), // 客戶信
-        emailjs.send("service_4i7f37e", "template_qrt9ay5", emailParams, "jF4MDMUjdZNpY-Wi8")  // 管理員信
+        emailjs.send("service_4i7f37e", "template_ig9xw2j", emailParams, "jF4MDMUjdZNpY-Wi8"), 
+        emailjs.send("service_4i7f37e", "template_qrt9ay5", emailParams, "jF4MDMUjdZNpY-Wi8")  
       ]).catch(err => console.error("信件背景發送失敗:", err));
 
-      // 4) 金流與跳轉邏輯
       const needsPaymentGateway =
         checkoutInfo.paymentMethod === "信用卡" ||
         checkoutInfo.paymentMethod === "超商取貨付款";
@@ -189,14 +187,13 @@ export default function CheckoutConfirm() {
           throw new Error(data.error || "金流參數解析失敗");
         }
       } else {
-        // 非金流支付（如貨到付款/轉帳）直接成功
         clearCart();
         navigate(`/checkout/success/${orderId}`);
       }
     } catch (err) {
       console.error("❌ 訂單失敗:", err);
       alert("訂單失敗: " + err.message);
-      setIsProcessing(false); // 失敗時務必恢復按鈕，讓客戶可以重試
+      setIsProcessing(false); 
     }
   };
 
@@ -225,38 +222,35 @@ export default function CheckoutConfirm() {
             </span>
           </div>
 
-          {/* 金額區塊 */}
           <div className="pt-4 border-t space-y-3">
             <div className="flex justify-between">
               <span>商品小計</span>
               <span>NT$ {subtotal.toLocaleString("zh-TW")}</span>
             </div>
 
+            {/* ✅ 折扣顯示 */}
+            {discountAmount > 0 && (
+              <div className="flex justify-between text-red-500">
+                <span>折扣優惠 ({checkoutInfo.couponCode})</span>
+                <span>- NT$ {discountAmount.toLocaleString("zh-TW")}</span>
+              </div>
+            )}
+
             <div className="flex justify-between">
-              <span>運費</span>
-              {/* ✅ 修改：UI 顯示免運狀態 */}
+              <span>運費 ({checkoutInfo?.paymentMethod === "信用卡" ? "宅配" : "超商"})</span>
               <span className={shippingFee === 0 ? "text-green-600 font-bold" : ""}>
                 {shippingFee === 0 ? "NT$ 0 (免運)" : `NT$ ${shippingFee.toLocaleString("zh-TW")}`}
               </span>
             </div>
 
-            {/* ✅ 新增：如果有折扣碼則顯示 */}
-            {checkoutInfo?.couponCode && (
-              <div className="flex justify-between text-xs text-orange-500">
-                <span>套用代碼</span>
-                <span>{checkoutInfo.couponCode}</span>
-              </div>
-            )}
-
             <div className="flex justify-between font-semibold pt-2 border-t">
               <span>總金額</span>
-              <span className="text-[#ef9d51]">NT$ {finalAmount.toLocaleString("zh-TW")}</span>
+              <span className="text-[#ef9d51] text-xl">NT$ {finalAmount.toLocaleString("zh-TW")}</span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* ✅ Debug 區塊 */}
       {SHOW_DEBUG && (
         <div className="text-xs text-gray-400 pt-2 mb-4">
           <div>now: {now.toString()}</div>
@@ -264,22 +258,20 @@ export default function CheckoutConfirm() {
         </div>
       )}
 
-      {/* ✅ 優化後的按鈕：根據狀態變換顏色與文字 */}
       <button
         onClick={createOrder}
         disabled={isProcessing}
-        className={`w-full py-4 rounded-full text-lg font-medium transition-colors ${
+        className={`w-full py-4 rounded-full text-lg font-bold transition-all shadow-lg active:scale-[0.98] ${
           isProcessing 
             ? "bg-gray-400 cursor-not-allowed" 
             : "bg-[#ef9d51] hover:bg-[#d68a44] text-white"
         }`}
       >
         {isProcessing ? (
-          <span className="flex items-center justify-center">
-            正在處理訂單，請稍候...
-          </span>
+          "正在處理訂單，請稍候..."
         ) : (
-          "確認送出並付款"
+          checkoutInfo.paymentMethod === "信用卡" ? "前往刷卡付款" : 
+          checkoutInfo.paymentMethod === "超商取貨付款" ? "確認送出並付款" : "確認成立訂單"
         )}
       </button>
       
