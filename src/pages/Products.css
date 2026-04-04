@@ -112,6 +112,24 @@
   border-color: #f39c42 !important;
 }
 
+.page-arrow {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  border: none;
+  background: #f6f5f2;
+  color: #6a625d;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.page-arrow:hover:not(:disabled) {
+  background: #f4a259;
+  color: #fff;
+}
+
 /* 手機版適應 */
 @media (max-width: 1024px) {
   .products-page-container {

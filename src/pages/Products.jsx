@@ -48,6 +48,40 @@ export default function Products() {
   };
   const { user } = useAuth();
   const itemsPerPage = 6;
+  const getPaginationItems = (current, total) => {
+    if (total <= 1) return [1];
+
+    const pages = [];
+
+    // 頁數少時直接全部顯示
+    if (total <= 7) {
+      return Array.from({ length: total }, (_, i) => i + 1);
+    }
+
+    pages.push(1);
+
+    const start = Math.max(2, current - 1);
+    const end = Math.min(total - 1, current + 1);
+
+    // 第一頁和中間區段有落差時顯示省略號
+    if (start > 2) {
+      pages.push("...");
+    }
+
+    for (let i = start; i <= end; i++) {
+      pages.push(i);
+    }
+
+    // 中間區段和最後一頁有落差時顯示省略號
+    if (end < total - 1) {
+      pages.push("...");
+    }
+
+    pages.push(total);
+
+    return pages;
+  };
+
   const handleWishlistClick = (e, productId) => {
   e.preventDefault();
 
@@ -131,8 +165,11 @@ export default function Products() {
     displayItems = [...displayItems].sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
   }
   const totalPages = Math.ceil(displayItems.length / itemsPerPage);
-  const currentItems = displayItems.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
-  
+  const currentItems = displayItems.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+  const paginationItems = getPaginationItems(currentPage, totalPages);
 
 
   return (
@@ -251,18 +288,52 @@ export default function Products() {
       {/* 分頁 */}
       {totalPages > 1 && (
         <div className="pagination">
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map((num) => (
-            <button
-              key={num}
-              onClick={() => {
-              setCurrentPage(num);
-              updateParams({ page: num });
+          <button
+            className="page-arrow"
+            onClick={() => {
+              if (currentPage > 1) {
+                setCurrentPage(currentPage - 1);
+                updateParams({ page: currentPage - 1 });
+              }
             }}
-              className={`page-num ${currentPage === num ? "active" : ""}`}
-            >
-              {num}
-            </button>
-          ))}
+            disabled={currentPage === 1}
+            aria-label="上一頁"
+          >
+            &lt;
+          </button>
+
+          {paginationItems.map((item, index) =>
+            item === "..." ? (
+              <span key={`ellipsis-${index}`} className="page-ellipsis">
+                ...
+              </span>
+            ) : (
+              <button
+                key={item}
+                onClick={() => {
+                  setCurrentPage(item);
+                  updateParams({ page: item });
+                }}
+                className={`page-num ${currentPage === item ? "active" : ""}`}
+              >
+                {item}
+              </button>
+            )
+          )}
+
+          <button
+            className="page-arrow"
+            onClick={() => {
+              if (currentPage < totalPages) {
+                setCurrentPage(currentPage + 1);
+                updateParams({ page: currentPage + 1 });
+              }
+            }}
+            disabled={currentPage === totalPages}
+            aria-label="下一頁"
+          >
+            &gt;
+          </button>
         </div>
       )}
 
