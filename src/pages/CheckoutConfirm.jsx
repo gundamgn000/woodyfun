@@ -69,8 +69,8 @@ export default function CheckoutConfirm() {
   // ===============================
   // ✅ 修改：折扣邏輯 (若有代碼則 -100)
   // ===============================
-  const discountAmount = checkoutInfo?.couponCode ? 100 : 0;
-  const finalAmount = Math.round(subtotal + shippingFee - discountAmount);
+  const discountAmount = 0;
+  const finalAmount = Math.round(subtotal + shippingFee);
 
   // ===============================
   // 建立訂單
@@ -94,26 +94,7 @@ export default function CheckoutConfirm() {
 
       console.log("正在建立訂單...", { subtotal, shippingFee, discountAmount, finalAmount });
 
-      // ===============================
-      // ✅ 修改：將折扣資訊存入 Firebase
-      // ===============================
-      const orderData = {
-        userId: user.uid,
-        email: user.email || "",
-        createdAt: Timestamp.now(),
-        shippingInfo: checkoutInfo,
-        paymentMethod: checkoutInfo.paymentMethod,
-        couponCode: checkoutInfo.couponCode || "", 
-        discountAmount: discountAmount,
-        subtotal,
-        shippingFee,
-        total: finalAmount,
-        status: "pending",
-        items: cart,
-      };
 
-      const docRef = await addDoc(collection(db, "orders"), orderData);
-      const orderId = docRef.id;
 
       const itemsText = cart
         .map((item) => `${item.name} × ${getQty(item)}`)
@@ -129,7 +110,7 @@ export default function CheckoutConfirm() {
         created_at: new Date().toLocaleString("zh-TW"),
         items: itemsText,
         subtotal,
-        discount: discountAmount > 0 ? `-${discountAmount}` : "0",
+        discount: "0",
         shipping: shippingFee === 0 ? "0 (免運優惠)" : shippingFee, 
         payment_method: checkoutInfo.paymentMethod,
         total: finalAmount,

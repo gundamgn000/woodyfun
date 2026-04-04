@@ -53,14 +53,10 @@ export default function Checkout() {
   }, [cart]);
 
   // ✨ 2. 自動計算「滿額現折」 (滿 699 折 100)
-  const autoDiscountAmount = useMemo(() => {
-    return subtotal >= 699 ? 100 : 0;
-  }, [subtotal]);
+  const autoDiscountAmount = 0;
 
   // 💰 3. 計算「折後小計」 (免運門檻的判定基準)
-  const discountedSubtotal = useMemo(() => {
-    return subtotal - autoDiscountAmount;
-  }, [subtotal, autoDiscountAmount]);
+  const discountedSubtotal = subtotal;
 
   const now = useMemo(() => getNow(), []);
 
@@ -200,7 +196,7 @@ export default function Checkout() {
           </div>
 
           {/* 折扣碼區塊 */}
-          <div className="space-y-2 pt-2 bg-white p-4 rounded-2xl border border-gray-50 shadow-sm">
+          {/* <div className="space-y-2 pt-2 bg-white p-4 rounded-2xl border border-gray-50 shadow-sm">
             <label className="text-sm font-medium text-gray-700 ml-1">專屬折扣碼</label>
             <div className="flex gap-3">
               <input type="text" className={inputStyle} placeholder="輸入代碼 (例如: FREE666)" value={couponCode} onChange={(e) => setCouponCode(e.target.value)} />
@@ -212,6 +208,8 @@ export default function Checkout() {
               <p className={`text-xs ml-1 mt-1 ${couponMessage.isError ? "text-red-500" : "text-green-600"}`}>{couponMessage.text}</p>
             )}
           </div>
+          */}
+
 
           {/* 🧾 金額摘要 */}
           <div className="border border-orange-100 rounded-2xl p-6 bg-[#fffcf9] space-y-3 mt-10">
