@@ -72,6 +72,10 @@ const ProductDetail = () => {
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
           const data = docSnap.data();
+          if (data.isActive !== true) {
+            setProduct(null);
+            return;
+          }
           setProduct({ id: docSnap.id, ...data });
           setSelectedImage(safeImg(data.mainImageUrl || data.imageUrl));
 

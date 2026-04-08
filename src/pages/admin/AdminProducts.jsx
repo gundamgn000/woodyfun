@@ -76,21 +76,43 @@ export default function AdminProducts() {
     }
   };
 
-  const toggleStatus = async (id, currentStatus) => {
-    const newStatus = currentStatus === "active" ? "inactive" : "active";
+  const toggleStatus = async (id, currentIsActive) => {
+    const newIsActive = !currentIsActive;
+
     try {
-      await updateDoc(doc(db, "products", id), { status: newStatus });
-      setProducts(products.map(p => p.id === id ? { ...p, status: newStatus } : p));
-    } catch (err) { alert("更新狀態失敗"); }
+      await updateDoc(doc(db, "products", id), {
+        isActive: newIsActive,
+      });
+
+      setProducts((prev) =>
+        prev.map((p) =>
+          p.id === id ? { ...p, isActive: newIsActive } : p
+        )
+      );
+    } catch (err) {
+      console.error("更新上下架狀態失敗:", err);
+      alert("更新狀態失敗");
+    }
   };
 
-  const togglePopular = async (id, currentIsPopular) => {
-    const newPopularStatus = !currentIsPopular;
-    try {
-      await updateDoc(doc(db, "products", id), { isPopular: newPopularStatus });
-      setProducts(products.map(p => p.id === id ? { ...p, isPopular: newPopularStatus } : p));
-    } catch (err) { console.error("更新熱門失敗:", err); }
-  };
+const togglePopular = async (id, currentIsPopular) => {
+  const newPopularStatus = !currentIsPopular;
+
+  try {
+    await updateDoc(doc(db, "products", id), {
+      isPopular: newPopularStatus,
+    });
+
+    setProducts((prev) =>
+      prev.map((p) =>
+        p.id === id ? { ...p, isPopular: newPopularStatus } : p
+      )
+    );
+  } catch (err) {
+    console.error("更新熱門失敗:", err);
+    alert("更新熱門狀態失敗");
+  }
+};
 
   if (loading) return <div className="flex justify-center items-center h-screen text-gray-400">木玩加載中...</div>;
 
@@ -140,8 +162,15 @@ export default function AdminProducts() {
              <div className="relative aspect-square bg-gray-100 overflow-hidden">
                 <img src={p.mainImageUrl || p.imageUrl || "https://via.placeholder.com/300"} alt={p.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                 <div className="absolute top-3 left-3 flex flex-col gap-2">
-                   <span className={`px-3 py-1 rounded-full text-xs font-bold shadow-sm ${p.status === 'active' ? 'bg-green-500 text-white' : 'bg-gray-500 text-white'}`}>{p.status === 'active' ? '上架中' : '已下架'}</span>
-                   <button onClick={() => togglePopular(p.id, p.isPopular)} className={`px-3 py-1 rounded-full text-xs font-bold shadow-md flex items-center gap-1 transition-all ${p.isPopular ? 'bg-orange-500 text-white' : 'bg-white/90 text-gray-400 hover:text-orange-500'}`}>
+                      <span
+                        className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold shadow-sm backdrop-blur-sm ${
+                          p.isActive
+                            ? "bg-green-500/90 text-white"
+                            : "bg-gray-500/90 text-white"
+                        }`}
+                      >
+                        {p.isActive ? "上架中" : "已下架"}
+                      </span>                   <button onClick={() => togglePopular(p.id, p.isPopular)} className={`px-3 py-1 rounded-full text-xs font-bold shadow-md flex items-center gap-1 transition-all ${p.isPopular ? 'bg-orange-500 text-white' : 'bg-white/90 text-gray-400 hover:text-orange-500'}`}>
                       <Star size={12} fill={p.isPopular ? "white" : "none"} /> {p.isPopular ? "熱門商品" : "設為熱門"}
                    </button>
                 </div>
@@ -158,7 +187,8 @@ export default function AdminProducts() {
                 </div>
                 <div className="grid grid-cols-3 gap-2">
                    <Link to={`/admin/products/edit/${p.id}`} className="flex items-center justify-center p-2 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white"><Edit3 size={18} /></Link>
-                   <button onClick={() => toggleStatus(p.id, p.status)} className={`flex items-center justify-center p-2 rounded-lg ${p.status === 'active' ? 'bg-gray-100 text-gray-600' : 'bg-green-50 text-green-600'}`}><Eye size={18} /></button>
+                   <button onClick={() => toggleStatus(p.id, p.isActive)}className={`flex items-center justify-center p-2 rounded-lg ${p.isActive ? "bg-gray-100 text-gray-600" : "bg-green-50 text-green-600"}`}><Eye size={18} />
+                  </button>
                    <button onClick={() => handleDelete(p.id, p.name)} className="flex items-center justify-center p-2 rounded-lg bg-red-50 text-red-600 hover:bg-red-600 hover:text-white"><Trash2 size={18} /></button>
                 </div>
              </div>
