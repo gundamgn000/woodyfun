@@ -262,6 +262,7 @@ export default function Products() {
 
                 <div className="product-info">
                   <div className="product-card-category">{item.category}</div>
+                  <div className="product-card-category">建議年齡 {item.ageRange || "全齡適用"}</div>
                   <h2 className="product-name">{item.name}</h2>
                   <div className="product-card-price">NT$ {item.price}</div>
                 </div>
