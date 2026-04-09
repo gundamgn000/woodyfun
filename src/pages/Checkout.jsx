@@ -166,9 +166,12 @@ export default function Checkout() {
               <option value="">請選擇付款方式</option>
 
               <option value="超商取貨付款">
-                超商取貨付款 (7-11/全家/萊爾富)
+                超商取貨付款    /   超商取貨不付款 (信用卡)
               </option>
-              <option value="信用卡">信用卡</option>
+              <option value="信用卡">宅配到府(信用卡)  *本站補貼部分運費，實際運送成本約210~250元*
+                
+                
+              </option>
             </select>
           </div>
 
@@ -182,11 +185,16 @@ export default function Checkout() {
               <span>預估運費</span>
               <span>NT$ {shippingFee?.toLocaleString()}</span>
             </div>
+            <div className="flex justify-between text-gray-400 border-b border-orange-20 pb-3">
+              <span></span>
+              
+            </div>
             <div className="flex justify-between font-bold text-xl text-gray-800 pt-1">
               <span>總金額</span>
               <span className="text-[#ef9d51]">
                 NT$ {totalAmount?.toLocaleString()}
               </span>
+              
             </div>
           </div>
 
