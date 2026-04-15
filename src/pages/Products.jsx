@@ -257,7 +257,6 @@ export default function Products() {
                     src={safeImg(item.mainImageUrl || item.imageUrl)}
                     alt={item.name}
                   />
-                  
                 </div>
 
                 <div className="product-info">

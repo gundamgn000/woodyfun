@@ -46,6 +46,7 @@ export default function Footer() {
               <Link to="/consumer-policy#terms" className="footer-link">服務條款</Link>
               <Link to="/consumer-policy#refund" className="footer-link">退換貨政策</Link>
               <Link to="https://line.me/R/ti/p/@153bbxjj" className="footer-link">聯絡客服</Link>
+              <Link to="#" className="footer-link">統一編號：60906139</Link>
             </nav>
           </div>
 
