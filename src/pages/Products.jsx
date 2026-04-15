@@ -20,7 +20,8 @@ export default function Products() {
   const categoryParam = searchParams.get("category") || "全部";
   const qParam = searchParams.get("q") || "";
   const sortParam = searchParams.get("sort") || "default";
-  const pageParam = Math.max(1, Number(searchParams.get("page") || 1));
+  const rawPage = Number(searchParams.get("page"));
+  const pageParam = Number.isFinite(rawPage) && rawPage > 0 ? rawPage : 1;
   const filterParam = searchParams.get("filter") || ""; // ✅ 新增這行
 
   // state（用來控制輸入框 UI）
@@ -239,11 +240,12 @@ export default function Products() {
       <div className="products-grid">
         {currentItems.map((item) => {
           const mainImage =
-            item.images?.[0]?.url ||        // images 是 [{url}]
-            item.images?.[0] ||             // images 是 ["url"]
-            item.image ||                   // image 是單一字串
+            item.mainImageUrl ||
+            item.imageUrl ||
+            item.images?.[0]?.url ||
+            item.images?.[0] ||
+            item.image ||
             "/placeholder-product.png";
-
 
           return (
             <div key={item.id} className="product-card-wrapper">
@@ -254,24 +256,25 @@ export default function Products() {
               >
                 <div className="product-image-wrapper">
                   <img
-                    src={safeImg(item.mainImageUrl || item.imageUrl)}
+                    src={safeImg(mainImage)}
                     alt={item.name}
                   />
                 </div>
 
                 <div className="product-info">
                   <div className="product-card-category">{item.category}</div>
-                  <div className="product-card-category">建議年齡 {item.ageRange || "全齡適用"}</div>
+                  <div className="product-card-category">
+                    建議年齡 {item.ageRange || "全齡適用"}
+                  </div>
                   <h2 className="product-name">{item.name}</h2>
                   <div className="product-card-price">NT$ {item.price}</div>
                 </div>
               </Link>
 
-             <button
+              <button
                 className="wishlist-btn"
                 onClick={(e) => handleWishlistClick(e, item.id)}
-             
-             >
+              >
                 {justAddedId === item.id && (
                   <div className="wishlist-hint">已加入收藏</div>
                 )}
@@ -279,8 +282,7 @@ export default function Products() {
                 {isWishlisted(item.id)
                   ? <HeartFilled color="#f39c42" />
                   : <HeartOutline color="#ccc" />}
-             </button>
-
+              </button>
             </div>
           );
         })}
