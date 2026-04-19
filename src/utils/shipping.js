@@ -11,7 +11,11 @@ export const OPENING_END = new Date("2026-02-28T23:59:59+08:00");
 
 export const calculateShipping = (paymentMethod, now = new Date()) => {
   if (now <= OPENING_END) return 0;
-  return paymentMethod === "信用卡" ? 180 : 65;
+
+  if (paymentMethod === "面交取貨") return 0;
+  if (paymentMethod === "信用卡") return 180;
+
+  return 65;
 };
 
 /**

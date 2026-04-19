@@ -164,6 +164,7 @@ export default function Checkout() {
               onChange={(e) => updateForm("paymentMethod", e.target.value)}
             >
               <option value="">請選擇付款方式</option>
+              <option value="面交取貨">面交取貨 (限地區)</option>
 
               <option value="超商取貨付款">
                 超商取貨付款    /   超商取貨不付款 (信用卡)
