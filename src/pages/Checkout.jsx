@@ -12,6 +12,7 @@ export default function Checkout() {
     name: "",
     phone: "",
     lineId: "", // 新增這一行
+    taxId: "",
     city: "",
     district: "",
     address: "",
@@ -111,6 +112,19 @@ export default function Checkout() {
               placeholder="請輸入 Line ID"
               value={form.lineId}
               onChange={(e) => updateForm("lineId", e.target.value)}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700 ml-1">
+              統一編號 <span className="text-gray-400 text-xs">(選填)</span>
+            </label>
+            <input
+              type="text"
+              className={inputStyle}
+              placeholder="請輸入統一編號"
+              value={form.taxId}
+              onChange={(e) => updateForm("taxId", e.target.value)}
             />
           </div>
 

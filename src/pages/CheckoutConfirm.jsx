@@ -89,6 +89,7 @@ export default function CheckoutConfirm() {
         email: user.email || "",
         createdAt: Timestamp.now(),
         shippingInfo: checkoutInfo,
+        taxId: checkoutInfo.taxId || "",
         paymentMethod: checkoutInfo.paymentMethod,
         subtotal,
         shippingFee,
@@ -206,6 +207,13 @@ export default function CheckoutConfirm() {
             <span>Line ID</span>
             <span className={checkoutInfo?.lineId ? "text-gray-800" : "text-gray-400"}>
               {checkoutInfo?.lineId || "未填寫"}
+            </span>
+          </div>
+
+          <div className="flex justify-between pb-4 border-b">
+            <span>統一編號</span>
+            <span className={checkoutInfo?.taxId ? "text-gray-800" : "text-gray-400"}>
+              {checkoutInfo?.taxId || "未填寫"}
             </span>
           </div>
 

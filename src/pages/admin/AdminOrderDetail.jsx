@@ -8,11 +8,11 @@ import { useAuth } from "../../context/AuthContext";
 import { logOrderAction } from "../../utils/orderLogger";
 
 
-const getStatusFlow = (isCOD) =>
-  isCOD
-    ? ["pending", "shipped", "completed"]       // 貨到付款
-    : ["pending", "paid", "shipped", "completed"]; // 線上付款
-
+//*const getStatusFlow = (isCOD) =>
+  //isCOD
+  //  ? ["pending", "shipped", "completed"]       // 貨到付款
+//   : ["pending", "paid", "shipped", "completed"]; // 線上付款
+//
 
 const STATUS_TEXT = {
   pending: "待付款、訂單成立",
@@ -256,7 +256,7 @@ export default function AdminOrderDetail() {
 
   const nextStatus = getNextStatus(currentStatus);
 
-   const isCOD = paymentMethod === "貨到付款";
+   //const isCOD = paymentMethod === "貨到付款";
   // 是否為線上金流（信用卡 / ATM / 綠界等）
   const isAutoPayment =
     paymentMethod !== "貨到付款" && paymentMethod !== "無資料";
@@ -514,6 +514,12 @@ export default function AdminOrderDetail() {
               <span className="font-medium">Line ID：</span>
               {shipping.lineId || "未填寫"}
             </p>
+
+            <p>
+              <strong>統一編號：</strong> {order.taxId || shipping?.taxId || "無"}
+
+            </p>
+
             <p>
               <span className="font-medium">Email：</span>
               {shipping.email || order.email || "無資料"}
@@ -526,6 +532,7 @@ export default function AdminOrderDetail() {
                   }`
                 : "無資料"}
             </p>
+
           </div>
 
           {/* 物流資訊卡片 */}
