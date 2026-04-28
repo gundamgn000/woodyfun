@@ -24,7 +24,7 @@ export default function AdminEditProduct() {
     description: "",
     price: "",
     stock: "",
-    category: "感官啟蒙",
+    category: "專注力玩具",
     ageRange: "",
     material: "天然實木",
     abilities: [],
@@ -246,9 +246,10 @@ export default function AdminEditProduct() {
                   onChange={handleChange} 
                   className={inputStyle}
                 >
-                  <option value="感官啟蒙">感官啟蒙</option>
-                  <option value="益智拼圖">益智拼圖</option>
-                  <option value="建構邏輯">建構邏輯</option>
+                  <option value="專注力玩具">專注力玩具</option>
+                  <option value="拼圖系列">拼圖系列</option>
+                  <option value="親子桌遊">親子桌遊</option>
+                  <option value="角色扮演">角色扮演</option>
                 </select>
               </div>
               <div>

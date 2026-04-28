@@ -8,8 +8,7 @@ import {
   getDocs,
   query,
   where,
-  limit,
-  orderBy, // 加入排序功能
+  limit, // 加入排序功能
   serverTimestamp //
 } from "firebase/firestore";
 import { db } from "../firebase/firebase";
@@ -361,7 +360,7 @@ const ProductDetail = () => {
         <h2 className="section-title">為您推薦</h2>
         <div className="recommend-grid">
           {recommendedProducts.map((p) => (
-            <Link key={p.id} to={`/products/${p.id}`} className="mini-card">
+            <Link key={p.id} to={`/product/${p.id}`} className="mini-card">
               <div className="mini-img-box">
                 <img src={safeImg(p.mainImageUrl || p.imageUrl)} alt={p.name} />
               </div>

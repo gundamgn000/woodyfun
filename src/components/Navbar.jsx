@@ -11,7 +11,7 @@ export default function Navbar() {
   const { totalItems, cart, subtotal } = useCart();
   const { user, authLoading, userRole, logout, userProfile } = useAuth();
 
-  const [dynamicCategories, setDynamicCategories] = useState([]);
+  const [ setDynamicCategories] = useState([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isUserOpen, setIsUserOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -29,14 +29,17 @@ export default function Navbar() {
     const fetchCategories = async () => {
       const querySnapshot = await getDocs(collection(db, "products"));
       const cats = new Set();
+
       querySnapshot.forEach((doc) => {
         const data = doc.data();
         if (data.category) cats.add(data.category);
       });
+
       setDynamicCategories(Array.from(cats));
     };
+
     fetchCategories();
-  }, []);
+  }, [setDynamicCategories]);
 
   return (
     <>
@@ -136,7 +139,7 @@ export default function Navbar() {
             <span className="text-[11px] text-gray-400 tracking-widest mb-2 uppercase">
               玩具分類
             </span>
-            {dynamicCategories.map((cat) => (
+            {["專注力玩具", "拼圖系列", "親子桌遊", "角色扮演"].map((cat) => (
               <NavLink
                 key={cat}
                 to={`/products?category=${cat}`}

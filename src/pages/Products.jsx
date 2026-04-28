@@ -219,7 +219,7 @@ export default function Products() {
         </div>
 
         <div className="filter-pill-container">
-          {["全部", "感官啟蒙", "益智拼圖", "建構邏輯"].map((cat) => (
+          {["全部", "專注力玩具", "拼圖系列", "親子桌遊", "角色扮演"].map((cat) => (
             <button
               key={cat}
               onClick={() => {
