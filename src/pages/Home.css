@@ -73,19 +73,57 @@
 
 /* 📱 手機版 Hero */
 @media (max-width: 768px) {
-   .hero {
-    height: 75vh;
+  .hero {
+    height: 62vh;
     background-image: url("../assets/home/hero-mobile.jpg");
-    background-position: center top;
+    background-position: center 58%;
+    align-items: flex-start;
+    padding-top: 72px;
+    filter: brightness(0.92) contrast(1.05);
+    
   }
 
+  .hero-overlay {
+    background: linear-gradient(
+      to bottom,
+      rgba(255,255,255,0.82) 0%,
+      rgba(255,255,255,0.5) 42%,
+      rgba(255,255,255,0.08) 78%,
+      rgba(255,255,255,0) 100%
+    );
+  }
+
+  .hero-content {
+    padding: 0 30px;
+    max-width: 100%;
+  }
 
   .hero-content h1 {
-    font-size: 2rem;
-    line-height: 1.3;
+    font-size: 1.75rem;
+    line-height: 1.25;
+  }
+
+  .hero-content h1 span {
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    font-size: 2.35rem !important;
+    line-height: 1.12;
+    display: inline-block;
+  }
+
+  .hero-content p {
+    margin-top: 20px;
+    font-size: 0.95rem;
+    line-height: 1.8;
+    letter-spacing: 0.08em;
+    opacity: 0.85;
+  }
+
+  .hero-content button {
+    margin-top: 34px;
+    padding: 14px 34px;
   }
 }
-
 
 /* ===== 玩具分類區塊 (原本的 Week's Look) ===== */
 .week-look-section {
