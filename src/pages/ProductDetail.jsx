@@ -8,7 +8,7 @@ import {
   getDocs,
   query,
   where,
-  limit, // 加入排序功能
+  limit, 
   serverTimestamp //
 } from "firebase/firestore";
 import { db } from "../firebase/firebase";

@@ -7,6 +7,7 @@ import { WishlistProvider } from "./context/WishlistContext";
 import { ToastProvider } from "./context/ToastContext";
 
 import Navbar from "./components/Navbar";
+import MobileNavbar from "./components/MobileNavbar";
 import Footer from "./components/Footer";
 import PageTransition from "./components/PageTransition";
 import ConsumerPolicy from "./pages/ConsumerPolicy";
@@ -62,6 +63,7 @@ function App() {
           <WishlistProvider>
             <Router>
               <Navbar />
+              <MobileNavbar />
               <main className="min-h-screen">
                 {/* 2. 使用 Suspense 包裹 Routes，並給予一個空的 loading 狀態以維持畫面穩定 */}
                 <Suspense fallback={<div className="min-h-screen" />}>
